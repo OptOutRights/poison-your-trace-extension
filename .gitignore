@@ -1,0 +1,5 @@
+dist/
+node_modules/
+web-ext-artifacts/
+# per-upload state written by `web-ext sign` (like web-ext-artifacts/), not source
+.amo-upload-uuid

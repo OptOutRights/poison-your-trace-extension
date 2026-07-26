@@ -1,0 +1,14 @@
+// web-ext packages the extension from this directory; ship only the manifest, the built dist/,
+// the popup page, and the icons, never the TypeScript sources or tooling.
+export default {
+  ignoreFiles: [
+    "src/**",
+    "node_modules/**",
+    "build.mjs",
+    "tsconfig.json",
+    "package.json",
+    "package-lock.json",
+    "web-ext-config.mjs",
+    "README.md",
+  ],
+};
