@@ -66,17 +66,20 @@ export class AutoContainer {
     const target = targetFor(details.url);
     if (!target) return {};
 
-    const container = await this.containers.getOrCreate(target.name, target.color);
-
+    // Read the tab BEFORE creating any container, so a navigation whose tab has already gone away
+    // (fast close, prerender discarded) never leaves an orphan container behind in the picker.
     let tab: browser.tabs.Tab;
     try {
       tab = await browser.tabs.get(details.tabId);
     } catch {
       return {}; // tab vanished mid flight
     }
+
+    const container = await this.containers.getOrCreate(target.name, target.color);
     if (tab.cookieStoreId === container.cookieStoreId) return {}; // already in the right container
 
-    // Wrong container: reopen this URL in the correct one, then discard the old tab.
+    // Wrong container: reopen this URL in the correct one, then discard the old tab. The reopened
+    // tab starts in the right container, so its own navigation passes straight through, no loop.
     await browser.tabs.create({
       url: details.url,
       cookieStoreId: container.cookieStoreId,
