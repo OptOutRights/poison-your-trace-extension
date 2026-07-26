@@ -29,6 +29,12 @@
     "default_popup": "popup.html",
     "default_icon": "icons/syringe.svg"
   },
+  "page_action": {
+    "default_title": "Poison your Trace, what this site sees",
+    "default_popup": "popup.html",
+    "default_icon": "icons/syringe.svg",
+    "show_matches": ["http://*/*", "https://*/*"]
+  },
   "icons": {
     "16": "icons/syringe.svg",
     "48": "icons/syringe.svg",
