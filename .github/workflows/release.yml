@@ -1,0 +1,98 @@
+name: Release
+
+# Builds, signs, and publishes the extension when a version tag is pushed.
+#
+# Trigger: push a tag shaped like vX.Y.Z (for example v0.2.0). The tag version must match the
+# "version" field in manifest.json; the job fails fast otherwise so the two never drift.
+#
+# What it does:
+#   1. checkout, setup Node, npm ci, npm run build
+#   2. web-ext sign --channel=unlisted, which uploads to addons.mozilla.org and returns a signed xpi
+#      in web-ext-artifacts/
+#   3. regenerate updates.json (the Mozilla AMO update manifest) for this version
+#   4. create or update the GitHub Release for the tag and attach the signed xpi plus updates.json
+#
+# Firefox reads manifest.json update_url (the latest release copy of updates.json), sees the newer
+# version, and auto updates from the tagged xpi named in update_link.
+#
+# Required repository secrets (Settings, Secrets and variables, Actions):
+#   AMO_JWT_ISSUER  the JWT issuer from the addons.mozilla.org API credentials page
+#   AMO_JWT_SECRET  the matching JWT secret
+# Without both secrets the signing step cannot run.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Derive version and verify it matches the tag
+        id: version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          manifest_version="$(node -p "require('./manifest.json').version")"
+          if [ "$tag_version" != "$manifest_version" ]; then
+            echo "Tag version ($tag_version) does not match manifest.json version ($manifest_version)." >&2
+            echo "Bump the manifest version and retag so the two agree." >&2
+            exit 1
+          fi
+          echo "version=$tag_version" >> "$GITHUB_OUTPUT"
+
+      - name: Sign the extension (channel unlisted)
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "Missing AMO_JWT_ISSUER or AMO_JWT_SECRET repository secrets; add them before releasing." >&2
+            exit 1
+          fi
+          npx web-ext sign \
+            --channel=unlisted \
+            --api-key="$AMO_JWT_ISSUER" \
+            --api-secret="$AMO_JWT_SECRET"
+
+      - name: Locate the signed xpi
+        id: xpi
+        run: |
+          xpi_path="$(ls web-ext-artifacts/*.xpi | head -n 1)"
+          if [ -z "$xpi_path" ]; then
+            echo "No signed xpi was produced in web-ext-artifacts/." >&2
+            exit 1
+          fi
+          echo "path=$xpi_path" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$xpi_path")" >> "$GITHUB_OUTPUT"
+
+      - name: Generate updates.json
+        run: node scripts/build-updates-json.mjs "${{ steps.version.outputs.version }}" "${{ steps.xpi.outputs.name }}"
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: v${{ steps.version.outputs.version }}
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.xpi.outputs.path }}
+            updates.json

@@ -3,6 +3,8 @@
 export default {
   ignoreFiles: [
     "src/**",
+    "scripts/**",
+    ".github/**",
     "node_modules/**",
     "build.mjs",
     "tsconfig.json",
@@ -10,5 +12,6 @@ export default {
     "package-lock.json",
     "web-ext-config.mjs",
     "README.md",
+    "updates.json",
   ],
 };
