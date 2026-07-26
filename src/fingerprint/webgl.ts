@@ -32,6 +32,13 @@ const WEBGL_UNMASKED_RENDERER = "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3
  * passed in so it can post its before and after captures out of the page world without importing.
  */
 function pageWorldOverride(masked: string, unmaskedVendor: string, unmaskedRenderer: string, reportType: string): void {
+  // Run at most once per document. A second injection into the same page would read our already
+  // masked vendor and renderer as its "before", collapsing the popup's before and after to the same
+  // text, so the guard keeps the override idempotent and the recorded "before" real.
+  const guard = window as unknown as { __poisonWebglDone?: boolean };
+  if (guard.__poisonWebglDone) return;
+  guard.__poisonWebglDone = true;
+
   // Numeric enum values for the intercepted parameters. These are fixed by the WebGL and extension
   // specs, so hard coding them avoids depending on a live context: VENDOR and RENDERER are core GL
   // enums; the UNMASKED_* pair comes from WEBGL_debug_renderer_info.

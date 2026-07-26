@@ -26,6 +26,12 @@ import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report"
  *   buffer, so a sum of absolute samples becomes exactly zero).
  */
 function pageWorldOverride(fill: number, reportType: string, opaqueBefore: string, neutralized: string): void {
+  // Run at most once per document, so a second injection into the same page does not re-patch the
+  // read paths or post a duplicate capture batch.
+  const guard = window as unknown as { __poisonAudioDone?: boolean };
+  if (guard.__poisonAudioDone) return;
+  guard.__poisonAudioDone = true;
+
   // Replace a prototype method, tolerating a missing or frozen prototype rather than throwing.
   const patch = (proto: object | undefined, name: string, impl: (...args: never[]) => unknown): void => {
     try {
