@@ -20,6 +20,14 @@ import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report"
  * world without importing anything.
  */
 function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: string, neutralized: string): void {
+  // Run at most once per document. If this override is injected twice into the same page (e.g. a
+  // race that registers the content script twice), a second run would read the value we already
+  // overrode as its "before", collapsing the popup's before and after to the same text. The guard
+  // makes the override idempotent so the recorded "before" is always the page's real value.
+  const guard = window as unknown as { __poisonFingerprintDone?: boolean };
+  if (guard.__poisonFingerprintDone) return;
+  guard.__poisonFingerprintDone = true;
+
   // Collected before and after pairs, posted to the isolated world relay at the end of the run.
   const captures: { signal: string; group: string; before: string; after: string }[] = [];
   const toStr = (v: unknown): string => {

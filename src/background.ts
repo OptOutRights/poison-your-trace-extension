@@ -36,18 +36,31 @@ const FINGERPRINT_SCRIPTS = [
 
 type RegisteredScript = Awaited<ReturnType<typeof browser.contentScripts.register>>;
 let fingerprintHandles: RegisteredScript[] = [];
+// Guards against a concurrent double registration. applyConfig can run from several triggers at once
+// (module load, onInstalled, onStartup, poison:apply), and setFingerprint awaits between the length
+// check and pushing its handles. Without this flag two overlapping calls could both pass the check and
+// register every fingerprint script twice, so each override would run twice in the same document. The
+// second run would read an already overridden value as its "before", collapsing the popup's before and
+// after to the same text. The flag is set synchronously before the first await, so a second caller
+// sees a registration already in flight and returns.
+let fingerprintRegistering = false;
 
 async function setFingerprint(on: boolean): Promise<void> {
-  if (on && fingerprintHandles.length === 0) {
-    for (const file of FINGERPRINT_SCRIPTS) {
-      fingerprintHandles.push(
-        await browser.contentScripts.register({
-          matches: ["<all_urls>"],
-          js: [{ file }],
-          runAt: "document_start",
-          allFrames: true,
-        }),
-      );
+  if (on && fingerprintHandles.length === 0 && !fingerprintRegistering) {
+    fingerprintRegistering = true;
+    try {
+      for (const file of FINGERPRINT_SCRIPTS) {
+        fingerprintHandles.push(
+          await browser.contentScripts.register({
+            matches: ["<all_urls>"],
+            js: [{ file }],
+            runAt: "document_start",
+            allFrames: true,
+          }),
+        );
+      }
+    } finally {
+      fingerprintRegistering = false;
     }
   } else if (!on && fingerprintHandles.length > 0) {
     for (const handle of fingerprintHandles) await handle.unregister();

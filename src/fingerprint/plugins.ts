@@ -43,6 +43,13 @@ function pageWorldOverride(
   mimes: readonly { type: string; suffixes: string; description: string }[],
   reportType: string,
 ): void {
+  // Run at most once per document. A second injection into the same page would read our already
+  // overridden navigator.plugins and navigator.mimeTypes as its "before", collapsing the popup's
+  // before and after to the same text, so the guard keeps the override idempotent.
+  const guard = window as unknown as { __poisonPluginsDone?: boolean };
+  if (guard.__poisonPluginsDone) return;
+  guard.__poisonPluginsDone = true;
+
   const define = (obj: object, prop: string, value: unknown): void => {
     try {
       Object.defineProperty(obj, prop, { get: () => value, configurable: true, enumerable: true });
