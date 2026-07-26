@@ -13,6 +13,8 @@
 // Policy. The Firefox privileged wrappedJSObject and exportFunction route is the CSP proof
 // hardening left for a later pass.
 
+import { REPORT_MESSAGE_TYPE } from "./report";
+
 /**
  * The five standardized PDF plugin names modern Firefox 128 and Chromium report, in canonical
  * order.
@@ -33,11 +35,13 @@ const PLUGIN_MIME_TYPES: readonly { type: string; suffixes: string; description:
 
 /**
  * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments and standard globals, never module scope symbols.
+ * reference only its arguments and standard globals, never module scope symbols. The report tag is
+ * passed in so it can post its before and after captures out of the page world without importing.
  */
 function pageWorldOverride(
   names: readonly string[],
   mimes: readonly { type: string; suffixes: string; description: string }[],
+  reportType: string,
 ): void {
   const define = (obj: object, prop: string, value: unknown): void => {
     try {
@@ -46,6 +50,40 @@ function pageWorldOverride(
       /* some engines mark a prop non configurable; skip rather than throw into the page */
     }
   };
+
+  // Read the REAL plugin and mimeType lists first, before the override, as comma joined names so the
+  // popup can show what the page would have seen. Reading a live PluginArray is index based.
+  const captures: { signal: string; group: string; before: string; after: string }[] = [];
+  const listNames = (arr: { length?: number; item?: (i: number) => { name?: string } | null } | undefined): string => {
+    const out: string[] = [];
+    try {
+      const len = arr && typeof arr.length === "number" ? arr.length : 0;
+      for (let i = 0; i < len; i++) {
+        const entry = arr && arr.item ? arr.item(i) : undefined;
+        if (entry && typeof entry.name === "string") out.push(entry.name);
+      }
+    } catch {
+      /* reading the live list threw: return what we gathered so far */
+    }
+    return out.join(", ");
+  };
+  const listTypes = (arr: { length?: number; item?: (i: number) => { type?: string } | null } | undefined): string => {
+    const out: string[] = [];
+    try {
+      const len = arr && typeof arr.length === "number" ? arr.length : 0;
+      for (let i = 0; i < len; i++) {
+        const entry = arr && arr.item ? arr.item(i) : undefined;
+        if (entry && typeof entry.type === "string") out.push(entry.type);
+      }
+    } catch {
+      /* reading the live list threw: return what we gathered so far */
+    }
+    return out.join(", ");
+  };
+  const beforePlugins = listNames(navigator.plugins as unknown as { length?: number; item?: (i: number) => { name?: string } | null });
+  const beforeMimes = listTypes(navigator.mimeTypes as unknown as { length?: number; item?: (i: number) => { type?: string } | null });
+  captures.push({ signal: "navigator.plugins", group: "plugins", before: beforePlugins, after: names.join(", ") });
+  captures.push({ signal: "navigator.mimeTypes", group: "plugins", before: beforeMimes, after: mimes.map((m) => m.type).join(", ") });
 
   try {
     // A shared, plausible MimeType like object per advertised type. `enabledPlugin` is wired to the
@@ -107,10 +145,18 @@ function pageWorldOverride(
   } catch {
     /* leave navigator untouched if the engine rejects the patch */
   }
+
+  // Post the before and after pairs to the isolated world relay. A failure here must not disturb
+  // the page: capture is a read out for the popup, never a protection.
+  try {
+    window.postMessage({ type: reportType, captures }, "*");
+  } catch {
+    /* postMessage unavailable: drop the batch, the override still applied */
+  }
 }
 
 function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(PLUGIN_NAMES)}, ${JSON.stringify(PLUGIN_MIME_TYPES)});`;
+  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(PLUGIN_NAMES)}, ${JSON.stringify(PLUGIN_MIME_TYPES)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)});`;
   const script = document.createElement("script");
   script.textContent = code;
   const root = document.documentElement ?? document.head ?? document.body;
