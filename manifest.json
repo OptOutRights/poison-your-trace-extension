@@ -18,6 +18,7 @@
     "cookies",
     "storage",
     "tabs",
+    "webNavigation",
     "webRequest",
     "webRequestBlocking",
     "<all_urls>"

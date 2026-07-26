@@ -53,7 +53,38 @@ src/
     webgl.ts           page world override: WebGL vendor and renderer
     audio.ts           page world override: Web Audio readback
     plugins.ts         page world override: navigator plugins and mimeTypes
+    report.ts          the before and after capture contract (shape, message tags)
+    report-relay.ts    isolated world relay: forwards page world captures to the background
+    captures-store.ts  background: per tab before and after snapshot the popup reads
+testpage/
+  fingerprint.html     a standalone page that shows every in scope signal
+  fingerprint-test.js  reads the signals and renders them grouped
 ```
+
+## Before and after captures (for the popup)
+
+Every override, before it replaces a signal, reads the real value the page would have seen and
+posts a `{ signal, group, before, after }` entry out of the page world. The relay forwards these to
+the background, which keeps the latest snapshot per tab. The popup (ticket #6) reads a tab's
+snapshot by sending a runtime message:
+
+```
+browser.runtime.sendMessage({ type: "poison:getCaptures", tabId })
+// resolves to { captures: SignalCapture[] }
+// SignalCapture = { signal, group, before, after }, all strings
+```
+
+Signals with no scalar value (canvas, Web Audio) report `before: "device signature"` and
+`after: "neutralized"`. The snapshot is cleared when the tab navigates or closes. See `report.ts`
+for the full contract.
+
+## Fingerprint test page
+
+Open `testpage/fingerprint.html` directly in Firefox (drag it into a tab, or use a `file://` URL).
+It reads every in scope signal and shows what your browser reports right now. With the extension
+enabled you see the shared common profile (Windows 10 Firefox 128, UTC, en US, a fixed canvas and
+audio hash); with the extension disabled you see your machine's real values. Toggle the extension
+from the toolbar and reload the page to compare the two.
 
 ## Build and run
 

@@ -7,19 +7,30 @@ import { loadConfig } from "./config";
 import { ContainerManager } from "./containers/manager";
 import { AutoContainer } from "./containers/auto";
 import { HeaderUniformizer } from "./fingerprint/headers";
+import { CapturesStore } from "./fingerprint/captures-store";
+import { REPORT_MESSAGE_TYPE, GET_CAPTURES_MESSAGE_TYPE, isCaptureMessage } from "./fingerprint/report";
+
+// Before and after capture store (ticket #4). Kept in its own module and referenced from a few
+// clearly separated lines so this block merges cleanly with other tickets touching background.ts.
+const captures = new CapturesStore();
 
 const containers = new ContainerManager();
 const autoContainer = new AutoContainer(containers);
-const headers = new HeaderUniformizer();
+// The header uniformizer reports the real (before) and applied (after) request header values into
+// the capture store, keyed by the originating tab, so the popup can show the network layer too.
+const headers = new HeaderUniformizer((tabId, entries) => captures.add(tabId, entries));
 
 // The page world scripts that make up fingerprint uniformization. `fingerprint.js` is the base
 // (navigator, screen, timezone, canvas); the others cover WebGL, Web Audio, and plugins/mimeTypes.
-// Each is registered at document_start so it runs before the page's own scripts.
+// `fingerprint-report-relay.js` runs in the isolated world and forwards the page world before and
+// after captures to the background. Each is registered at document_start so it runs before the
+// page's own scripts.
 const FINGERPRINT_SCRIPTS = [
   "dist/fingerprint.js",
   "dist/fingerprint-webgl.js",
   "dist/fingerprint-audio.js",
   "dist/fingerprint-plugins.js",
+  "dist/fingerprint-report-relay.js",
 ];
 
 type RegisteredScript = Awaited<ReturnType<typeof browser.contentScripts.register>>;
@@ -67,10 +78,32 @@ browser.runtime.onStartup.addListener(() => void applyConfig());
 // protections are armed without needing a manual toggle.
 void applyConfig();
 
-browser.runtime.onMessage.addListener((message: unknown): Promise<unknown> | undefined => {
-  const msg = message as { type?: string };
-  if (msg?.type === "poison:apply") {
-    return applyConfig().then(() => ({ ok: true }));
-  }
-  return undefined;
+browser.runtime.onMessage.addListener(
+  (message: unknown, sender: browser.runtime.MessageSender): Promise<unknown> | undefined => {
+    const msg = message as { type?: string; tabId?: number };
+    if (msg?.type === "poison:apply") {
+      return applyConfig().then(() => ({ ok: true }));
+    }
+    // A relay content script forwarding page world before and after captures. Attribute them to the
+    // sender's tab so the popup can read this tab's snapshot.
+    if (isCaptureMessage(message) && msg.type === REPORT_MESSAGE_TYPE) {
+      const tabId = sender.tab?.id;
+      if (typeof tabId === "number") captures.add(tabId, message.captures);
+      return Promise.resolve({ ok: true });
+    }
+    // The popup asks for a tab's before and after snapshot. It may pass an explicit tabId, otherwise
+    // we fall back to the sender's tab. This is the documented read interface ticket #6 consumes.
+    if (msg?.type === GET_CAPTURES_MESSAGE_TYPE) {
+      const tabId = typeof msg.tabId === "number" ? msg.tabId : sender.tab?.id;
+      return Promise.resolve({ captures: typeof tabId === "number" ? captures.get(tabId) : [] });
+    }
+    return undefined;
+  },
+);
+
+// Clear a tab's snapshot when it navigates to a new document or is closed, so the popup never shows
+// stale before and after values from a previous page. The overrides repopulate on the next load.
+browser.webNavigation.onBeforeNavigate.addListener((details) => {
+  if (details.frameId === 0) captures.clear(details.tabId);
 });
+browser.tabs.onRemoved.addListener((tabId) => captures.clear(tabId));

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Poison your Trace, fingerprint test page</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 60rem;
+        padding: 2rem 1.25rem 4rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      p.lede {
+        opacity: 0.85;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+      }
+      caption {
+        text-align: left;
+        font-weight: 600;
+        padding: 0.75rem 0 0.35rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.4rem 0.6rem;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+        vertical-align: top;
+        word-break: break-word;
+      }
+      th {
+        width: 14rem;
+        font-weight: 600;
+      }
+      td.value {
+        font-family: ui-monospace, monospace;
+      }
+      .group {
+        font-weight: 700;
+        padding-top: 1.25rem;
+      }
+      footer {
+        margin-top: 2.5rem;
+        opacity: 0.7;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Poison your Trace, fingerprint test page</h1>
+    <p class="lede">
+      This page reads every fingerprint signal Poison your Trace covers in this version and shows the
+      value your browser reports. With the extension enabled, you should see the shared common
+      profile (a Windows 10 Firefox 128, UTC, en US, and neutralized canvas and audio). With the
+      extension disabled, you should see your machine's real values instead.
+    </p>
+    <div id="report">Reading signals...</div>
+    <footer>
+      Signals in scope: navigator (userAgent, appVersion, platform, language, languages,
+      hardwareConcurrency, oscpu), screen (width, height, availWidth, availHeight, colorDepth,
+      pixelDepth, devicePixelRatio), timezone (Intl zone and getTimezoneOffset), canvas readback,
+      WebGL vendor and renderer, navigator plugins and mimeTypes, and Web Audio readback. Font
+      metrics are intentionally not modified in this version.
+    </footer>
+    <script src="fingerprint-test.js"></script>
+  </body>
+</html>

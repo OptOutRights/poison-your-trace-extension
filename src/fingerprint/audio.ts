@@ -15,14 +15,17 @@
 // analyser read APIs, not the audio graph or its output to speakers. Inline injection can also be
 // blocked by a strict page Content Security Policy (same seam as inject.ts).
 
+import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report";
+
 /**
  * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments (`fill`) and standard globals, never module scope symbols.
+ * reference only its arguments and standard globals, never module scope symbols. The report tag and
+ * sentinels are passed in so it can post its before and after capture out of the page world.
  *
  * @param fill the single fixed sample value every readback is flattened to (0 means a silent
  *   buffer, so a sum of absolute samples becomes exactly zero).
  */
-function pageWorldOverride(fill: number): void {
+function pageWorldOverride(fill: number, reportType: string, opaqueBefore: string, neutralized: string): void {
   // Replace a prototype method, tolerating a missing or frozen prototype rather than throwing.
   const patch = (proto: object | undefined, name: string, impl: (...args: never[]) => unknown): void => {
     try {
@@ -77,6 +80,17 @@ function pageWorldOverride(fill: number): void {
     // Time domain byte data is centred at 128 (zero amplitude), matching a silent signal.
     if (array && typeof array.length === "number") array.fill(128);
   });
+
+  // Web Audio readback has no scalar value to compare, so we report the agreed sentinels: the real
+  // device rendered signature before, neutralized after. A failure to post must not disturb the page.
+  try {
+    const captures = [
+      { signal: "audio.readback", group: "audio", before: opaqueBefore, after: neutralized },
+    ];
+    window.postMessage({ type: reportType, captures }, "*");
+  } catch {
+    /* postMessage unavailable: drop the batch, the override still applied */
+  }
 }
 
 // Fixed constant shared by every user: a silent buffer. This makes the audio readback value
@@ -84,7 +98,7 @@ function pageWorldOverride(fill: number): void {
 const AUDIO_FILL = 0;
 
 function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(AUDIO_FILL)});`;
+  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(AUDIO_FILL)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)}, ${JSON.stringify(OPAQUE_BEFORE)}, ${JSON.stringify(NEUTRALIZED_AFTER)});`;
   const script = document.createElement("script");
   script.textContent = code;
   const root = document.documentElement ?? document.head ?? document.body;
