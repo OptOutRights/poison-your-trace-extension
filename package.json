@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "npm run typecheck && node build.mjs",
     "start": "npm run build && web-ext run",
-    "lint:ext": "npm run build && web-ext lint"
+    "lint:ext": "npm run build && web-ext lint --self-hosted",
+    "sign": "npm run build && web-ext sign --channel=unlisted"
   },
   "devDependencies": {
     "@types/firefox-webext-browser": "^120.0.0",
