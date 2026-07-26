@@ -9,6 +9,7 @@ import { AutoContainer } from "./containers/auto";
 import { HeaderUniformizer } from "./fingerprint/headers";
 import { CapturesStore } from "./fingerprint/captures-store";
 import { REPORT_MESSAGE_TYPE, GET_CAPTURES_MESSAGE_TYPE, isCaptureMessage } from "./fingerprint/report";
+import { getBurnerFor } from "./email/store";
 
 // Before and after capture store (ticket #4). Kept in its own module and referenced from a few
 // clearly separated lines so this block merges cleanly with other tickets touching background.ts.
@@ -54,6 +55,25 @@ async function setFingerprint(on: boolean): Promise<void> {
   }
 }
 
+// Burner email autofill (issue #5). Registered only while the extension is enabled, so the disabled
+// path never injects it. The content script asks back for the site's burner address via the
+// "poison:burner" message handled below.
+let burnerHandle: RegisteredScript | null = null;
+
+async function setBurnerAutofill(on: boolean): Promise<void> {
+  if (on && burnerHandle === null) {
+    burnerHandle = await browser.contentScripts.register({
+      matches: ["http://*/*", "https://*/*"],
+      js: [{ file: "dist/email-autofill.js" }],
+      runAt: "document_idle",
+      allFrames: false,
+    });
+  } else if (!on && burnerHandle !== null) {
+    await burnerHandle.unregister();
+    burnerHandle = null;
+  }
+}
+
 /** Apply the current config: wire every protection on when enabled, off when disabled. Idempotent. */
 async function applyConfig(): Promise<void> {
   const config = await loadConfig();
@@ -61,6 +81,7 @@ async function applyConfig(): Promise<void> {
   if (!config.enabled) {
     autoContainer.disable();
     await setFingerprint(false);
+    await setBurnerAutofill(false);
     headers.disable();
     console.info("[poison] disabled, all protections off.");
     return;
@@ -68,8 +89,9 @@ async function applyConfig(): Promise<void> {
 
   autoContainer.enable();
   await setFingerprint(true);
+  await setBurnerAutofill(true);
   headers.enable();
-  console.info("[poison] enabled, auto containers and fingerprint uniformization on.");
+  console.info("[poison] enabled, auto containers, fingerprint uniformization and burner autofill on.");
 }
 
 browser.runtime.onInstalled.addListener(() => void applyConfig());
@@ -80,7 +102,7 @@ void applyConfig();
 
 browser.runtime.onMessage.addListener(
   (message: unknown, sender: browser.runtime.MessageSender): Promise<unknown> | undefined => {
-    const msg = message as { type?: string; tabId?: number };
+    const msg = message as { type?: string; tabId?: number; hostname?: string };
     if (msg?.type === "poison:apply") {
       return applyConfig().then(() => ({ ok: true }));
     }
@@ -96,6 +118,13 @@ browser.runtime.onMessage.addListener(
     if (msg?.type === GET_CAPTURES_MESSAGE_TYPE) {
       const tabId = typeof msg.tabId === "number" ? msg.tabId : sender.tab?.id;
       return Promise.resolve({ captures: typeof tabId === "number" ? captures.get(tabId) : [] });
+    }
+    // The autofill content script asks for the site's burner address. Only answer when enabled and a
+    // hostname was supplied, so nothing is filled while the extension is off.
+    if (msg?.type === "poison:burner" && typeof msg.hostname === "string") {
+      return loadConfig().then((config) =>
+        config.enabled ? getBurnerFor(msg.hostname as string).then((address) => ({ address })) : {},
+      );
     }
     return undefined;
   },

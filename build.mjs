@@ -15,6 +15,7 @@ await build({
     "fingerprint-audio": "src/fingerprint/audio.ts",
     "fingerprint-plugins": "src/fingerprint/plugins.ts",
     "fingerprint-report-relay": "src/fingerprint/report-relay.ts",
+    "email-autofill": "src/email/autofill.ts",
   },
   outdir: "dist",
   bundle: true,
