@@ -1,0 +1,19 @@
+{
+  "name": "poison-your-trace-web-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Poison your Trace, a Firefox extension that stops your separate activities from being joined into one identity.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run typecheck && node build.mjs",
+    "start": "npm run build && web-ext run",
+    "lint:ext": "npm run build && web-ext lint"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^120.0.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0",
+    "web-ext": "^8.3.0"
+  }
+}
