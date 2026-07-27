@@ -30,23 +30,35 @@
     "default_title": "Poison your Trace",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/syringe-16.png",
-      "32": "icons/syringe-32.png"
-    }
+      "16": "icons/seringueblack-16.png",
+      "32": "icons/seringueblack-32.png"
+    },
+    "theme_icons": [
+      {
+        "light": "icons/seringuewhite-16.png",
+        "dark": "icons/seringueblack-16.png",
+        "size": 16
+      },
+      {
+        "light": "icons/seringuewhite-32.png",
+        "dark": "icons/seringueblack-32.png",
+        "size": 32
+      }
+    ]
   },
   "page_action": {
     "default_title": "Poison your Trace, what this site sees",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/syringe-16.png",
-      "32": "icons/syringe-32.png"
+      "16": "icons/seringuewhite-16.png",
+      "32": "icons/seringuewhite-32.png"
     },
     "show_matches": ["http://*/*", "https://*/*"]
   },
   "icons": {
-    "16": "icons/syringe-16.png",
-    "32": "icons/syringe-32.png",
-    "48": "icons/syringe-48.png",
-    "96": "icons/syringe-96.png"
+    "16": "icons/seringuewhite-16.png",
+    "32": "icons/seringuewhite-32.png",
+    "48": "icons/seringuewhite-48.png",
+    "96": "icons/seringuewhite-96.png"
   }
 }
