@@ -93,6 +93,32 @@ function heading(text: string): HTMLElement {
   return h;
 }
 
+// The hero metric: how many fingerprint signals were rewritten on this tab. Leads the recap with
+// the design system's strong number hierarchy and a 3px accent marker.
+function metricBlock(count: number): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "metric";
+
+  const value = document.createElement("p");
+  value.className = "metric-value";
+  value.textContent = String(count);
+
+  const label = document.createElement("p");
+  label.className = "metric-label";
+  label.textContent =
+    count === 1 ? "signal rewritten on this tab" : "signals rewritten on this tab";
+
+  wrap.append(value, label);
+  return wrap;
+}
+
+// Reflect the enabled state in the status pill: colour AND a word, so the state never depends on
+// colour alone (design system: state is redundant).
+function setStatus(status: HTMLElement, enabled: boolean): void {
+  status.textContent = enabled ? "Active" : "Off";
+  status.className = enabled ? "status active" : "status paused";
+}
+
 // One "before to after" line. The two values are separated by the word style arrow "to" (never a
 // dash), and canvas and audio arrive already carrying the "device signature" and "neutralized"
 // sentinels, so they render as is.
@@ -194,6 +220,14 @@ async function renderRecap(): Promise<void> {
 
   const hostname = hostnameOf(tab);
 
+  // Fingerprint before and after, grouped. A tab that just opened (or a non web page) has no
+  // captures yet, so we say so plainly rather than showing an empty list.
+  const captures = hostname ? await getCaptures(tab.id) : [];
+
+  // Hero metric first: the count of signals rewritten on this tab. Omitted when nothing was
+  // captured, so the metric never reads a misleading zero.
+  if (captures.length > 0) recap.append(metricBlock(captures.length));
+
   // Site context: container and burner email. Both resolve independently of the captures.
   recap.append(heading("This site"));
   recap.append(factLine("Container", await containerName(tab)));
@@ -204,9 +238,6 @@ async function renderRecap(): Promise<void> {
     recap.append(factLine("Burner email", "not a web page, no burner in use."));
   }
 
-  // Fingerprint before and after, grouped. A tab that just opened (or a non web page) has no
-  // captures yet, so we say so plainly rather than showing an empty list.
-  const captures = hostname ? await getCaptures(tab.id) : [];
   if (captures.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty";
@@ -225,7 +256,7 @@ async function render(): Promise<void> {
 
   const config = await loadConfig();
   enabled.checked = config.enabled;
-  status.textContent = config.enabled ? "On, protecting every site." : "Off.";
+  setStatus(status, config.enabled);
 
   await renderRecap();
 
@@ -235,11 +266,12 @@ async function render(): Promise<void> {
       try {
         await saveConfig({ enabled: on });
         await browser.runtime.sendMessage({ type: "poison:apply" });
-        status.textContent = on ? "On, protecting every site." : "Off.";
+        setStatus(status, on);
         // The enabled state changed, so refresh the recap to match (show the list or mark it off).
         await renderRecap();
       } catch (err) {
         status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+        status.className = "status paused";
       }
     })();
   });

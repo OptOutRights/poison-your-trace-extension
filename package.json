@@ -6,14 +6,17 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "generate-icons": "node scripts/generate-icons.mjs",
     "build": "npm run typecheck && node build.mjs",
     "start": "npm run build && web-ext run",
     "lint:ext": "npm run build && web-ext lint --self-hosted",
     "sign": "npm run build && web-ext sign --channel=unlisted"
   },
   "devDependencies": {
+    "@fontsource-variable/outfit": "^5.0.0",
     "@types/firefox-webext-browser": "^120.0.0",
     "esbuild": "^0.24.0",
+    "sharp": "^0.33.0",
     "typescript": "^5.5.0",
     "web-ext": "^8.3.0"
   }

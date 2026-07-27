@@ -5,6 +5,20 @@
 // even though the sources live in nested folders, so the manifest and background can reference
 // stable file names.
 import { build } from "esbuild";
+import { copyFile, mkdir } from "node:fs/promises";
+import { generateIcons } from "./scripts/generate-icons.mjs";
+
+// Refresh the toolbar/page-action/manager PNGs from the source SVG so the packaged icons always
+// match the current syringe artwork.
+await generateIcons();
+
+// Bundle the Outfit Variable font into the extension. node_modules is not shipped, so copy the
+// woff2 to a packaged location the popup stylesheet can @font-face.
+await mkdir("fonts", { recursive: true });
+await copyFile(
+  "node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2",
+  "fonts/outfit.woff2",
+);
 
 await build({
   entryPoints: {

@@ -1,0 +1,271 @@
+/*
+  Popup styling. Tokens, the font, and the reset come from theme.css; this file keeps the design
+  system's visual grammar (type scale, 4px spacing, 7px controls, thin dividers, 3px state markers,
+  angular cuts, tabular numbers, 150ms tempo, visible focus) and the product layer: the enable
+  toggle, per-tab "signals rewritten" metric, before -> after capture rows, and honest gaps.
+*/
+
+@import "theme.css";
+
+body {
+  width: 320px;
+  margin: 0;
+  padding: 16px;
+  background: var(--white);
+  color: var(--zinc-950);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+  font-synthesis: none;
+}
+
+/* Header: title type (24/29) with the brand mark. */
+.masthead {
+  margin-bottom: 12px;
+}
+
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--zinc-950);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+h1 img {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.intro {
+  margin: 8px 0 0;
+  color: var(--zinc-600);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* Enable control: label + native checkbox + a redundant status pill. */
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--zinc-200);
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+.control label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--zinc-800);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.switch input:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+/* Status pill: angular clipped corners, redundant colour + word (never colour alone). */
+.status {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  border: 1px solid var(--zinc-300);
+  background: var(--white);
+  padding: 4px 9px;
+  color: var(--zinc-700);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+
+.status.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.status.paused {
+  border-color: var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+/* Recap. */
+.recap {
+  margin-top: 12px;
+}
+
+/* Section labels: 11/13 uppercase metadata. */
+.recap h2 {
+  margin: 16px 0 6px;
+  color: var(--zinc-500);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.recap h2:first-child {
+  margin-top: 0;
+}
+
+/* Hero metric: strong number hierarchy with a 3px accent state marker. */
+.metric {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 4px;
+  background: var(--zinc-050);
+  border-left: 3px solid var(--accent);
+}
+
+.metric .metric-value {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  color: var(--zinc-950);
+}
+
+.metric .metric-label {
+  margin: 0;
+  color: var(--zinc-700);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* "This site" facts: label / value rows. */
+.fact {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--zinc-700);
+}
+
+.fact b {
+  color: var(--zinc-800);
+  font-weight: 600;
+}
+
+/* Capture rows: before -> after, with a 3px marker and tabular values. */
+.cap {
+  position: relative;
+  padding: 6px 0 6px 13px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cap::before {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 3px;
+  height: 16px;
+  background: var(--accent);
+  content: "";
+}
+
+.cap + .cap {
+  border-top: 1px solid var(--zinc-200);
+}
+
+.cap .sig {
+  font-weight: 600;
+  color: var(--zinc-800);
+}
+
+.cap .vals {
+  color: var(--zinc-600);
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.cap .before {
+  color: var(--red-text);
+}
+
+.cap .after {
+  color: var(--accent-ink);
+}
+
+.cap .arrow {
+  color: var(--zinc-400);
+  padding: 0 0.25em;
+}
+
+/* Honest gaps: a muted amber block for what is NOT hidden. */
+.fact.gap {
+  padding: 8px 9px;
+  margin: 4px 0;
+  border: 1px solid var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  font-size: 11px;
+}
+
+.fact.gap b {
+  color: var(--amber-text);
+}
+
+/* Empty / off states. */
+.empty {
+  color: var(--zinc-500);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Footer link to the how-it-works page. */
+.popup-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--zinc-200);
+}
+
+.popup-footer a {
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.popup-footer a:hover {
+  text-decoration: underline;
+}
+
+.popup-footer a:focus-visible {
+  outline: 0;
+  border-radius: 3px;
+  box-shadow: var(--focus-ring);
+}

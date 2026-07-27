@@ -1,0 +1,63 @@
+/*
+  Shared design-system foundation for every extension page (the popup and the how-it-works page).
+  Ported from docs/design-system.html: Outfit Variable, the role-based tokens (accent = the brand
+  syringe green), the box-sizing reset, and reduced-motion support. Page-specific layout and
+  components live in each page's own stylesheet, which starts with `@import "theme.css";`.
+*/
+
+@font-face {
+  font-family: "Outfit Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/outfit.woff2") format("woff2-variations");
+}
+
+:root {
+  /* Five role-based accent tokens: the brand syringe green (icons/syringe.svg is #0a7d3c). */
+  --accent: #0a7d3c;
+  --accent-hover: #086a33;
+  --accent-soft: #e7f4ec;
+  --accent-soft-hover: #d9ede1;
+  --accent-ink: #06572a;
+
+  --zinc-950: #18181b;
+  --zinc-800: #27272a;
+  --zinc-700: #3f3f46;
+  --zinc-600: #52525b;
+  --zinc-500: #71717a;
+  --zinc-400: #a1a1aa;
+  --zinc-300: #d4d4d8;
+  --zinc-200: #e4e4e7;
+  --zinc-050: #fafafa;
+  --white: #ffffff;
+
+  --amber-bg: #fff8eb;
+  --amber-line: #d6c3a4;
+  --amber-text: #6b4d21;
+  --red-bg: #fff6f4;
+  --red-line: #d8c1bf;
+  --red-text: #7a2d2a;
+  --green-bg: #ecfdf5;
+  --green-line: #a7f3d0;
+  --green-text: #065f46;
+
+  --font-sans: "Outfit Variable", Outfit, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius-control: 7px;
+  --focus-ring: 0 0 0 2px var(--white), 0 0 0 4px var(--accent-hover);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

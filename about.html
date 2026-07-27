@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How Poison your Trace works</title>
+    <link rel="stylesheet" href="about.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <h1><img src="icons/seringueblack-512.png" alt="" />How Poison your Trace works</h1>
+        <p class="lede">
+          Poison your Trace stops your separate activities from being joined into one identity.
+          Here is what that means in plain terms, and exactly what it hides.
+        </p>
+      </header>
+
+      <section aria-labelledby="how">
+        <h2 id="how">How it works</h2>
+        <p>
+          Websites recognise you in two ways: the cookies they store in your browser, and your
+          browser's <strong>fingerprint</strong>: the mix of small details (your screen, time zone,
+          graphics card, and more) that together make your device unique and tractable. When several sites can read
+          the same fingerprint and share cookies, they can join everything you do into one profile.
+        </p>
+        <p>Poison your Trace breaks both links:</p>
+
+        <svg
+          class="schema"
+          viewBox="0 0 700 250"
+          role="img"
+          aria-labelledby="schema-title schema-desc"
+        >
+          <title id="schema-title">Before and after Poison your Trace</title>
+          <desc id="schema-desc">
+            Without protection, three sites read a unique fingerprint and shared cookies and link
+            into one identity. With Poison your Trace, each site is sealed in its own container and
+            sees the same common profile, so nothing links to you.
+          </desc>
+
+          <!-- Divider between the two panels. -->
+          <line class="s-divider" x1="350" y1="15" x2="350" y2="235" />
+
+          <!-- BEFORE -->
+          <text class="s-panel-label s-bad-label" x="24" y="28">WITHOUT PROTECTION</text>
+
+          <path class="s-link" d="M59 94 L180 176" />
+          <path class="s-link" d="M169 94 L180 176" />
+          <path class="s-link" d="M279 94 L180 176" />
+
+          <rect class="s-box" x="24" y="52" width="70" height="42" rx="4" />
+          <rect class="s-box" x="134" y="52" width="70" height="42" rx="4" />
+          <rect class="s-box" x="244" y="52" width="70" height="42" rx="4" />
+          <text class="s-box-text" x="59" y="74" text-anchor="middle">Site A</text>
+          <text class="s-box-text" x="169" y="74" text-anchor="middle">Site B</text>
+          <text class="s-box-text" x="279" y="74" text-anchor="middle">Site C</text>
+          <text class="s-tag" x="59" y="88" text-anchor="middle">unique</text>
+          <text class="s-tag" x="169" y="88" text-anchor="middle">unique</text>
+          <text class="s-tag" x="279" y="88" text-anchor="middle">unique</text>
+
+          <rect class="s-node" x="90" y="176" width="180" height="42" rx="4" />
+          <text class="s-node-text" x="180" y="201" text-anchor="middle">one identity = you</text>
+          <text class="schema-caption" x="180" y="236" text-anchor="middle">
+            one fingerprint, shared cookies
+          </text>
+
+          <!-- AFTER -->
+          <text class="s-panel-label s-good-label" x="374" y="28">WITH POISON YOUR TRACE</text>
+
+          <rect class="s-box-good" x="374" y="52" width="70" height="42" rx="4" />
+          <rect class="s-box-good" x="484" y="52" width="70" height="42" rx="4" />
+          <rect class="s-box-good" x="594" y="52" width="70" height="42" rx="4" />
+          <rect class="s-marker" x="374" y="52" width="3" height="42" />
+          <rect class="s-marker" x="484" y="52" width="3" height="42" />
+          <rect class="s-marker" x="594" y="52" width="3" height="42" />
+          <text class="s-box-text" x="409" y="74" text-anchor="middle">Site A</text>
+          <text class="s-box-text" x="519" y="74" text-anchor="middle">Site B</text>
+          <text class="s-box-text" x="629" y="74" text-anchor="middle">Site C</text>
+          <text class="s-tag-good" x="409" y="88" text-anchor="middle">common</text>
+          <text class="s-tag-good" x="519" y="88" text-anchor="middle">common</text>
+          <text class="s-tag-good" x="629" y="88" text-anchor="middle">common</text>
+
+          <rect class="s-node-good" x="440" y="176" width="180" height="42" rx="4" />
+          <text class="s-node-text-good" x="530" y="201" text-anchor="middle">no one in particular</text>
+          <text class="schema-caption" x="530" y="236" text-anchor="middle">
+            same profile, sealed per site
+          </text>
+        </svg>
+
+        <div class="callout">
+          <strong>It uniformizes, it does not randomize.</strong> A random value per site would just
+          be a new unique label. Everyone running the extension shows the same common profile
+          (Windows 10 + Firefox 128 + UTC + en-US), so the crowd blends together and the signals
+          point at no one in particular.
+        </div>
+      </section>
+
+      <section aria-labelledby="changes">
+        <h2 id="changes">What it changes</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>A container per site</h3>
+            <p>
+              Each website gets its own sealed cookie jar, so a login or tracker on one site cannot
+              follow you to another.
+            </p>
+          </div>
+          <div class="card">
+            <h3>One shared fingerprint</h3>
+            <p>
+              Instead of your unique device signature, every site sees the same common profile. You
+              are hidden into the crowd.
+            </p>
+          </div>
+          <div class="card">
+            <h3>A burner email</h3>
+            <p>
+              Signup forms get a throwaway address like amber.otter42@example.invalid, a different
+              one per site so they cannot be linked.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="hidden">
+        <h2 id="hidden">What gets uniformized</h2>
+        <p>
+          When enabled, these fingerprint signals are reshaped toward one shared profile. The popup
+          shows each one for the current tab, as its real value "to" the shared value.
+        </p>
+        <ul class="signals">
+          <li>
+            <span class="signal-name">Navigator</span>
+            <span class="signal-desc"
+              >The basics your browser announces: its name and version, your operating system, and
+              your languages.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Screen</span>
+            <span class="signal-desc">Your screen's size, resolution, and colour depth.</span>
+          </li>
+          <li>
+            <span class="signal-name">Timezone</span>
+            <span class="signal-desc"
+              >Your time zone and clock offset, which hint at where in the world you are.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Canvas</span>
+            <span class="signal-desc"
+              >A hidden image your browser draws; tiny hardware quirks make it unique to your device.
+              It is neutralized to a shared value.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">WebGL</span>
+            <span class="signal-desc"
+              >The name of your graphics card and driver, exposed when a page renders 3D.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Plugins</span>
+            <span class="signal-desc"
+              >The list of browser plugins and file types your browser reports supporting.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Audio</span>
+            <span class="signal-desc"
+              >A hidden sound your browser processes; like canvas, its quirks identify your device.
+              It is neutralized.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Request headers</span>
+            <span class="signal-desc"
+              >Labels attached to every request (the User-Agent and Accept-Language), sent before any
+              page script even runs.</span
+            >
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="gaps">
+        <h2 id="gaps">What it does not hide</h2>
+        <div class="gaps">
+          <ul>
+            <li>
+              <strong>Your IP address.</strong> The extension shows no IP and never looks one up, but
+              it cannot change the address a site sees when your browser connects. Use a VPN or Tor
+              for that.
+            </li>
+            <li>
+              <strong>Email is a burner only.</strong> The alias lives at a domain that can never
+              receive mail, so it hides your real address on signup forms but is not an inbox.
+            </li>
+            <li><strong>Font metrics</strong> are not covered yet.</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="foot">
+        Poison your Trace works entirely on your device. It makes no third-party calls to look
+        anything up about you.
+      </footer>
+    </main>
+  </body>
+</html>
