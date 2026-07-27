@@ -125,5 +125,5 @@ Versions are `MAJOR.MINOR.PATCH`; the single source of truth is the `version` fi
 > **Maintainer setup (once):** the signing step reads addons.mozilla.org API credentials from two repository secrets — `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`. Until both exist, the release workflow stops at the signing step with a clear message.
 
 <div align="center">
-<sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> · Apache-2.0 · No tracking, no telemetry, no accounts.</sub>
+<sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> with <a href="https://github.com/mh2d">MH2D</a> · Apache-2.0 · No tracking, no telemetry, no accounts.</sub>
 </div>
