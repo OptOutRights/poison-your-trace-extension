@@ -1,0 +1,1116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A portable visual system for compact browser-extension interfaces."
+    />
+    <title>Compact Extension UI — Design System</title>
+    <style>
+      @font-face {
+        font-family: "Outfit Variable";
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url("../node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2")
+          format("woff2-variations");
+      }
+
+      :root {
+        /* Change these five role-based tokens to rebrand the system. */
+        --accent: #2864fc;
+        --accent-hover: #1f4fd1;
+        --accent-soft: #edf2ff;
+        --accent-soft-hover: #e2e9ff;
+        --accent-ink: #1644b8;
+
+        /* Compatibility aliases used by the specimens below. */
+        --blue-600: var(--accent);
+        --blue-700: var(--accent-hover);
+        --blue-050: var(--accent-soft);
+        --blue-100: var(--accent-soft-hover);
+        --blue-800: var(--accent-ink);
+
+        --zinc-950: #18181b;
+        --zinc-800: #27272a;
+        --zinc-700: #3f3f46;
+        --zinc-600: #52525b;
+        --zinc-500: #71717a;
+        --zinc-400: #a1a1aa;
+        --zinc-300: #d4d4d8;
+        --zinc-200: #e4e4e7;
+        --zinc-050: #fafafa;
+        --white: #ffffff;
+
+        --amber-bg: #fff8eb;
+        --amber-line: #d6c3a4;
+        --amber-text: #6b4d21;
+        --red-bg: #fff6f4;
+        --red-line: #d8c1bf;
+        --red-text: #7a2d2a;
+        --green-bg: #ecfdf5;
+        --green-line: #a7f3d0;
+        --green-text: #065f46;
+
+        --font-sans: "Outfit Variable", Outfit, ui-sans-serif, system-ui,
+          -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --radius-control: 7px;
+        --focus-ring: 0 0 0 2px var(--white), 0 0 0 4px var(--blue-700);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: #f4f4f5;
+        color-scheme: light;
+        font-family: var(--font-sans);
+        font-synthesis: none;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        color: var(--zinc-950);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 22px;
+      }
+
+      .canvas {
+        position: relative;
+        width: min(1396px, 100%);
+        min-height: calc(100vh - 44px);
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1px solid var(--zinc-300);
+        background: var(--white);
+        box-shadow: 0 16px 48px rgb(24 24 27 / 0.08);
+      }
+
+      .canvas::before {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: 26px;
+        width: 72px;
+        height: 3px;
+        background: var(--blue-600);
+        content: "";
+      }
+
+      .masthead {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+        gap: 32px;
+        align-items: end;
+        padding: 26px 28px 20px;
+        border-bottom: 1px solid var(--zinc-200);
+      }
+
+      .kicker,
+      .section-label,
+      .spec-label {
+        margin: 0;
+        color: var(--zinc-500);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      h1 {
+        margin: 6px 0 0;
+        color: var(--zinc-950);
+        font-size: clamp(32px, 3vw, 44px);
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 0.96;
+      }
+
+      .intro {
+        max-width: 55ch;
+        margin: 0;
+        color: var(--zinc-600);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .intro strong {
+        color: var(--zinc-800);
+        font-weight: 600;
+      }
+
+      .masthead-copy {
+        display: grid;
+        gap: 10px;
+        justify-items: start;
+      }
+
+      .handoff {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .copy-button {
+        min-height: 32px;
+        border: 1px solid var(--accent);
+        border-radius: var(--radius-control);
+        background: var(--accent-soft);
+        padding: 5px 10px;
+        color: var(--accent-ink);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+        transition:
+          border-color 150ms ease,
+          background-color 150ms ease;
+      }
+
+      .copy-button:hover {
+        border-color: var(--accent-hover);
+        background: var(--accent-soft-hover);
+      }
+
+      .copy-button:focus-visible {
+        outline: 0;
+        box-shadow: var(--focus-ring);
+      }
+
+      .copy-status {
+        min-height: 13px;
+        color: var(--zinc-500);
+        font-size: 10px;
+        line-height: 1.3;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(230px, 0.8fr) minmax(420px, 1.5fr) minmax(
+            330px,
+            1.1fr
+          );
+        gap: 0;
+      }
+
+      .column {
+        min-width: 0;
+        padding: 22px 24px 24px;
+      }
+
+      .column + .column {
+        border-left: 1px solid var(--zinc-200);
+      }
+
+      .section + .section {
+        margin-top: 22px;
+        padding-top: 20px;
+        border-top: 1px solid var(--zinc-200);
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 13px;
+      }
+
+      h2 {
+        margin: 0;
+        color: var(--zinc-800);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .section-meta {
+        color: var(--zinc-400);
+        font-size: 11px;
+        line-height: 1.2;
+      }
+
+      .principles {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .principle {
+        display: grid;
+        grid-template-columns: 20px minmax(0, 1fr);
+        gap: 9px;
+        align-items: start;
+      }
+
+      .principle-index {
+        display: inline-flex;
+        width: 20px;
+        height: 20px;
+        align-items: center;
+        justify-content: center;
+        background: var(--blue-050);
+        color: var(--blue-800);
+        font-size: 11px;
+        font-weight: 700;
+        clip-path: polygon(
+          5px 0,
+          100% 0,
+          100% calc(100% - 5px),
+          calc(100% - 5px) 100%,
+          0 100%,
+          0 5px
+        );
+      }
+
+      .principle strong {
+        display: block;
+        margin-bottom: 2px;
+        color: var(--zinc-800);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .principle p {
+        margin: 0;
+        color: var(--zinc-500);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .type-list {
+        display: grid;
+        gap: 0;
+      }
+
+      .type-row {
+        display: grid;
+        grid-template-columns: 70px minmax(0, 1fr);
+        gap: 12px;
+        align-items: baseline;
+        min-height: 42px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--zinc-200);
+      }
+
+      .type-row:last-child {
+        border-bottom: 0;
+      }
+
+      .type-meta {
+        color: var(--zinc-500);
+        font-size: 10px;
+        line-height: 1.3;
+      }
+
+      .type-display {
+        font-size: 36px;
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 0.95;
+      }
+
+      .type-title {
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .type-body {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.4;
+      }
+
+      .type-label {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .type-micro {
+        color: var(--zinc-500);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      .swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 7px;
+      }
+
+      .swatch {
+        min-width: 0;
+      }
+
+      .swatch-color {
+        height: 44px;
+        border: 1px solid rgb(24 24 27 / 0.1);
+      }
+
+      .swatch-name {
+        margin: 6px 0 0;
+        overflow: hidden;
+        color: var(--zinc-700);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .swatch-value {
+        margin: 1px 0 0;
+        color: var(--zinc-400);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 9px;
+        line-height: 1.2;
+      }
+
+      .semantic-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .semantic {
+        min-width: 0;
+        padding: 8px 9px;
+        border: 1px solid;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .semantic.paused {
+        border-color: var(--amber-line);
+        background: var(--amber-bg);
+        color: var(--amber-text);
+      }
+
+      .semantic.danger {
+        border-color: var(--red-line);
+        background: var(--red-bg);
+        color: var(--red-text);
+      }
+
+      .semantic.success {
+        border-color: var(--green-line);
+        background: var(--green-bg);
+        color: var(--green-text);
+      }
+
+      .spacing-scale {
+        display: grid;
+        gap: 8px;
+      }
+
+      .space-row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) 34px;
+        gap: 9px;
+        align-items: center;
+        color: var(--zinc-500);
+        font-size: 10px;
+      }
+
+      .space-bar {
+        height: 7px;
+        background: var(--blue-600);
+      }
+
+      .size-notes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin-top: 13px;
+      }
+
+      .size-note {
+        padding: 8px 9px;
+        border: 1px solid var(--zinc-200);
+        background: var(--zinc-050);
+      }
+
+      .size-note strong {
+        display: block;
+        color: var(--zinc-800);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+
+      .size-note span {
+        color: var(--zinc-500);
+        font-size: 10px;
+      }
+
+      .component-stack {
+        display: grid;
+        gap: 15px;
+      }
+
+      .specimen {
+        min-width: 0;
+      }
+
+      .spec-label {
+        margin-bottom: 7px;
+      }
+
+      .button-row,
+      .status-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .button {
+        min-height: 34px;
+        border: 1px solid var(--zinc-300);
+        border-radius: var(--radius-control);
+        background: var(--white);
+        padding: 5px 11px;
+        color: var(--zinc-800);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1;
+        cursor: pointer;
+        transition:
+          border-color 150ms ease,
+          background-color 150ms ease,
+          transform 150ms ease;
+      }
+
+      .button:hover {
+        border-color: var(--blue-700);
+        background: var(--blue-100);
+      }
+
+      .button:active {
+        transform: translateY(1px);
+      }
+
+      .button:focus-visible {
+        outline: 0;
+        box-shadow: var(--focus-ring);
+      }
+
+      .button.primary {
+        border-color: var(--blue-600);
+        background: var(--blue-600);
+        color: var(--white);
+      }
+
+      .button.primary:hover {
+        border-color: var(--blue-700);
+        background: var(--blue-700);
+      }
+
+      .button.secondary {
+        border-color: var(--blue-600);
+        background: #f4f7ff;
+        color: var(--blue-800);
+      }
+
+      .button:disabled {
+        cursor: not-allowed;
+        opacity: 0.46;
+      }
+
+      .status {
+        display: inline-flex;
+        min-height: 26px;
+        align-items: center;
+        border: 1px solid var(--zinc-300);
+        background: var(--white);
+        padding: 5px 9px;
+        color: var(--zinc-700);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        clip-path: polygon(
+          7px 0,
+          100% 0,
+          100% calc(100% - 7px),
+          calc(100% - 7px) 100%,
+          0 100%,
+          0 7px
+        );
+      }
+
+      .status.active {
+        border-color: var(--blue-600);
+        background: var(--blue-050);
+        color: var(--blue-800);
+      }
+
+      .status.paused {
+        border-color: var(--amber-line);
+        background: var(--amber-bg);
+        color: var(--amber-text);
+      }
+
+      .status.unavailable {
+        border-color: var(--red-line);
+        background: var(--red-bg);
+        color: var(--red-text);
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-bottom: 1px solid var(--zinc-300);
+      }
+
+      .tab {
+        min-height: 52px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: var(--white);
+        color: var(--zinc-700);
+        cursor: pointer;
+      }
+
+      .tab.selected {
+        border-bottom-color: var(--blue-600);
+        color: var(--blue-800);
+      }
+
+      .tab:focus-visible {
+        position: relative;
+        outline: 2px solid var(--blue-700);
+        outline-offset: -3px;
+      }
+
+      .tab-count,
+      .tab-label {
+        display: block;
+      }
+
+      .tab-count {
+        font-size: 18px;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+
+      .tab-label {
+        margin-top: 2px;
+        color: var(--zinc-500);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .tab.selected .tab-label {
+        color: var(--blue-800);
+      }
+
+      .request-list {
+        border-block: 1px solid var(--zinc-200);
+      }
+
+      .request {
+        position: relative;
+        display: grid;
+        min-height: 40px;
+        grid-template-columns: minmax(0, 1fr) auto 16px;
+        gap: 8px;
+        align-items: center;
+        padding: 5px 7px 5px 13px;
+      }
+
+      .request + .request {
+        border-top: 1px solid var(--zinc-200);
+      }
+
+      .request::before {
+        position: absolute;
+        left: 0;
+        width: 3px;
+        height: 22px;
+        background: var(--blue-600);
+        content: "";
+      }
+
+      .request.allowed::before {
+        background: var(--zinc-400);
+      }
+
+      .request-name {
+        overflow: hidden;
+        color: var(--zinc-950);
+        font-size: 13px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .request-summary {
+        color: var(--zinc-600);
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .chevron {
+        color: var(--zinc-500);
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .metric-demo {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 14px;
+        align-items: center;
+        padding: 12px;
+        background: var(--zinc-050);
+        border-left: 3px solid var(--blue-600);
+      }
+
+      .metric-value {
+        margin: 0;
+        font-size: 38px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        letter-spacing: -0.045em;
+        line-height: 0.9;
+      }
+
+      .metric-label {
+        margin: 6px 0 0;
+        color: var(--zinc-700);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .signal {
+        width: 8px;
+        height: 8px;
+        margin-right: 5px;
+        background: var(--blue-600);
+        box-shadow: 0 0 0 3px rgb(40 100 252 / 0.16);
+        clip-path: polygon(
+          35% 0,
+          100% 0,
+          100% 65%,
+          65% 100%,
+          0 100%,
+          0 35%
+        );
+      }
+
+      .signal-label {
+        display: flex;
+        align-items: center;
+        color: var(--zinc-500);
+        font-size: 11px;
+      }
+
+      .footer-note {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 16px;
+        padding-top: 13px;
+        border-top: 1px solid var(--zinc-200);
+        color: var(--zinc-500);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .footer-note::before {
+        width: 3px;
+        height: 18px;
+        flex: 0 0 auto;
+        background: var(--blue-600);
+        content: "";
+      }
+
+      @media (max-width: 1040px) {
+        .content {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .column:last-child {
+          grid-column: 1 / -1;
+          border-top: 1px solid var(--zinc-200);
+          border-left: 0;
+        }
+
+        .component-stack {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          padding: 0;
+        }
+
+        .canvas {
+          border: 0;
+          box-shadow: none;
+        }
+
+        .masthead,
+        .content {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .masthead {
+          gap: 14px;
+          padding: 25px 18px 20px;
+        }
+
+        .column {
+          padding: 21px 18px;
+        }
+
+        .column + .column,
+        .column:last-child {
+          grid-column: auto;
+          border-top: 1px solid var(--zinc-200);
+          border-left: 0;
+        }
+
+        .component-stack {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <article class="canvas">
+        <header class="masthead">
+          <div>
+            <p class="kicker">Compact Extension UI · Portable reference</p>
+            <h1>Clear signals.<br />Quiet interface.</h1>
+          </div>
+        </header>
+
+        <div class="content">
+          <div class="column">
+            <section class="section" aria-labelledby="principles-heading">
+              <div class="section-heading">
+                <h2 id="principles-heading">Principles</h2>
+                <span class="section-meta">01</span>
+              </div>
+              <ol class="principles">
+                <li class="principle">
+                  <span class="principle-index">1</span>
+                  <div>
+                    <strong>Signal over chrome</strong>
+                    <p>Primary metrics and state carry the strongest contrast.</p>
+                  </div>
+                </li>
+                <li class="principle">
+                  <span class="principle-index">2</span>
+                  <div>
+                    <strong>Compact, never cramped</strong>
+                    <p>Dense layouts keep controls distinct and labels readable.</p>
+                  </div>
+                </li>
+                <li class="principle">
+                  <span class="principle-index">3</span>
+                  <div>
+                    <strong>State is redundant</strong>
+                    <p>Color, copy, borders, and position communicate together.</p>
+                  </div>
+                </li>
+              </ol>
+            </section>
+
+            <section class="section" aria-labelledby="spacing-heading">
+              <div class="section-heading">
+                <h2 id="spacing-heading">Spacing &amp; sizing</h2>
+                <span class="section-meta">4px base</span>
+              </div>
+              <div class="spacing-scale" aria-label="Spacing scale">
+                <div class="space-row">
+                  <span>XS</span><span class="space-bar" style="width: 16px"></span
+                  ><span>4px</span>
+                </div>
+                <div class="space-row">
+                  <span>S</span><span class="space-bar" style="width: 32px"></span
+                  ><span>8px</span>
+                </div>
+                <div class="space-row">
+                  <span>M</span><span class="space-bar" style="width: 48px"></span
+                  ><span>12px</span>
+                </div>
+                <div class="space-row">
+                  <span>L</span><span class="space-bar" style="width: 64px"></span
+                  ><span>16px</span>
+                </div>
+                <div class="space-row">
+                  <span>XL</span><span class="space-bar" style="width: 96px"></span
+                  ><span>24px</span>
+                </div>
+              </div>
+              <div class="size-notes">
+                <div class="size-note"><strong>7px</strong><span>control radius</span></div>
+                <div class="size-note"><strong>34px</strong><span>button height</span></div>
+                <div class="size-note"><strong>40px</strong><span>list row</span></div>
+                <div class="size-note"><strong>16px</strong><span>shell inset</span></div>
+              </div>
+            </section>
+
+            <section class="section" aria-labelledby="details-heading">
+              <div class="section-heading">
+                <h2 id="details-heading">Signature details</h2>
+                <span class="section-meta">03</span>
+              </div>
+              <div class="metric-demo">
+                <div>
+                  <p class="metric-value">24</p>
+                  <p class="metric-label">Actions this session</p>
+                </div>
+                <span class="signal-label"><span class="signal"></span>active</span>
+              </div>
+              <p class="footer-note">
+                Angular cuts, 3px state markers, tabular numbers, thin dividers,
+                and a single 150ms interaction tempo give the product its identity.
+              </p>
+            </section>
+          </div>
+
+          <div class="column">
+            <section class="section" aria-labelledby="type-heading">
+              <div class="section-heading">
+                <h2 id="type-heading">Typography</h2>
+                <span class="section-meta">Outfit Variable · 400–700</span>
+              </div>
+              <div class="type-list">
+                <div class="type-row">
+                  <span class="type-meta">36 / 34<br />700</span>
+                  <span class="type-display">24 actions</span>
+                </div>
+                <div class="type-row">
+                  <span class="type-meta">24 / 29<br />600</span>
+                  <span class="type-title">Extension name</span>
+                </div>
+                <div class="type-row">
+                  <span class="type-meta">14 / 20<br />400</span>
+                  <span class="type-body"
+                    >One sentence explains what is happening and where.</span
+                  >
+                </div>
+                <div class="type-row">
+                  <span class="type-meta">12 / 14<br />600</span>
+                  <span class="type-label">Primary category</span>
+                </div>
+                <div class="type-row">
+                  <span class="type-meta">11 / 13<br />500</span>
+                  <span class="type-micro">Technical detail · secondary metadata</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="section" aria-labelledby="color-heading">
+              <div class="section-heading">
+                <h2 id="color-heading">Colour system</h2>
+                <span class="section-meta">light mode</span>
+              </div>
+              <div class="swatch-grid">
+                <div class="swatch">
+                  <div class="swatch-color" style="background: #2864fc"></div>
+                  <p class="swatch-name">Accent</p>
+                  <p class="swatch-value">#2864FC</p>
+                </div>
+                <div class="swatch">
+                  <div class="swatch-color" style="background: #edf2ff"></div>
+                  <p class="swatch-name">Soft accent</p>
+                  <p class="swatch-value">#EDF2FF</p>
+                </div>
+                <div class="swatch">
+                  <div class="swatch-color" style="background: #18181b"></div>
+                  <p class="swatch-name">Ink</p>
+                  <p class="swatch-value">#18181B</p>
+                </div>
+                <div class="swatch">
+                  <div class="swatch-color" style="background: #71717a"></div>
+                  <p class="swatch-name">Muted</p>
+                  <p class="swatch-value">#71717A</p>
+                </div>
+                <div class="swatch">
+                  <div class="swatch-color" style="background: #d4d4d8"></div>
+                  <p class="swatch-name">Line</p>
+                  <p class="swatch-value">#D4D4D8</p>
+                </div>
+              </div>
+              <div class="semantic-list" aria-label="Semantic colours">
+                <div class="semantic paused">Paused · amber</div>
+                <div class="semantic danger">Attention · red</div>
+                <div class="semantic success">Success · green</div>
+              </div>
+            </section>
+
+            <section class="section" aria-labelledby="usage-heading">
+              <div class="section-heading">
+                <h2 id="usage-heading">Porting contract</h2>
+                <span class="section-meta">keep / adapt</span>
+              </div>
+              <ol class="principles">
+                <li class="principle">
+                  <span class="principle-index">A</span>
+                  <div>
+                    <strong>Keep the visual grammar</strong>
+                    <p>Type scale, 4px rhythm, 7px controls, lines, cuts, and tempo.</p>
+                  </div>
+                </li>
+                <li class="principle">
+                  <span class="principle-index">B</span>
+                  <div>
+                    <strong>Adapt the product layer</strong>
+                    <p>Name, purpose, metric, actions, nouns, states, and accent.</p>
+                  </div>
+                </li>
+                <li class="principle">
+                  <span class="principle-index">C</span>
+                  <div>
+                    <strong>Preserve behavior</strong>
+                    <p>AA contrast, visible focus, state coverage, and reduced motion.</p>
+                  </div>
+                </li>
+              </ol>
+            </section>
+          </div>
+
+          <div class="column">
+            <section class="section" aria-labelledby="components-heading">
+              <div class="section-heading">
+                <h2 id="components-heading">Core components</h2>
+                <span class="section-meta">04</span>
+              </div>
+              <div class="component-stack">
+                <div class="specimen">
+                  <p class="spec-label">BUTTONS · 34PX</p>
+                  <div class="button-row">
+                    <button class="button primary" type="button">Run once</button>
+                    <button class="button secondary" type="button">
+                      Always on
+                    </button>
+                    <button class="button" type="button">Neutral</button>
+                    <button class="button" type="button" disabled>Disabled</button>
+                  </div>
+                </div>
+
+                <div class="specimen">
+                  <p class="spec-label">STATUS PILLS</p>
+                  <div class="status-row">
+                    <span class="status active">Active</span>
+                    <span class="status paused">Paused</span>
+                    <span class="status unavailable">Needs attention</span>
+                  </div>
+                </div>
+
+                <div class="specimen">
+                  <p class="spec-label">COUNT TABS · 52PX</p>
+                  <div class="tabs">
+                    <button class="tab selected" type="button">
+                      <span class="tab-count">8</span>
+                      <span class="tab-label">Primary items</span>
+                    </button>
+                    <button class="tab" type="button">
+                      <span class="tab-count">21</span>
+                      <span class="tab-label">All items</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="specimen">
+                  <p class="spec-label">REQUEST ROWS · 40PX</p>
+                  <div class="request-list">
+                    <div class="request">
+                      <span class="request-name">Primary result</span>
+                      <span class="request-summary">4 handled</span>
+                      <span class="chevron" aria-hidden="true">›</span>
+                    </div>
+                    <div class="request allowed">
+                      <span class="request-name">Secondary result</span>
+                      <span class="request-summary">6 observed</span>
+                      <span class="chevron" aria-hidden="true">›</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </article>
+    </main>
+    <template id="agent-brief">
+Recreate this compact visual system for [PRODUCT NAME], a browser extension that
+[ONE-SENTENCE PURPOSE].
+
+First inspect the target project's requirements, existing UI, technology, and
+accessibility constraints. Do not copy Tracker Blocker terminology or assume its
+features.
+
+KEEP
+- Outfit Variable at weights 400–700.
+- A restrained neutral foundation with one accent family and separate semantic
+  warning, danger, and success colours.
+- The type scale shown here: 36/34 metric, 24/29 title, 14/20 body, 12/14 label,
+  and 11/13 metadata.
+- A 4px spacing base, 7px control radius, 34px compact buttons, 40px rows,
+  52px count tabs, 16px popup inset, thin dividers, and minimal shadow.
+- Signature details: angular clipped corners, 3px state markers, tabular numbers,
+  strong metric hierarchy, and 150ms functional transitions.
+- Visible keyboard focus, labels that do not depend on colour, WCAG 2.2 AA
+  contrast, narrow-screen reflow, and prefers-reduced-motion support.
+
+ADAPT
+- Product name and one-sentence purpose.
+- Primary metric or state, primary and secondary actions, content taxonomy, and
+  all product-specific nouns.
+- The five role-based accent tokens: accent, accent-hover, accent-soft,
+  accent-soft-hover, and accent-ink. Keep semantic colours independent.
+- Components to match the target extension's real workflows. Remove specimens
+  that do not serve the product.
+
+DELIVER
+- A popup composed for 280–400px width and no more than 600px height.
+- A settings/options surface only if the product needs one.
+- Centralized role-based tokens and small reusable components.
+- Loading, empty, error, disabled, hover, focus, selected, and success states
+  where relevant.
+
+Keep the interface lightweight and information-first. Avoid gradients, glass
+effects, decorative cards, excessive shadows, full-caps headings, and ornamental
+animation. Preserve privacy and offline behavior when the target extension
+requires it.
+    </template>
+  </body>
+</html>

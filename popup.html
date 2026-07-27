@@ -3,39 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <title>Poison your Trace</title>
-    <style>
-      body { font: 13px/1.5 system-ui, sans-serif; width: 300px; margin: 0; padding: 0.9rem; }
-      h1 { font-size: 15px; margin: 0 0 0.6rem; display: flex; align-items: center; gap: 0.4rem; }
-      h1 img { width: 20px; height: 20px; }
-      .row { display: flex; align-items: center; justify-content: space-between; margin: 0.5rem 0; }
-      label { font-weight: 600; }
-      .switch { display: flex; align-items: center; gap: 0.4rem; }
-      #status { color: #555; min-height: 1.2em; margin-top: 0.5rem; }
-      small { color: #666; display: block; margin-top: 0.5rem; }
-      hr { border: none; border-top: 1px solid #e5e5e5; margin: 0.8rem 0; }
-      #recap h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin: 0.9rem 0 0.3rem; }
-      .cap { margin: 0.25rem 0; }
-      .cap .sig { font-weight: 600; color: #333; }
-      .cap .vals { color: #555; word-break: break-word; }
-      .cap .before { color: #b00; }
-      .cap .after { color: #077; }
-      .cap .arrow { color: #999; padding: 0 0.25em; }
-      .fact { margin: 0.35rem 0; }
-      .fact b { color: #333; }
-      .gap { color: #777; }
-      #recap .empty { color: #777; font-style: italic; }
-    </style>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1><img src="icons/syringe.svg" alt="" />Poison your Trace</h1>
-    <div class="row">
+    <header class="masthead">
+      <h1><img src="icons/syringe.svg" alt="" />Poison your Trace</h1>
+      <p class="intro">
+        Every site gets its own container and your browser fingerprint is uniformized.
+      </p>
+    </header>
+    <div class="control">
       <label for="enabled">Enabled</label>
-      <span class="switch"><input id="enabled" type="checkbox" /></span>
+      <span class="switch">
+        <input id="enabled" type="checkbox" />
+        <span id="status" class="status"></span>
+      </span>
     </div>
-    <small>Every site gets its own container and your browser fingerprint is uniformized.</small>
-    <div id="status"></div>
-    <hr />
-    <div id="recap"></div>
+    <div id="recap" class="recap"></div>
     <script src="dist/popup.js"></script>
   </body>
 </html>
