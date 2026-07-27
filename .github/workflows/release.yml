@@ -84,6 +84,18 @@ jobs:
           echo "path=$xpi_path" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$xpi_path")" >> "$GITHUB_OUTPUT"
 
+      - name: Copy the signed xpi under a stable name
+        id: stable
+        # web-ext sign names the file per version (poison_your_trace-0.1.1.xpi), so its download URL
+        # changes every release. A fixed-name copy gives a permanent link,
+        # releases/latest/download/poison-your-trace.xpi, that the README can point at and that
+        # never rots between releases. The versioned asset stays too: updates.json's update_link
+        # references it at its per version path for auto updates.
+        run: |
+          stable_path="web-ext-artifacts/poison-your-trace.xpi"
+          cp "${{ steps.xpi.outputs.path }}" "$stable_path"
+          echo "path=$stable_path" >> "$GITHUB_OUTPUT"
+
       - name: Generate updates.json
         run: node scripts/build-updates-json.mjs "${{ steps.version.outputs.version }}" "${{ steps.xpi.outputs.name }}"
 
@@ -95,4 +107,5 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             ${{ steps.xpi.outputs.path }}
+            ${{ steps.stable.outputs.path }}
             updates.json

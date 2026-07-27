@@ -50,19 +50,27 @@ signed release (see below).
 ## Install a signed release (auto updating)
 
 Firefox only auto updates signed extensions, so releases are signed through the addons.mozilla.org
-API and self distributed (unlisted). You install the signed xpi once, and every later release lands
-automatically.
+API and self distributed (unlisted). Because the build is signed, **anyone can install it on a
+normal Firefox** with no developer settings and nothing from the maintainer: the signature is what
+Firefox checks, not who is installing. You install the signed xpi once, and every later release
+lands automatically.
 
-One time install:
+Install in Firefox (one time):
 
-1. Open the latest release: https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest
-2. Download the `.xpi` asset.
-3. Drag the `.xpi` file onto a Firefox window (or open it with File, Open File), then confirm the
-   install prompt.
+1. In Firefox, open the permanent install link:
+   **https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/poison-your-trace.xpi**
+2. Firefox downloads the `.xpi` and offers to add it. Open it from the download prompt (or the
+   Downloads panel) and confirm **Add**.
 
-That is the only manual step. The installed extension carries an `update_url` pointing at the
-release copy of `updates.json`, so Firefox checks it periodically and pulls in newer signed builds
-on its own. No reinstall is ever needed for updates.
+That link always points at the newest signed release, so it never goes stale between versions. Once
+installed, the extension carries an `update_url` pointing at the release copy of `updates.json`, so
+Firefox checks it periodically and pulls in newer signed builds on its own. No reinstall is ever
+needed for updates.
+
+> Why this works for everyone: an unlisted build signed by addons.mozilla.org installs on stock
+> Firefox exactly like a listed one. The maintainer's own shortcut (dropping a local, unsigned dev
+> `.xpi` into the address bar) only works because their Firefox relaxes signature enforcement; the
+> signed release above needs none of that, so it is the path to share with other users.
 
 ## Layout
 
