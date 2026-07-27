@@ -1,0 +1,281 @@
+/*
+  "How it works" page. Tokens, the font, and the reset come from theme.css; this file lays out a
+  single readable column and the beginner-oriented components (the before/after schema, the list of
+  what is hidden, and the honest-gaps block), all in the same design-system grammar as the popup.
+*/
+
+@import "theme.css";
+
+body {
+  margin: 0;
+  padding: 32px 20px 56px;
+  background: var(--zinc-050);
+  color: var(--zinc-950);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  font-synthesis: none;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Header. */
+.masthead {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+h1 img {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+}
+
+.lede {
+  margin: 12px 0 0;
+  max-width: 60ch;
+  color: var(--zinc-600);
+  font-size: 15px;
+}
+
+/* Sections. */
+section {
+  margin-top: 32px;
+}
+
+h2 {
+  margin: 0 0 12px;
+  color: var(--zinc-800);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+section > p {
+  margin: 0 0 12px;
+  max-width: 62ch;
+  color: var(--zinc-700);
+}
+
+/* The key insight, called out with a 3px accent marker. */
+.callout {
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+}
+
+.callout strong {
+  font-weight: 700;
+}
+
+/* Before/after schema. */
+.schema {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 8px 0 4px;
+}
+
+.s-panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.s-bad-label {
+  fill: var(--red-text);
+}
+
+.s-good-label {
+  fill: var(--accent-ink);
+}
+
+.s-box {
+  fill: var(--white);
+  stroke: var(--zinc-300);
+  stroke-width: 1;
+}
+
+.s-box-good {
+  fill: var(--white);
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.s-marker {
+  fill: var(--accent);
+}
+
+.s-box-text {
+  fill: var(--zinc-800);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.s-tag {
+  fill: var(--zinc-500);
+  font-size: 10px;
+}
+
+.s-tag-good {
+  fill: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.s-link {
+  stroke: var(--red-line);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.s-node {
+  fill: var(--red-bg);
+  stroke: var(--red-line);
+  stroke-width: 1;
+}
+
+.s-node-good {
+  fill: var(--green-bg);
+  stroke: var(--green-line);
+  stroke-width: 1;
+}
+
+.s-node-text {
+  fill: var(--red-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.s-node-text-good {
+  fill: var(--green-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.s-divider {
+  stroke: var(--zinc-200);
+  stroke-width: 1;
+}
+
+.schema-caption {
+  margin: 0;
+  color: var(--zinc-500);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* "What it changes" cards. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  padding: 14px;
+  background: var(--white);
+  border: 1px solid var(--zinc-200);
+  border-left: 3px solid var(--accent);
+}
+
+.card h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--zinc-800);
+}
+
+.card p {
+  margin: 0;
+  color: var(--zinc-600);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* "What gets uniformized" list. */
+.signals {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--zinc-200);
+}
+
+.signals li {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+.signals dt,
+.signals .signal-name {
+  color: var(--zinc-950);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signals .signal-desc {
+  color: var(--zinc-600);
+  font-size: 14px;
+}
+
+/* Honest gaps: amber block, matching the popup's "Not hidden". */
+.gaps {
+  padding: 16px;
+  border: 1px solid var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.gaps ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.gaps li {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.gaps strong {
+  font-weight: 700;
+}
+
+footer.foot {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--zinc-200);
+  color: var(--zinc-500);
+  font-size: 12px;
+}
+
+@media (max-width: 620px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signals li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
