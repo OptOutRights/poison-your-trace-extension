@@ -4,9 +4,10 @@
 
 # Poison your Trace
 
-### Stop your separate activities from being joined into one identity.
+### Free yourself from constant web tracking.
+#### You're not you. You are everyone. 
 
-One switch. Every site gets its own container, and your browser fingerprint is uniformized toward a profile shared by every user of the extension — so the signals a site reads point at no one.
+One switch. Every site gets its own container, and your browser fingerprint is uniformized toward a profile shared by every user of the extension, you're part of the crowd.
 
 <br/>
 
@@ -15,7 +16,6 @@ One switch. Every site gets its own container, and your browser fingerprint is u
 ![Firefox 128+](https://img.shields.io/badge/Firefox-128%2B-6b4d21?logo=firefoxbrowser&logoColor=white)
 ![Manifest V2](https://img.shields.io/badge/Manifest-V2-52525b)
 ![License Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-0a7d3c)
-![No telemetry](https://img.shields.io/badge/telemetry-none-0a7d3c)
 
 </div>
 
@@ -31,37 +31,43 @@ One switch. Every site gets its own container, and your browser fingerprint is u
 </div>
 -->
 
-## Why you'd want it
+## The purpose
 
-Sites don't just watch you on their page — they stitch your activity across the web into a single profile using cookies that follow you and a **fingerprint** built from your screen, timezone, fonts, graphics card, and dozens of other quiet signals. Poison your Trace breaks both joins at once.
+Websites collect and sell your activity across the web to form a single profile of you and follow you everywhere you go. For this, some ways they use are:
+- cookies that follow you 
+- **your fingerprint** built from your screen, timezone, fonts, graphics card, and dozens of other quiet signals. 
+
+Poison your Trace neutralizes both joins at once.
+
+## Install (30 seconds, any Firefox)
+
+The release is signed by addons.mozilla.org, so **anyone can install it on stock Firefox**: no developer mode needed.
+
+1. Open the permanent install link in Firefox:
+   **[poison-your-trace.xpi](https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/poison-your-trace.xpi)**.
+   Click normally, if you cmd+click to open the link it might fail.
+2. Firefox offers to add it: click **Add**.
+
+If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: mh2d.projets@gmail.com.
+
+That link always points at the newest signed release, and the extension auto-updates itself from there. Install once, forget about it.
+
 
 ## What it does
 
 | | |
 |---|---|
-| 🧫 **Per-site containers** | Every site opens in its own Firefox container. Cookies and logins never cross between sites. |
-| 🌫️ **Uniformized fingerprint** | Navigator, screen, timezone, canvas, WebGL, plugins, Web Audio, User-Agent and Accept-Language are reshaped toward *one shared profile* — not randomized per site. You blend into the crowd instead of standing out. |
-| 📮 **Burner email autofill** | Empty email fields get a unique, stable, per-site throwaway alias at `example.invalid`. Your real address never leaves your keyboard. |
-| 🎚️ **A single switch** | One **Enabled** toggle turns every protection on or off. No dashboards, no dials. |
+| **Per-site containers** | Every site opens in its own Firefox container. Cookies and logins never cross between sites. |
+| **Uniformized fingerprint** | Navigator, screen, timezone, canvas, WebGL, plugins, Web Audio, User-Agent and Accept-Language are reshaped toward *one shared profile*. They are not randomized per site. Be part of the big crowd |
+| **Burner email autofill** | Empty email fields get a unique, stable, per-site throwaway alias at `example.invalid`. Your real address never leaves your keyboard. |
 
 > **Why uniformize, not randomize?** A random value nobody else has is itself a unique label. Presenting the *same* common profile as every other user is what actually makes you disappear.
 
-## Install (30 seconds, any Firefox)
 
-The release is signed by addons.mozilla.org, so **anyone can install it on stock Firefox** — no developer mode, nothing from the maintainer.
-
-1. Open the permanent install link in Firefox:
-   **[poison-your-trace.xpi](https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/poison-your-trace.xpi)**
-2. Firefox offers to add it — click **Add**.
-
-That link always points at the newest signed release, and the extension auto-updates itself from there. Install once, forget about it.
-
-## Honest gaps
-
-We'd rather tell you what this *doesn't* do.
+## Current limitations
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
-- **Email is burner-only.** The alias is inert and receives nothing — it hides your address on signup forms; it is not an inbox.
+- **Some friction sign-ups and sign-ins.** it might happen that you struggle sometimes a bit to sign-up. Try deactivating the extension for the URL and try again. We are working on it. 
 - **Font metrics aren't covered yet.**
 
 ## Build from source
@@ -75,26 +81,9 @@ npm start          # build + launch Firefox with the extension loaded
 npm run lint:ext   # build + web-ext lint --self-hosted
 ```
 
-To load it by hand: open `about:debugging` → **This Firefox** → **Load Temporary Add-on**, and pick `manifest.json`. A temporary add-on unloads when Firefox restarts, so use it only for quick development — the signed release above is the permanent, auto-updating path.
+To load it by hand: open `about:debugging` → **This Firefox** → **Load Temporary Add-on**, and pick `manifest.json`. A temporary add-on unloads when Firefox restarts, so use it only for quick development. The signed release above is the permanent, auto-updating path.
 
 ---
-
-## Under the hood
-
-For the full narrative — why uniformize over randomize, how page-world injection works, why `.invalid`, and the honest gaps in depth — see the **[beginner's guide](docs/beginners-guide.md)**. The essentials:
-
-### Threat model
-
-| Linkage vector | What a site sees | Mitigation |
-|---|---|---|
-| Cookies / storage shared across sites | Third-party cookies follow you across domains | **Per-site containers** — each site gets its own `contextualIdentity`; storage never crosses |
-| Fingerprint entropy | Screen, timezone, canvas, WebGL, audio, plugins, UA | **Uniformization** toward one shared profile; you match the crowd rather than carry a unique value |
-| Signup email | Your real address on every form | **Burner autofill** — a stable per-site alias at the reserved `example.invalid` |
-| IP address | Your network origin | **Out of scope** — never leaked, but not changed. Layer a VPN or Tor. |
-
-### What is reshaped
-
-`navigator` basics (userAgent, platform, language, languages, hardwareConcurrency, oscpu, appVersion) · `screen` (dimensions, colorDepth, pixelDepth, devicePixelRatio) · timezone (`Intl` zone + `getTimezoneOffset`) · canvas readback · WebGL vendor/renderer · `navigator.plugins`/`mimeTypes` · Web Audio readback · `User-Agent` and `Accept-Language` request headers. *Font metrics are not covered yet.*
 
 ### Architecture
 
