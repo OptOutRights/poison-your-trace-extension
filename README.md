@@ -48,7 +48,7 @@ The release is signed by addons.mozilla.org, so **anyone can install it on stock
    Click normally, if you cmd+click to open the link it might fail.
 2. Firefox offers to add it: click **Add**.
 
-If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: mh2d.projets@gmail.com.
+If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: poisonyourtrace@optoutrights.org.
 
 That link always points at the newest signed release, and the extension auto-updates itself from there. Install once, forget about it.
 
