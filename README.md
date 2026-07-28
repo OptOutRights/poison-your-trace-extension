@@ -67,7 +67,7 @@ That link always points at the newest signed release, and the extension auto-upd
 ## Current limitations
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
-- **Some friction sign-ups and sign-ins.** it might happen that you struggle sometimes a bit to sign-up. Try deactivating the extension for the URL and try again. We are working on it. 
+- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Try temporarily deactivating the extension for that site, then try again. We are working to improve this.
 - **Font metrics aren't covered yet.**
 
 ## Build from source
