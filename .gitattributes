@@ -1,0 +1,3 @@
+# Keep Claude Code worktree gitlinks out of `git archive` output (the AMO source-code zip).
+.claude/ export-ignore
+.gitattributes export-ignore

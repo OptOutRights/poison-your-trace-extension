@@ -59,6 +59,14 @@ jobs:
           fi
           echo "version=$tag_version" >> "$GITHUB_OUTPUT"
 
+      - name: Build the store package and source zip (AMO listed submission)
+        run: |
+          node scripts/build-store-zip.mjs
+          git archive --worktree-attributes --format=zip \
+            --prefix=poison-your-trace-source/ \
+            -o "web-ext-artifacts/poison-your-trace-source-${{ steps.version.outputs.version }}.zip" \
+            HEAD
+
       - name: Sign the extension (channel unlisted)
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
@@ -108,4 +116,6 @@ jobs:
           files: |
             ${{ steps.xpi.outputs.path }}
             ${{ steps.stable.outputs.path }}
+            web-ext-artifacts/poison-your-trace-store-${{ steps.version.outputs.version }}.zip
+            web-ext-artifacts/poison-your-trace-source-${{ steps.version.outputs.version }}.zip
             updates.json
