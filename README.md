@@ -48,7 +48,7 @@ The release is signed by addons.mozilla.org, so **anyone can install it on stock
    Click normally, if you cmd+click to open the link it might fail.
 2. Firefox offers to add it: click **Add**.
 
-If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: mh2d.projets@gmail.com.
+If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: poisonyourtrace@optoutrights.org.
 
 That link always points at the newest signed release, and the extension auto-updates itself from there. Install once, forget about it.
 
@@ -67,7 +67,7 @@ That link always points at the newest signed release, and the extension auto-upd
 ## Current limitations
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
-- **Some friction sign-ups and sign-ins.** it might happen that you struggle sometimes a bit to sign-up. Try deactivating the extension for the URL and try again. We are working on it. 
+- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Try temporarily deactivating the extension for that site, then try again. We are working to improve this.
 - **Font metrics aren't covered yet.**
 
 ## Build from source
