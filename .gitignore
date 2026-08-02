@@ -12,3 +12,4 @@ fonts/
 updates.json
 # per-upload state written by `web-ext sign` (like web-ext-artifacts/), not source
 .amo-upload-uuid
+.claude
