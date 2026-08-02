@@ -1,6 +1,6 @@
 // Content script, registered dynamically at document_start when the extension is enabled.
 //
-// Uniformizes navigator.plugins and navigator.mimeTypes toward a FIXED, widely shared Firefox 128
+// Uniformizes navigator.plugins and navigator.mimeTypes toward a FIXED, widely shared Firefox 140
 // configuration. Like inject.ts it injects a page world <script> so the override is visible to the
 // site's own scripts.
 //
@@ -16,7 +16,7 @@
 import { REPORT_MESSAGE_TYPE } from "./report";
 
 /**
- * The five standardized PDF plugin names modern Firefox 128 and Chromium report, in canonical
+ * The five standardized PDF plugin names modern Firefox 140 and Chromium report, in canonical
  * order.
  */
 const PLUGIN_NAMES: readonly string[] = [
@@ -27,7 +27,7 @@ const PLUGIN_NAMES: readonly string[] = [
   "WebKit built-in PDF",
 ];
 
-/** The two MIME types every one of the five PDF plugins advertises (matches real Firefox 128). */
+/** The two MIME types every one of the five PDF plugins advertises (matches real Firefox 140). */
 const PLUGIN_MIME_TYPES: readonly { type: string; suffixes: string; description: string }[] = [
   { type: "application/pdf", suffixes: "pdf", description: "Portable Document Format" },
   { type: "text/pdf", suffixes: "pdf", description: "Portable Document Format" },

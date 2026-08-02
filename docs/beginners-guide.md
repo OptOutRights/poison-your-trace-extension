@@ -120,6 +120,6 @@ for the full contract.
 
 Open `testpage/fingerprint.html` directly in Firefox (drag it into a tab, or use a `file://` URL).
 It reads every in scope signal and shows what your browser reports right now. With the extension
-enabled you see the shared common profile (Windows 10 Firefox 128, UTC, en US, a fixed canvas and
+enabled you see the shared common profile (Windows 10 Firefox 140, UTC, en US, a fixed canvas and
 audio hash); with the extension disabled you see your machine's real values. Toggle the extension
 from the toolbar and reload the page to compare the two.
