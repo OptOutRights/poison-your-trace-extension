@@ -12,7 +12,7 @@ One switch. Every site gets its own container, and your browser fingerprint is u
 <br/>
 
 <!-- TODO(store): replace <slug> below once the addons.mozilla.org listing is created (see docs/store-migration.md). -->
-[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/<slug>/)
+[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)
 
 ![Firefox 140+](https://img.shields.io/badge/Firefox-140%2B-6b4d21?logo=firefoxbrowser&logoColor=white)
 ![Manifest V2](https://img.shields.io/badge/Manifest-V2-52525b)
