@@ -36,7 +36,7 @@ export interface CommonProfile {
  * maximizes the anonymity set. Timezone UTC (offset 0) and en-US are the neutral defaults.
  */
 export const COMMON_PROFILE: CommonProfile = {
-  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+  ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
   platform: "Win32",
   language: "en-US",
   languages: ["en-US", "en"],
