@@ -8,9 +8,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "generate-icons": "node scripts/generate-icons.mjs",
     "build": "npm run typecheck && node build.mjs",
-    "build:store": "npm run build && node scripts/build-store-zip.mjs",
     "start": "npm run build && web-ext run",
-    "lint:ext": "npm run build && web-ext lint --self-hosted",
+    "lint:ext": "npm run build && web-ext lint",
     "sign": "npm run build && web-ext sign --channel=unlisted"
   },
   "devDependencies": {

@@ -6,7 +6,6 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "poison-your-trace-extension@optoutrights.org",
-      "update_url": "https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/updates.json",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": ["none"]

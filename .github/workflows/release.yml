@@ -1,24 +1,26 @@
 name: Release
 
-# Builds, signs, and publishes the extension when a version tag is pushed.
+# Builds and submits the extension to the Firefox Add-ons store (AMO, "listed" channel) when a
+# version tag is pushed. Once Mozilla approves the version, every installed copy auto-updates from
+# AMO — there is no self-hosted updates.json to maintain and no update_url in the manifest.
 #
 # Trigger: push a tag shaped like vX.Y.Z (for example v0.2.0). The tag version must match the
 # "version" field in manifest.json; the job fails fast otherwise so the two never drift.
 #
 # What it does:
 #   1. checkout, setup Node, npm ci, npm run build
-#   2. web-ext sign --channel=unlisted, which uploads to addons.mozilla.org and returns a signed xpi
-#      in web-ext-artifacts/
-#   3. regenerate updates.json (the Mozilla AMO update manifest) for this version
-#   4. create or update the GitHub Release for the tag and attach the signed xpi plus updates.json
-#
-# Firefox reads manifest.json update_url (the latest release copy of updates.json), sees the newer
-# version, and auto updates from the tagged xpi named in update_link.
+#   2. web-ext sign --channel=listed, which uploads the version to addons.mozilla.org for review.
+#      --approval-timeout=0 means CI submits and returns without waiting on Mozilla's async review.
+#   3. build a source zip (AMO reviewers require source because the extension is bundled with
+#      esbuild) and publish a minimal GitHub Release carrying only that zip, so the account owner
+#      has a permanent link to hand to AMO when asked.
 #
 # Required repository secrets (Settings, Secrets and variables, Actions):
 #   AMO_JWT_ISSUER  the JWT issuer from the addons.mozilla.org API credentials page
 #   AMO_JWT_SECRET  the matching JWT secret
-# Without both secrets the signing step cannot run.
+# Both must belong to the account that owns the listing for add-on id
+# poison-your-trace-extension@optoutrights.org. Without them the signing step cannot run.
+# See docs/store-migration.md for the one-time AMO setup.
 
 on:
   push:
@@ -59,15 +61,15 @@ jobs:
           fi
           echo "version=$tag_version" >> "$GITHUB_OUTPUT"
 
-      - name: Build the store package and source zip (AMO listed submission)
+      - name: Build the source zip (for AMO review)
         run: |
-          node scripts/build-store-zip.mjs
+          mkdir -p web-ext-artifacts
           git archive --worktree-attributes --format=zip \
             --prefix=poison-your-trace-source/ \
             -o "web-ext-artifacts/poison-your-trace-source-${{ steps.version.outputs.version }}.zip" \
             HEAD
 
-      - name: Sign the extension (channel unlisted)
+      - name: Submit the extension to AMO (channel listed)
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
@@ -77,45 +79,16 @@ jobs:
             exit 1
           fi
           npx web-ext sign \
-            --channel=unlisted \
+            --channel=listed \
+            --approval-timeout=0 \
             --api-key="$AMO_JWT_ISSUER" \
             --api-secret="$AMO_JWT_SECRET"
 
-      - name: Locate the signed xpi
-        id: xpi
-        run: |
-          xpi_path="$(ls web-ext-artifacts/*.xpi | head -n 1)"
-          if [ -z "$xpi_path" ]; then
-            echo "No signed xpi was produced in web-ext-artifacts/." >&2
-            exit 1
-          fi
-          echo "path=$xpi_path" >> "$GITHUB_OUTPUT"
-          echo "name=$(basename "$xpi_path")" >> "$GITHUB_OUTPUT"
-
-      - name: Copy the signed xpi under a stable name
-        id: stable
-        # web-ext sign names the file per version (poison_your_trace-0.1.1.xpi), so its download URL
-        # changes every release. A fixed-name copy gives a permanent link,
-        # releases/latest/download/poison-your-trace.xpi, that the README can point at and that
-        # never rots between releases. The versioned asset stays too: updates.json's update_link
-        # references it at its per version path for auto updates.
-        run: |
-          stable_path="web-ext-artifacts/poison-your-trace.xpi"
-          cp "${{ steps.xpi.outputs.path }}" "$stable_path"
-          echo "path=$stable_path" >> "$GITHUB_OUTPUT"
-
-      - name: Generate updates.json
-        run: node scripts/build-updates-json.mjs "${{ steps.version.outputs.version }}" "${{ steps.xpi.outputs.name }}"
-
-      - name: Publish the GitHub Release
+      - name: Publish the GitHub Release (source only)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: v${{ steps.version.outputs.version }}
           fail_on_unmatched_files: true
           files: |
-            ${{ steps.xpi.outputs.path }}
-            ${{ steps.stable.outputs.path }}
-            web-ext-artifacts/poison-your-trace-store-${{ steps.version.outputs.version }}.zip
             web-ext-artifacts/poison-your-trace-source-${{ steps.version.outputs.version }}.zip
-            updates.json

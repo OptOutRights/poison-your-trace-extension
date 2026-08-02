@@ -11,7 +11,8 @@ One switch. Every site gets its own container, and your browser fingerprint is u
 
 <br/>
 
-[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/poison-your-trace.xpi)
+<!-- TODO(store): replace <slug> below once the addons.mozilla.org listing is created (see docs/store-migration.md). -->
+[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/<slug>/)
 
 ![Firefox 140+](https://img.shields.io/badge/Firefox-140%2B-6b4d21?logo=firefoxbrowser&logoColor=white)
 ![Manifest V2](https://img.shields.io/badge/Manifest-V2-52525b)
@@ -39,18 +40,17 @@ Websites collect and sell your activity across the web to form a single profile 
 
 Poison your Trace neutralizes both joins at once.
 
-## Install (30 seconds, any Firefox)
+## Install
 
-The release is signed by addons.mozilla.org, so **anyone can install it on stock Firefox**: no developer mode needed.
+Poison your Trace is on the official Firefox Add-ons store, so **anyone can install it on stock Firefox**.
 
-1. Open the permanent install link in Firefox:
-   **[poison-your-trace.xpi](https://github.com/OptOutRights/poison-your-trace-web-extension/releases/latest/download/poison-your-trace.xpi)**.
-   Click normally, if you cmd+click to open the link it might fail.
-2. Firefox offers to add it: click **Add**.
+1. Open the listing in Firefox:
+   **[Poison your Trace on Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)**.
+2. Click **Add to Firefox**, then **Add**.
 
-If it doesn't work, you can try to copy the link and paste it manually, and press 1 or 2 times enter, or contact: poisonyourtrace@optoutrights.org.
+If something goes wrong, contact: poisonyourtrace@optoutrights.org.
 
-That link always points at the newest signed release, and the extension auto-updates itself from there. Install once, forget about it.
+Firefox keeps the extension up to date automatically from addons.mozilla.org. Install once, forget about it.
 
 
 ## What it does
@@ -78,10 +78,10 @@ You need Node.js and Firefox.
 npm install
 npm run build      # typecheck, then bundle into dist/
 npm start          # build + launch Firefox with the extension loaded
-npm run lint:ext   # build + web-ext lint --self-hosted
+npm run lint:ext   # build + web-ext lint (validates as a listed store add-on)
 ```
 
-To load it by hand: open `about:debugging` → **This Firefox** → **Load Temporary Add-on**, and pick `manifest.json`. A temporary add-on unloads when Firefox restarts, so use it only for quick development. The signed release above is the permanent, auto-updating path.
+To load it by hand: open `about:debugging` → **This Firefox** → **Load Temporary Add-on**, and pick `manifest.json`. A temporary add-on unloads when Firefox restarts, so use it only for quick development. The store version above is the permanent, auto-updating path.
 
 ---
 
@@ -120,9 +120,11 @@ testpage/
 
 ### Releases
 
-Versions are `MAJOR.MINOR.PATCH`; the single source of truth is the `version` field in `manifest.json`. Pushing a matching `vX.Y.Z` tag runs `.github/workflows/release.yml`, which verifies tag == manifest version, builds, signs with `web-ext sign --channel=unlisted`, and publishes a GitHub Release carrying the signed `.xpi` and a freshly generated `updates.json`. Installed copies poll that `updates.json` and auto-update — no reinstall is ever needed.
+Versions are `MAJOR.MINOR.PATCH`; the single source of truth is the `version` field in `manifest.json`. Pushing a matching `vX.Y.Z` tag runs `.github/workflows/release.yml`, which verifies tag == manifest version, builds, and submits the version to addons.mozilla.org with `web-ext sign --channel=listed`. Once Mozilla approves it, every installed copy auto-updates from the store: no `updates.json`, no reinstall. The workflow also publishes a minimal GitHub Release carrying the source zip that AMO reviewers may request.
 
-> **Maintainer setup (once):** the signing step reads addons.mozilla.org API credentials from two repository secrets — `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`. Until both exist, the release workflow stops at the signing step with a clear message.
+> **Maintainer setup (once):** the submit step reads addons.mozilla.org API credentials from two repository secrets — `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` — belonging to the account that owns the store listing. Until both exist, the release workflow stops at the submit step with a clear message. See [docs/store-migration.md](docs/store-migration.md) for the one-time AMO setup.
+
+Local testing needs no store round-trip: `npm start` loads the extension into a throwaway Firefox instantly, and `about:debugging → Load Temporary Add-on` works too. `npm run sign` produces an instantly-signed unlisted `.xpi` if you want to test the signed-install flow on stock Firefox (use a throwaway version number — a version can live in only one AMO channel).
 
 <div align="center">
 <sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> with <a href="https://github.com/mh2d">MH2D</a> · Apache-2.0 · No tracking, no telemetry, no accounts.</sub>
