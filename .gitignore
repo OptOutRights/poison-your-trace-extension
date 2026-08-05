@@ -1,6 +1,8 @@
 dist/
 node_modules/
 web-ext-artifacts/
+# vendored, version-pinned CreepJS fetched on demand by scripts/fingerprint-harness.mjs, not source
+vendor/
 # resized from the 512px sources by scripts/generate-icons.mjs at build time
 icons/seringue*-16.png
 icons/seringue*-32.png

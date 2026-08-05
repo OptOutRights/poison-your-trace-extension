@@ -1,0 +1,429 @@
+{
+  "generatedAt": "2026-08-02T19:02:46.671Z",
+  "extensionVersion": "0.1.7",
+  "firefoxVersion": "153.0.1",
+  "host": {
+    "platform": "darwin",
+    "release": "23.6.0",
+    "arch": "arm64"
+  },
+  "creepPinnedSha": "10aa6724cd33a1015db1574211890518cd04f0cc",
+  "off": {
+    "contradictions": [],
+    "extensionActive": false,
+    "parity": {
+      "checked": 12,
+      "mismatches": [
+        {
+          "signal": "canvas.readback",
+          "window": "21070624",
+          "worker": "acae52b0"
+        }
+      ]
+    },
+    "window": {
+      "audio.meta": "sampleRate:44100 maxChannels:1",
+      "canvas.readback": "21070624",
+      "devicePixelRatio": "2",
+      "navigator.hardwareConcurrency": "10",
+      "navigator.language": "fr",
+      "navigator.languages": "fr, fr-FR, en-US, en",
+      "navigator.maxTouchPoints": "0",
+      "navigator.oscpu": "Intel Mac OS X 10.15",
+      "navigator.platform": "MacIntel",
+      "navigator.plugins": "PDF Viewer, Chrome PDF Viewer, Chromium PDF Viewer, Microsoft Edge PDF Viewer, WebKit built-in PDF",
+      "navigator.userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Gecko/20100101 Firefox/153.0",
+      "screen.avail": "1728x1041",
+      "screen.colorDepth": "30",
+      "screen.size": "1728x1117",
+      "timezone": "Europe/Paris",
+      "timezoneOffset": "-120",
+      "webgl.renderer": "Apple M1, or similar",
+      "webgl.unmaskedRenderer": "Apple M1, or similar",
+      "webgl.unmaskedVendor": "Apple",
+      "webgl.vendor": "Mozilla"
+    },
+    "worker": {
+      "canvas.readback": "acae52b0",
+      "navigator.hardwareConcurrency": "10",
+      "navigator.language": "fr",
+      "navigator.languages": "fr, fr-FR, en-US, en",
+      "navigator.platform": "MacIntel",
+      "navigator.userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:153.0) Gecko/20100101 Firefox/153.0",
+      "timezone": "Europe/Paris",
+      "timezoneOffset": "-120",
+      "webgl.renderer": "Apple M1, or similar",
+      "webgl.unmaskedRenderer": "Apple M1, or similar",
+      "webgl.unmaskedVendor": "Apple",
+      "webgl.vendor": "Mozilla"
+    }
+  },
+  "on": {
+    "contradictions": [],
+    "extensionActive": true,
+    "parity": {
+      "checked": 12,
+      "mismatches": [
+        {
+          "signal": "navigator.platform",
+          "window": "Win32",
+          "worker": "MacIntel"
+        },
+        {
+          "signal": "navigator.language",
+          "window": "en-US",
+          "worker": "fr"
+        },
+        {
+          "signal": "navigator.languages",
+          "window": "en-US, en",
+          "worker": "fr, fr-FR, en-US, en"
+        },
+        {
+          "signal": "navigator.hardwareConcurrency",
+          "window": "8",
+          "worker": "10"
+        },
+        {
+          "signal": "timezone",
+          "window": "UTC",
+          "worker": "Europe/Paris"
+        },
+        {
+          "signal": "timezoneOffset",
+          "window": "0",
+          "worker": "-120"
+        },
+        {
+          "signal": "canvas.readback",
+          "window": "a2301260",
+          "worker": "acae52b0"
+        },
+        {
+          "signal": "webgl.renderer",
+          "window": "Mozilla",
+          "worker": "Apple M1, or similar"
+        },
+        {
+          "signal": "webgl.unmaskedVendor",
+          "window": "Google Inc. (Intel)",
+          "worker": "Apple"
+        },
+        {
+          "signal": "webgl.unmaskedRenderer",
+          "window": "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+          "worker": "Apple M1, or similar"
+        }
+      ]
+    },
+    "window": {
+      "audio.meta": "sampleRate:44100 maxChannels:1",
+      "canvas.readback": "a2301260",
+      "devicePixelRatio": "1",
+      "navigator.hardwareConcurrency": "8",
+      "navigator.language": "en-US",
+      "navigator.languages": "en-US, en",
+      "navigator.maxTouchPoints": "0",
+      "navigator.oscpu": "Windows NT 10.0; Win64; x64",
+      "navigator.platform": "Win32",
+      "navigator.plugins": "PDF Viewer, Chrome PDF Viewer, Chromium PDF Viewer, Microsoft Edge PDF Viewer, WebKit built-in PDF",
+      "navigator.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+      "screen.avail": "1920x1040",
+      "screen.colorDepth": "24",
+      "screen.size": "1920x1080",
+      "timezone": "UTC",
+      "timezoneOffset": "0",
+      "webgl.renderer": "Mozilla",
+      "webgl.unmaskedRenderer": "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "webgl.unmaskedVendor": "Google Inc. (Intel)",
+      "webgl.vendor": "Mozilla"
+    },
+    "worker": {
+      "canvas.readback": "acae52b0",
+      "navigator.hardwareConcurrency": "10",
+      "navigator.language": "fr",
+      "navigator.languages": "fr, fr-FR, en-US, en",
+      "navigator.platform": "MacIntel",
+      "navigator.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
+      "timezone": "Europe/Paris",
+      "timezoneOffset": "-120",
+      "webgl.renderer": "Apple M1, or similar",
+      "webgl.unmaskedRenderer": "Apple M1, or similar",
+      "webgl.unmaskedVendor": "Apple",
+      "webgl.vendor": "Mozilla"
+    }
+  },
+  "creep": {
+    "off": {
+      "headlessRating": 33,
+      "lieDetail": {},
+      "lieKeys": [],
+      "stealthRating": 0,
+      "totalLies": 0
+    },
+    "on": {
+      "headlessRating": 33,
+      "lieDetail": {
+        "AnalyserNode.getByteFrequencyData": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "AnalyserNode.getByteTimeDomainData": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "AnalyserNode.getFloatFrequencyData": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "AnalyserNode.getFloatTimeDomainData": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "AudioBuffer": [
+          "sample noise detected"
+        ],
+        "AudioBuffer.copyFromChannel": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "AudioBuffer.getChannelData": [
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "CanvasRenderingContext2D.getImageData": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error",
+          "pixel data modified"
+        ],
+        "Date.getTimezoneOffset": [
+          "failed call interface error",
+          "failed apply interface error",
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "DateTimeFormat.resolvedOptions": [
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "HTMLCanvasElement.toBlob": [
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "HTMLCanvasElement.toDataURL": [
+          "failed new instance error",
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "Navigator.appVersion": [
+          "failed undefined properties"
+        ],
+        "Navigator.hardwareConcurrency": [
+          "failed undefined properties",
+          "does not match worker scope"
+        ],
+        "Navigator.language": [
+          "failed undefined properties"
+        ],
+        "Navigator.languages": [
+          "failed undefined properties"
+        ],
+        "Navigator.mimeTypes": [
+          "failed undefined properties"
+        ],
+        "Navigator.oscpu": [
+          "failed undefined properties"
+        ],
+        "Navigator.platform": [
+          "failed undefined properties",
+          "does not match worker scope"
+        ],
+        "Navigator.plugins": [
+          "failed undefined properties"
+        ],
+        "Navigator.userAgent": [
+          "failed undefined properties",
+          "does not match worker scope"
+        ],
+        "Screen": [
+          "failed matchMedia"
+        ],
+        "Screen.availHeight": [
+          "failed undefined properties"
+        ],
+        "Screen.availWidth": [
+          "failed undefined properties"
+        ],
+        "Screen.colorDepth": [
+          "failed undefined properties"
+        ],
+        "Screen.height": [
+          "failed undefined properties"
+        ],
+        "Screen.pixelDepth": [
+          "failed undefined properties"
+        ],
+        "Screen.width": [
+          "failed undefined properties"
+        ],
+        "WebGL2RenderingContext.getParameter": [
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "WebGLRenderingContext.getParameter": [
+          "failed class extends error",
+          "failed toString",
+          "failed \"prototype\" in function",
+          "failed descriptor",
+          "failed own property",
+          "failed descriptor keys",
+          "failed own property names",
+          "failed own keys names",
+          "failed at incompatible proxy error"
+        ],
+        "Window.devicePixelRatio": [
+          "lied dpr"
+        ]
+      },
+      "lieKeys": [
+        "AnalyserNode.getByteFrequencyData",
+        "AnalyserNode.getByteTimeDomainData",
+        "AnalyserNode.getFloatFrequencyData",
+        "AnalyserNode.getFloatTimeDomainData",
+        "AudioBuffer",
+        "AudioBuffer.copyFromChannel",
+        "AudioBuffer.getChannelData",
+        "CanvasRenderingContext2D.getImageData",
+        "Date.getTimezoneOffset",
+        "DateTimeFormat.resolvedOptions",
+        "HTMLCanvasElement.toBlob",
+        "HTMLCanvasElement.toDataURL",
+        "Navigator.appVersion",
+        "Navigator.hardwareConcurrency",
+        "Navigator.language",
+        "Navigator.languages",
+        "Navigator.mimeTypes",
+        "Navigator.oscpu",
+        "Navigator.platform",
+        "Navigator.plugins",
+        "Navigator.userAgent",
+        "Screen",
+        "Screen.availHeight",
+        "Screen.availWidth",
+        "Screen.colorDepth",
+        "Screen.height",
+        "Screen.pixelDepth",
+        "Screen.width",
+        "WebGL2RenderingContext.getParameter",
+        "WebGLRenderingContext.getParameter",
+        "Window.devicePixelRatio"
+      ],
+      "stealthRating": 0,
+      "totalLies": 162
+    }
+  }
+}
