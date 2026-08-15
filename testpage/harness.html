@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Poison your Trace, fingerprint regression harness</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 64rem;
+        padding: 2rem 1.25rem 4rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      p.lede {
+        opacity: 0.85;
+      }
+      p.status {
+        padding: 0.6rem 0.8rem;
+        border: 1px solid rgba(128, 128, 128, 0.35);
+        border-radius: 0.4rem;
+        background: rgba(128, 128, 128, 0.08);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+      caption {
+        text-align: left;
+        font-weight: 600;
+        padding: 0.75rem 0 0.35rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.4rem 0.6rem;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+        vertical-align: top;
+        word-break: break-word;
+      }
+      tr.bad td {
+        background: rgba(220, 60, 60, 0.14);
+      }
+      li.bad {
+        color: #c0392b;
+      }
+      code {
+        font-size: 0.85em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fingerprint regression harness</h1>
+    <p class="lede">
+      This page reads every in-scope fingerprint signal in the <strong>window</strong> context and in a
+      <strong>Web Worker</strong>, then flags worker-vs-window mismatches and cross-signal
+      contradictions. Open it over <code>http://</code> (not <code>file://</code>) with the extension
+      <strong>on</strong> and <strong>off</strong> to compare. Rows highlighted red disagree between
+      window and worker.
+    </p>
+    <p class="lede">
+      The machine-readable verdict is exposed on <code>window.__HARNESS_RESULT__</code> once
+      <code>&lt;body data-harness-ready="true"&gt;</code> is set; <code>scripts/fingerprint-harness.mjs</code>
+      drives this page under Selenium to record the baseline.
+    </p>
+    <div id="out"><p>Running probes…</p></div>
+    <script src="harness.js"></script>
+  </body>
+</html>
