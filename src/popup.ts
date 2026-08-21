@@ -9,6 +9,7 @@ import {
   GET_CAPTURES_MESSAGE_TYPE,
   type SignalCapture,
 } from "./fingerprint/report";
+import type { OsFamily } from "./fingerprint/profiles";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -85,6 +86,48 @@ async function burnerEmail(hostname: string): Promise<string | undefined> {
     hostname,
   })) as { address?: string } | undefined;
   return reply?.address;
+}
+
+// OS family readout. The background is the single source of truth: it detects the real family and
+// applies any override, so the popup only reads it back and offers the override control.
+type OsChoice = OsFamily | "auto";
+interface OsInfo {
+  detected: OsFamily;
+  resolved: boolean;
+  override: OsChoice;
+  effective: OsFamily;
+}
+
+const OS_LABEL: Record<OsChoice, string> = {
+  auto: "Auto-detect",
+  windows: "Windows",
+  mac: "macOS",
+  linux: "Linux",
+};
+
+async function getOsInfo(): Promise<OsInfo> {
+  return (await browser.runtime.sendMessage({ type: "poison:osinfo" })) as OsInfo;
+}
+
+// The one-line explanation under the OS selector: what was detected and what is actually presented,
+// flagging an override or a failed detection so a wrong guess is easy to spot and correct.
+function osNote(info: OsInfo): string {
+  if (info.override !== "auto") {
+    const detected = info.resolved ? OS_LABEL[info.detected] : "an undetected OS";
+    return `Detected ${detected}. Overridden to present ${OS_LABEL[info.effective]}.`;
+  }
+  if (!info.resolved) {
+    return `Could not detect your OS; presenting ${OS_LABEL[info.effective]}. Pick your OS if that is wrong.`;
+  }
+  return `Detected ${OS_LABEL[info.detected]}, presenting the matching profile.`;
+}
+
+async function renderOsControl(): Promise<void> {
+  const select = el<HTMLSelectElement>("os-family");
+  const note = el<HTMLElement>("os-note");
+  const info = await getOsInfo();
+  select.value = info.override;
+  note.textContent = osNote(info);
 }
 
 function heading(text: string): HTMLElement {
@@ -258,7 +301,24 @@ async function render(): Promise<void> {
   enabled.checked = config.enabled;
   setStatus(status, config.enabled);
 
+  await renderOsControl();
   await renderRecap();
+
+  // OS override: save the chosen family and re-apply so both layers pick it up. The change lands on
+  // the next page load, so we refresh the readout (which reflects the new effective family) too.
+  const osSelect = el<HTMLSelectElement>("os-family");
+  osSelect.addEventListener("change", () => {
+    void (async () => {
+      try {
+        await saveConfig({ osFamily: osSelect.value as OsChoice });
+        await browser.runtime.sendMessage({ type: "poison:apply" });
+        await renderOsControl();
+      } catch (err) {
+        status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+        status.className = "status paused";
+      }
+    })();
+  });
 
   enabled.addEventListener("change", () => {
     void (async () => {

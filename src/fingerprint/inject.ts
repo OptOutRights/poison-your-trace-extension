@@ -11,7 +11,7 @@
 // The MAIN world has no extension APIs, so before/after captures are posted with window.postMessage
 // and forwarded to the background by the isolated-world relay (report-relay.ts).
 
-import { COMMON_PROFILE, type CommonProfile } from "./profile";
+import { resolveProfileFromPage, type CommonProfile } from "./profiles";
 import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report";
 
 /**
@@ -63,16 +63,16 @@ function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: s
     define(obj, prop, value);
   };
 
-  // navigator
+  // navigator. platform, oscpu and the UA all come straight from the resolved profile, so they agree
+  // with each other and with the machine's real OS family by construction — no per-OS branching here.
   const appVersion = p.ua.replace("Mozilla/", "");
-  const oscpu = p.platform === "Win32" ? "Windows NT 10.0; Win64; x64" : p.platform;
   defineAndRecord(navigator, "userAgent", p.ua, "navigator");
   defineAndRecord(navigator, "appVersion", appVersion, "navigator");
   defineAndRecord(navigator, "platform", p.platform, "navigator");
   defineAndRecord(navigator, "language", p.language, "navigator");
   defineAndRecord(navigator, "languages", Object.freeze([...p.languages]), "navigator");
   defineAndRecord(navigator, "hardwareConcurrency", p.hardwareConcurrency, "navigator");
-  defineAndRecord(navigator, "oscpu", oscpu, "navigator");
+  defineAndRecord(navigator, "oscpu", p.oscpu, "navigator");
 
   // screen and window
   defineAndRecord(screen, "width", p.screen.width, "screen");
@@ -160,5 +160,8 @@ function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: s
 }
 
 // This file IS the page's MAIN world (world: "MAIN" content script), so apply the overrides
-// directly. The constants are bundled in by esbuild; no toString() serialization round trip.
-pageWorldOverride(COMMON_PROFILE, REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);
+// directly. All three OS profiles are bundled in by esbuild; the background injects the resolved OS
+// family (from getPlatformInfo, honouring any user override) as window.__poisonOsFamily just before
+// this script, so we present the common profile FOR THAT FAMILY and never claim a different OS than
+// the machine's real one. If that global is absent we fall back to detecting from the real navigator.
+pageWorldOverride(resolveProfileFromPage(window), REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);

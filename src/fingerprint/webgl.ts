@@ -5,7 +5,7 @@
 // high entropy quasi identifier: the exact driver, GPU and ANGLE backend string is distinctive
 // enough to single out a machine. We UNIFORMIZE toward ONE widely shared value so the signal
 // carries close to zero distinguishing bits and the whole crowd clusters together, same philosophy
-// as profile.ts.
+// as the profiles/ modules — one common value PER OS FAMILY (a Mac renderer under a Mac UA).
 //
 // Running in the MAIN world, the override applies directly to the page's own globals and is visible
 // to the site's scripts. It patches getParameter on both WebGLRenderingContext and
@@ -14,16 +14,24 @@
 // script rather than the DOM, the override survives a strict page Content Security Policy.
 
 // A real Firefox reports "Mozilla" for the MASKED core params (getParameter(VENDOR) and
-// getParameter(RENDERER)) and only exposes the ANGLE GPU strings through the
-// WEBGL_debug_renderer_info UNMASKED_* params. Returning the ANGLE string on the masked params
-// would be a "Firefox that answers like Chrome" contradiction that ADDS entropy. So we split the
-// two: masked returns Firefox's constant "Mozilla", unmasked returns the common ANGLE identity.
-// Intel UHD Graphics 620 is one of the most common integrated GPUs, maximizing the anonymity set.
+// getParameter(RENDERER)) and only exposes the GPU strings through the WEBGL_debug_renderer_info
+// UNMASKED_* params. Returning the GPU string on the masked params would be a "Firefox that answers
+// like Chrome" contradiction that ADDS entropy. So we split the two: masked returns Firefox's
+// constant "Mozilla" (identical on every OS), unmasked returns the per family common GPU identity.
+//
+// The unmasked renderer is per OS on purpose (ticket #37): detectors cross check it against the UA's
+// OS, so a Windows ANGLE/D3D11 renderer under a macOS UA is a tell. We resolve the same OS-family
+// profile the navigator overrides use, and read its webgl identity.
 import { REPORT_MESSAGE_TYPE } from "./report";
+import { resolveProfileFromPage } from "./profiles";
 
 const WEBGL_MASKED = "Mozilla";
-const WEBGL_UNMASKED_VENDOR = "Google Inc. (Intel)";
-const WEBGL_UNMASKED_RENDERER = "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)";
+// Resolve the same family the navigator overrides use: the background injects window.__poisonOsFamily
+// before these scripts, so this reads that shared value (and falls back to the real navigator, which
+// inject.ts has already set to the same family, if the global is missing).
+const osProfile = resolveProfileFromPage(window);
+const WEBGL_UNMASKED_VENDOR = osProfile.webgl.unmaskedVendor;
+const WEBGL_UNMASKED_RENDERER = osProfile.webgl.unmaskedRenderer;
 
 /**
  * Runs in the page's MAIN world, reading and replacing the page's own globals, so it must rely only

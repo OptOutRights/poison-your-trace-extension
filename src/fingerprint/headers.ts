@@ -1,10 +1,11 @@
 // Network layer half of fingerprint uniformization.
 //
 // The injected page scripts fix what JavaScript sees; this fixes what the SERVER sees. Both must
-// agree or the mismatch is itself a signal, so both read the same COMMON_PROFILE. This rewrites the
-// User Agent and Accept Language request headers via webRequest.
+// agree or the mismatch is itself a signal, so both consume the SAME resolved OS-family profile: the
+// background resolves it once from the real OS (browser.runtime.getPlatformInfo) and hands it in
+// here via a getter. This rewrites the User Agent and Accept Language request headers via webRequest.
 
-import { COMMON_PROFILE, acceptLanguageHeader } from "./profile";
+import { acceptLanguageHeader, type CommonProfile } from "./profiles";
 import type { SignalCapture } from "./report";
 
 type BlockingResponse = browser.webRequest.BlockingResponse;
@@ -16,19 +17,28 @@ export type HeaderCaptureSink = (tabId: number, captures: SignalCapture[]) => vo
 export class HeaderUniformizer {
   private listening = false;
 
-  /** Optional consumer for the before and after header captures (the background per tab store). */
-  constructor(private readonly onCapture?: HeaderCaptureSink) {}
+  /**
+   * @param getProfile returns the resolved OS-family profile to apply (the background resolves it
+   *   from the real OS so the header layer matches the page-world overrides).
+   * @param onCapture optional consumer for the before and after header captures (the background per
+   *   tab store).
+   */
+  constructor(
+    private readonly getProfile: () => CommonProfile,
+    private readonly onCapture?: HeaderCaptureSink,
+  ) {}
 
   private readonly handler = (details: Details): BlockingResponse => {
     const headers = details.requestHeaders;
     if (!headers) return {};
-    const applied = acceptLanguageHeader();
+    const profile = this.getProfile();
+    const applied = acceptLanguageHeader(profile);
     const captures: SignalCapture[] = [];
     for (const header of headers) {
       const name = header.name.toLowerCase();
       if (name === "user-agent") {
-        captures.push({ signal: "header.userAgent", group: "headers", before: header.value ?? "", after: COMMON_PROFILE.ua });
-        header.value = COMMON_PROFILE.ua;
+        captures.push({ signal: "header.userAgent", group: "headers", before: header.value ?? "", after: profile.ua });
+        header.value = profile.ua;
       } else if (name === "accept-language") {
         captures.push({ signal: "header.acceptLanguage", group: "headers", before: header.value ?? "", after: applied });
         header.value = applied;

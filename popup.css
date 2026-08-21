@@ -119,6 +119,46 @@ h1 img {
   color: var(--amber-text);
 }
 
+/* OS family control: shares the divided-row layout, so it sits directly under the enable row without
+   a doubled divider (the enable row's bottom border is the separator). */
+.os-control {
+  border-top: 0;
+}
+
+/* Native select restyled to the system's angular grammar: clipped corners, 7px controls, focus ring. */
+.os-select {
+  appearance: none;
+  border: 1px solid var(--zinc-300);
+  background: var(--white);
+  color: var(--zinc-800);
+  padding: 5px 9px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+
+.os-select:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+/* The detected / presented readout under the selector: muted 11px metadata. */
+.os-note {
+  margin: 8px 0 0;
+  color: var(--zinc-600);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 /* Recap. */
 .recap {
   margin-top: 12px;
