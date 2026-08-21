@@ -11,7 +11,7 @@
 // The MAIN world has no extension APIs, so before/after captures are posted with window.postMessage
 // and forwarded to the background by the isolated-world relay (report-relay.ts).
 
-import { resolveProfileFromNavigator, type CommonProfile } from "./profiles";
+import { resolveProfileFromPage, type CommonProfile } from "./profiles";
 import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report";
 
 /**
@@ -160,7 +160,8 @@ function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: s
 }
 
 // This file IS the page's MAIN world (world: "MAIN" content script), so apply the overrides
-// directly. All three OS profiles are bundled in by esbuild; we read the REAL navigator (before any
-// override has run — this is the first fingerprint script) to detect the machine's OS family and
-// present the common profile FOR THAT FAMILY, so we never claim a different OS than the real one.
-pageWorldOverride(resolveProfileFromNavigator(navigator), REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);
+// directly. All three OS profiles are bundled in by esbuild; the background injects the resolved OS
+// family (from getPlatformInfo, honouring any user override) as window.__poisonOsFamily just before
+// this script, so we present the common profile FOR THAT FAMILY and never claim a different OS than
+// the machine's real one. If that global is absent we fall back to detecting from the real navigator.
+pageWorldOverride(resolveProfileFromPage(window), REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);

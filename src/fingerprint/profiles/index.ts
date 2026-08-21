@@ -34,6 +34,23 @@ export function resolveProfileFromNavigator(nav: Navigator): CommonProfile {
   return resolveProfile(osFamilyFromHints(nav.platform, nav.userAgent, (nav as { oscpu?: string }).oscpu));
 }
 
+/** True for the exact OsFamily literals, so an injected/stored value can be validated before use. */
+export function isOsFamily(value: unknown): value is OsFamily {
+  return value === "windows" || value === "mac" || value === "linux";
+}
+
+/**
+ * The family the page world should present. The background is the single source of truth: it resolves
+ * the family (from getPlatformInfo, honouring any user override) and injects it as `window.__poisonOsFamily`
+ * before these scripts run, so the page world and the network header layer always agree. If that
+ * global is missing (e.g. injection failed), fall back to detecting from the real navigator.
+ */
+export function resolveProfileFromPage(win: Window): CommonProfile {
+  const forced = (win as { __poisonOsFamily?: unknown }).__poisonOsFamily;
+  if (isOsFamily(forced)) return resolveProfile(forced);
+  return resolveProfileFromNavigator(win.navigator);
+}
+
 /**
  * Classify the real OS family from any available hints — navigator.platform / userAgent / oscpu in
  * the page world, or browser.runtime.getPlatformInfo().os in the background. All hints are matched

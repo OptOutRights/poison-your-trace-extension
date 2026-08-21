@@ -23,12 +23,13 @@
 // OS, so a Windows ANGLE/D3D11 renderer under a macOS UA is a tell. We resolve the same OS-family
 // profile the navigator overrides use, and read its webgl identity.
 import { REPORT_MESSAGE_TYPE } from "./report";
-import { resolveProfileFromNavigator } from "./profiles";
+import { resolveProfileFromPage } from "./profiles";
 
 const WEBGL_MASKED = "Mozilla";
-// This script runs after inject.ts, which has already set navigator to the resolved profile's family,
-// so reading navigator here yields that same family (and would fall back to the real one otherwise).
-const osProfile = resolveProfileFromNavigator(navigator);
+// Resolve the same family the navigator overrides use: the background injects window.__poisonOsFamily
+// before these scripts, so this reads that shared value (and falls back to the real navigator, which
+// inject.ts has already set to the same family, if the global is missing).
+const osProfile = resolveProfileFromPage(window);
 const WEBGL_UNMASKED_VENDOR = osProfile.webgl.unmaskedVendor;
 const WEBGL_UNMASKED_RENDERER = osProfile.webgl.unmaskedRenderer;
 
