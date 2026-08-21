@@ -7,10 +7,10 @@
 // background, which keeps them per tab so the popup can answer "what did this tab's fingerprint look
 // like before versus after".
 //
-// Design constraint: the override functions are serialized with toString() and injected into the
-// page world, so they cannot import from this module. They inline their own posting primitive. This
-// module owns the CONTRACT (the message tag, the entry shape, the signal names) so every producer
-// and consumer agrees on one vocabulary.
+// Design constraint: the overrides run in the page's MAIN world, which has no extension APIs, so
+// they cannot talk to the background directly. They post their captures with window.postMessage and
+// the isolated-world relay forwards them. This module owns the CONTRACT (the message tag, the entry
+// shape, the signal names) so every producer and consumer agrees on one vocabulary.
 
 /** The postMessage tag that marks a before and after report coming out of the page world. */
 export const REPORT_MESSAGE_TYPE = "poison:capture";

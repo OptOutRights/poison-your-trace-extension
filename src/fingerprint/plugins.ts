@@ -1,17 +1,15 @@
-// Content script, registered dynamically at document_start when the extension is enabled.
+// Content script, registered dynamically at document_start in the page's MAIN world when the
+// extension is enabled.
 //
 // Uniformizes navigator.plugins and navigator.mimeTypes toward a FIXED, widely shared Firefox 140
-// configuration. Like inject.ts it injects a page world <script> so the override is visible to the
-// site's own scripts.
+// configuration. Like inject.ts it runs in the page's MAIN world so the override applies directly
+// to the page's own globals and is visible to the site's scripts, and — because the browser injects
+// the script rather than the DOM — it survives a strict page Content Security Policy.
 //
 // Why a constant list carries zero bits: modern Firefox and Chromium expose the SAME standardized
 // set of five built in PDF "plugins" (real NPAPI plugins are gone). Presenting exactly that set,
 // the crowd's default, means the plugin vector distinguishes no one. Randomizing would instead mint
 // a per visit identifier, so we uniformize.
-//
-// Caveat (documented seam): inline injection can be blocked by a strict page Content Security
-// Policy. The Firefox privileged wrappedJSObject and exportFunction route is the CSP proof
-// hardening left for a later pass.
 
 import { REPORT_MESSAGE_TYPE } from "./report";
 
@@ -34,9 +32,9 @@ const PLUGIN_MIME_TYPES: readonly { type: string; suffixes: string; description:
 ];
 
 /**
- * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments and standard globals, never module scope symbols. The report tag is
- * passed in so it can post its before and after captures out of the page world without importing.
+ * Runs in the page's MAIN world, reading and replacing the page's own globals, so it must rely only
+ * on its arguments and standard page globals, never on extension APIs. The report tag is passed in
+ * so it can post its before and after captures to the isolated-world relay.
  */
 function pageWorldOverride(
   names: readonly string[],
@@ -162,18 +160,10 @@ function pageWorldOverride(
   }
 }
 
-function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(PLUGIN_NAMES)}, ${JSON.stringify(PLUGIN_MIME_TYPES)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)});`;
-  const script = document.createElement("script");
-  script.textContent = code;
-  const root = document.documentElement ?? document.head ?? document.body;
-  if (!root) return;
-  root.prepend(script);
-  script.remove();
-}
+// This file IS the page's MAIN world (world: "MAIN" content script), so apply the override
+// directly. The constants are bundled in by esbuild; no toString() serialization round trip.
+pageWorldOverride(PLUGIN_NAMES, PLUGIN_MIME_TYPES, REPORT_MESSAGE_TYPE);
 
-inject();
-
-// Module scope (no runtime export): keeps pageWorldOverride and inject file local so they do not
-// collide with the sibling fingerprint content scripts in tsc's global script scope.
+// Module scope (no runtime export): keeps pageWorldOverride file local so it does not collide with
+// the sibling fingerprint content scripts in tsc's global script scope.
 export {};

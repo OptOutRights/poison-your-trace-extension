@@ -9,6 +9,7 @@
     "generate-icons": "node scripts/generate-icons.mjs",
     "build": "npm run typecheck && node build.mjs",
     "start": "npm run build && web-ext run",
+    "testpage:csp": "node testpage/serve-csp.mjs",
     "lint:ext": "npm run build && web-ext lint",
     "sign": "npm run build && web-ext sign --channel=unlisted"
   },
