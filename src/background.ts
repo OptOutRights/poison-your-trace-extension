@@ -9,17 +9,41 @@ import { AutoContainer } from "./containers/auto";
 import { HeaderUniformizer } from "./fingerprint/headers";
 import { CapturesStore } from "./fingerprint/captures-store";
 import { REPORT_MESSAGE_TYPE, GET_CAPTURES_MESSAGE_TYPE, isCaptureMessage } from "./fingerprint/report";
+import { resolveProfile, osFamilyFromHints, type CommonProfile } from "./fingerprint/profiles";
 import { getBurnerFor } from "./email/store";
 
 // Before and after capture store (ticket #4). Kept in its own module and referenced from a few
 // clearly separated lines so this block merges cleanly with other tickets touching background.ts.
 const captures = new CapturesStore();
 
+// Resolve ONE OS-family profile from the machine's real OS (ticket #37) and share it between the
+// network header rewrite here and the page-world overrides, so the two layers can never disagree.
+// The page world resolves its family from the real navigator; here we resolve from getPlatformInfo.
+// If that ever fails we must NOT rewrite headers to the Windows default — a Windows UA over a real
+// macOS/Linux stack is exactly the getHasLiedOs contradiction ticket #37 removes. So we track whether
+// resolution succeeded and, on failure, leave request headers untouched (the real UA still matches
+// the real family the page world presents). Windows is only a placeholder until getPlatformInfo wins.
+let resolvedProfile: CommonProfile = resolveProfile("windows");
+let osResolved = false;
+const profileReady = browser.runtime
+  .getPlatformInfo()
+  .then((info) => {
+    resolvedProfile = resolveProfile(osFamilyFromHints(info.os));
+    osResolved = true;
+  })
+  .catch(() => {
+    /* getPlatformInfo unavailable: leave osResolved false so the header rewrite stays down */
+  });
+
 const containers = new ContainerManager();
 const autoContainer = new AutoContainer(containers);
-// The header uniformizer reports the real (before) and applied (after) request header values into
-// the capture store, keyed by the originating tab, so the popup can show the network layer too.
-const headers = new HeaderUniformizer((tabId, entries) => captures.add(tabId, entries));
+// The header uniformizer reads the shared resolved profile and reports the real (before) and applied
+// (after) request header values into the capture store, keyed by the originating tab, so the popup
+// can show the network layer too.
+const headers = new HeaderUniformizer(
+  () => resolvedProfile,
+  (tabId, entries) => captures.add(tabId, entries),
+);
 
 // The page world scripts that make up fingerprint uniformization. `fingerprint.js` is the base
 // (navigator, screen, timezone, canvas); the others cover WebGL, Web Audio, and plugins/mimeTypes.
@@ -117,7 +141,15 @@ async function applyConfig(): Promise<void> {
   autoContainer.enable();
   await setFingerprint(true);
   await setBurnerAutofill(true);
-  headers.enable();
+  // Make sure the real OS family has resolved before the header rewrite goes live, so the very first
+  // request already carries the correct profile. If resolution failed we leave headers untouched
+  // rather than rewrite them to the wrong OS (see resolvedProfile above).
+  await profileReady;
+  if (osResolved) {
+    headers.enable();
+  } else {
+    console.warn("[poison] OS family unresolved; leaving request headers untouched to avoid a UA/OS mismatch.");
+  }
   console.info("[poison] enabled, auto containers, fingerprint uniformization and burner autofill on.");
 }
 
