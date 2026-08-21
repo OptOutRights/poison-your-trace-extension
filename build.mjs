@@ -34,9 +34,8 @@ await build({
   outdir: "dist",
   bundle: true,
   format: "iife",
-  // The fingerprint scripts serialize a function with toString() to inject it into the page world,
-  // so the output must stay unminified (identifiers and whitespace preserved) for that source to
-  // survive the round trip.
+  // Keep the output unminified so the shipped scripts stay readable when debugging in the page
+  // (the fingerprint overrides run in the page's MAIN world, where the page can read them anyway).
   minify: false,
   target: "firefox128",
   platform: "browser",

@@ -1,11 +1,12 @@
 // Content script relay, registered dynamically at document_start alongside the fingerprint
 // overrides when the extension is enabled.
 //
-// The overrides run in the PAGE world and cannot talk to the extension directly. They post their
-// before and after captures with window.postMessage. This relay runs in the ISOLATED content world
-// (which the page cannot see) and forwards those captures to the background, which stores them per
-// tab for the popup (ticket #6). The relay is the trust boundary: it accepts only same window
-// messages that match the capture contract and passes nothing else through.
+// The overrides run in the page's MAIN world, which has no extension APIs, so they cannot talk to
+// the background directly. They post their before and after captures with window.postMessage. This
+// relay runs in the ISOLATED content world (which the page cannot see) and forwards those captures
+// to the background, which stores them per tab for the popup (ticket #6). The relay is the trust
+// boundary: it accepts only same window messages that match the capture contract and passes nothing
+// else through.
 
 import { REPORT_MESSAGE_TYPE, isCaptureMessage } from "./report";
 

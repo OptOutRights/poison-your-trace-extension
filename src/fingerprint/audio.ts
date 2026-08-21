@@ -1,7 +1,8 @@
-// Content script, registered dynamically at document_start when the extension is enabled.
+// Content script, registered dynamically at document_start in the page's MAIN world when the
+// extension is enabled.
 //
-// Uniformizes the Web Audio fingerprint. Like inject.ts it injects a page world <script> so the
-// overrides are visible to the site's own scripts.
+// Uniformizes the Web Audio fingerprint. Like inject.ts it runs in the page's MAIN world so the
+// overrides apply directly to the page's own globals and are visible to the site's scripts.
 //
 // The audio fingerprint is derived from the PCM a site renders through an OfflineAudioContext
 // (oscillator into DynamicsCompressor into destination) and reads back via getChannelData. Tiny
@@ -12,15 +13,14 @@
 //
 // Caveat (documented seam): this deliberately breaks legitimate Web Audio readback (visualisers,
 // waveform analysis, offline export). Ordinary playback is unaffected, we patch only the buffer and
-// analyser read APIs, not the audio graph or its output to speakers. Inline injection can also be
-// blocked by a strict page Content Security Policy (same seam as inject.ts).
+// analyser read APIs, not the audio graph or its output to speakers.
 
 import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report";
 
 /**
- * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments and standard globals, never module scope symbols. The report tag and
- * sentinels are passed in so it can post its before and after capture out of the page world.
+ * Runs in the page's MAIN world, reading and replacing the page's own globals, so it must rely only
+ * on its arguments and standard page globals, never on extension APIs. The report tag and sentinels
+ * are passed in so it can post its before and after capture to the isolated-world relay.
  *
  * @param fill the single fixed sample value every readback is flattened to (0 means a silent
  *   buffer, so a sum of absolute samples becomes exactly zero).
@@ -103,18 +103,10 @@ function pageWorldOverride(fill: number, reportType: string, opaqueBefore: strin
 // (sum of absolute samples over getChannelData(0)) deterministically zero on all machines.
 const AUDIO_FILL = 0;
 
-function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(AUDIO_FILL)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)}, ${JSON.stringify(OPAQUE_BEFORE)}, ${JSON.stringify(NEUTRALIZED_AFTER)});`;
-  const script = document.createElement("script");
-  script.textContent = code;
-  const root = document.documentElement ?? document.head ?? document.body;
-  if (!root) return;
-  root.prepend(script);
-  script.remove();
-}
+// This file IS the page's MAIN world (world: "MAIN" content script), so apply the override
+// directly. The constants are bundled in by esbuild; no toString() serialization round trip.
+pageWorldOverride(AUDIO_FILL, REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);
 
-inject();
-
-// Module scope (no runtime export): keeps pageWorldOverride and inject file local so they do not
-// collide with the sibling fingerprint content scripts in tsc's global script scope.
+// Module scope (no runtime export): keeps pageWorldOverride file local so it does not collide with
+// the sibling fingerprint content scripts in tsc's global script scope.
 export {};

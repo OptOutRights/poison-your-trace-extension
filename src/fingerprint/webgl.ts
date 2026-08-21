@@ -1,4 +1,5 @@
-// Content script, registered dynamically at document_start when the extension is enabled.
+// Content script, registered dynamically at document_start in the page's MAIN world when the
+// extension is enabled.
 //
 // Uniformizes the WebGL vendor and renderer fingerprint. The GPU vendor and renderer strings are a
 // high entropy quasi identifier: the exact driver, GPU and ANGLE backend string is distinctive
@@ -6,13 +7,11 @@
 // carries close to zero distinguishing bits and the whole crowd clusters together, same philosophy
 // as profile.ts.
 //
-// It injects a page world <script> so the override is visible to the site's own scripts. The
-// override patches getParameter on both WebGLRenderingContext and WebGL2RenderingContext so the
-// VENDOR and RENDERER parameters and the WEBGL_debug_renderer_info UNMASKED_* parameters all return
-// the chosen common strings.
-//
-// Caveat (documented seam): inline injection can be blocked by a strict page Content Security
-// Policy. The CSP proof wrappedJSObject and exportFunction route is hardening left for a later pass.
+// Running in the MAIN world, the override applies directly to the page's own globals and is visible
+// to the site's scripts. It patches getParameter on both WebGLRenderingContext and
+// WebGL2RenderingContext so the VENDOR and RENDERER parameters and the WEBGL_debug_renderer_info
+// UNMASKED_* parameters all return the chosen common strings. Because the browser injects the
+// script rather than the DOM, the override survives a strict page Content Security Policy.
 
 // A real Firefox reports "Mozilla" for the MASKED core params (getParameter(VENDOR) and
 // getParameter(RENDERER)) and only exposes the ANGLE GPU strings through the
@@ -27,9 +26,9 @@ const WEBGL_UNMASKED_VENDOR = "Google Inc. (Intel)";
 const WEBGL_UNMASKED_RENDERER = "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)";
 
 /**
- * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments and standard globals, never module scope symbols. The report tag is
- * passed in so it can post its before and after captures out of the page world without importing.
+ * Runs in the page's MAIN world, reading and replacing the page's own globals, so it must rely only
+ * on its arguments and standard page globals, never on extension APIs. The report tag is passed in
+ * so it can post its before and after captures to the isolated-world relay.
  */
 function pageWorldOverride(masked: string, unmaskedVendor: string, unmaskedRenderer: string, reportType: string): void {
   // Run at most once per document. A second injection into the same page would read our already
@@ -118,18 +117,10 @@ function pageWorldOverride(masked: string, unmaskedVendor: string, unmaskedRende
   }
 }
 
-function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(WEBGL_MASKED)}, ${JSON.stringify(WEBGL_UNMASKED_VENDOR)}, ${JSON.stringify(WEBGL_UNMASKED_RENDERER)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)});`;
-  const script = document.createElement("script");
-  script.textContent = code;
-  const root = document.documentElement ?? document.head ?? document.body;
-  if (!root) return;
-  root.prepend(script);
-  script.remove();
-}
+// This file IS the page's MAIN world (world: "MAIN" content script), so apply the override
+// directly. The constants are bundled in by esbuild; no toString() serialization round trip.
+pageWorldOverride(WEBGL_MASKED, WEBGL_UNMASKED_VENDOR, WEBGL_UNMASKED_RENDERER, REPORT_MESSAGE_TYPE);
 
-inject();
-
-// Module scope (no runtime export): keeps pageWorldOverride and inject file local so they do not
-// collide with the sibling fingerprint content scripts in tsc's global script scope.
+// Module scope (no runtime export): keeps pageWorldOverride file local so it does not collide with
+// the sibling fingerprint content scripts in tsc's global script scope.
 export {};

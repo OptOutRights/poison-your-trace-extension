@@ -3,7 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Poison your Trace, fingerprint test page</title>
+    <!--
+      This page carries NO <meta http-equiv> CSP on purpose. A meta CSP is only enforced once the
+      parser reaches the tag, which is AFTER content scripts inject at document_start, so it fails to
+      block the old inline-<script> injection and gives a false pass. The strict CSP for this test is
+      delivered as an HTTP *response header* by testpage/serve-csp.mjs (npm run testpage:csp), active
+      from the first byte, exactly like the real strict-CSP sites (banks, big tech) issue #36 targets.
+      The page probes at runtime whether inline scripts are actually blocked and reports the verdict.
+    -->
+    <title>Poison your Trace, strict-CSP fingerprint test page</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -92,22 +100,22 @@
     </style>
   </head>
   <body>
-    <h1>Poison your Trace, fingerprint test page</h1>
+    <h1>Poison your Trace, strict-CSP fingerprint test page</h1>
     <p class="lede">
-      This page reads every fingerprint signal Poison your Trace covers in this version and shows the
-      value your browser reports. Each row is marked green (✓ uniformized to the shared common
-      profile) or red (✗ your real device leaking through), with a plain-language verdict at the top.
-      With the extension enabled, you should see the shared common profile (a Windows 10 Firefox 140,
-      UTC, en US, and neutralized canvas and audio). With the extension disabled, you should see your
-      machine's real values instead.
+      Open this page through the CSP header server — <code>npm run testpage:csp</code>, then
+      <code>http://127.0.0.1:8778/fingerprint-csp.html</code> — so it is served with a strict
+      <code>script-src 'self'</code> Content Security Policy header, the kind banks and big-tech
+      sites use. The page verifies live that inline <code>&lt;script&gt;</code> injection is blocked
+      here, then reads every fingerprint signal and marks each green (✓ uniformized) or red (✗ real
+      device leaking). Because the overrides now run as a <code>world: "MAIN"</code> content script
+      the browser injects, they apply even under this CSP: with the extension enabled every row
+      should be green. Under the old inline-<code>&lt;script&gt;</code> injection they would be red,
+      because the page CSP blocked it. The verdict at the top states the result plainly.
     </p>
     <div id="report">Reading signals...</div>
     <footer>
-      Signals in scope: navigator (userAgent, appVersion, platform, language, languages,
-      hardwareConcurrency, oscpu), screen (width, height, availWidth, availHeight, colorDepth,
-      pixelDepth, devicePixelRatio), timezone (Intl zone and getTimezoneOffset), canvas readback,
-      WebGL vendor and renderer, navigator plugins and mimeTypes, and Web Audio readback. Font
-      metrics are intentionally not modified in this version.
+      Same signals as fingerprint.html. If served without the CSP header (e.g. opened as a file or
+      via a plain static server) the page will say so and skip the CSP-proofing check.
     </footer>
     <script src="fingerprint-test.js"></script>
   </body>

@@ -23,16 +23,19 @@ const headers = new HeaderUniformizer((tabId, entries) => captures.add(tabId, en
 
 // The page world scripts that make up fingerprint uniformization. `fingerprint.js` is the base
 // (navigator, screen, timezone, canvas); the others cover WebGL, Web Audio, and plugins/mimeTypes.
-// `fingerprint-report-relay.js` runs in the isolated world and forwards the page world before and
-// after captures to the background. Each is registered at document_start so it runs before the
-// page's own scripts.
-const FINGERPRINT_SCRIPTS = [
+// They run in the page's MAIN world (world: "MAIN") so the overrides apply directly to the page's
+// own globals and are visible to the site's scripts, and — unlike the old inline <script> injection
+// — survive a strict page Content Security Policy because the browser injects them, not the DOM.
+const FINGERPRINT_OVERRIDE_SCRIPTS = [
   "dist/fingerprint.js",
   "dist/fingerprint-webgl.js",
   "dist/fingerprint-audio.js",
   "dist/fingerprint-plugins.js",
-  "dist/fingerprint-report-relay.js",
 ];
+// `fingerprint-report-relay.js` runs in the ISOLATED content world (the only world with extension
+// APIs) and forwards the page world before/after captures to the background. Everything is
+// registered at document_start so it runs before the page's own scripts.
+const FINGERPRINT_RELAY_SCRIPT = "dist/fingerprint-report-relay.js";
 
 type RegisteredScript = Awaited<ReturnType<typeof browser.contentScripts.register>>;
 let fingerprintHandles: RegisteredScript[] = [];
@@ -49,13 +52,24 @@ async function setFingerprint(on: boolean): Promise<void> {
   if (on && fingerprintHandles.length === 0 && !fingerprintRegistering) {
     fingerprintRegistering = true;
     try {
-      for (const file of FINGERPRINT_SCRIPTS) {
+      // Register the isolated-world relay first so its message listener is live before the MAIN
+      // world overrides post their captures.
+      fingerprintHandles.push(
+        await browser.contentScripts.register({
+          matches: ["<all_urls>"],
+          js: [{ file: FINGERPRINT_RELAY_SCRIPT }],
+          runAt: "document_start",
+          allFrames: true,
+        }),
+      );
+      for (const file of FINGERPRINT_OVERRIDE_SCRIPTS) {
         fingerprintHandles.push(
           await browser.contentScripts.register({
             matches: ["<all_urls>"],
             js: [{ file }],
             runAt: "document_start",
             allFrames: true,
+            world: "MAIN",
           }),
         );
       }

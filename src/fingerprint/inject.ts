@@ -1,23 +1,24 @@
-// Content script, registered dynamically at document_start when the extension is enabled.
+// Content script, registered dynamically at document_start in the page's MAIN world when the
+// extension is enabled.
 //
-// Uniformizes the JavaScript visible fingerprint toward the COMMON profile. It injects a page
-// world <script> so the overrides are visible to the site's own scripts (a content script runs in
-// an isolated world the page cannot see). The network layer half, the User Agent and Accept
-// Language request headers, is handled in the background via webRequest so the two layers can never
-// disagree.
+// Uniformizes the JavaScript visible fingerprint toward the COMMON profile. Running in the MAIN
+// world means the overrides are applied directly to the page's own globals and are visible to the
+// site's scripts, and — because the browser injects the script rather than the DOM — they keep
+// working under a strict page Content Security Policy. The network layer half, the User Agent and
+// Accept Language request headers, is handled in the background via webRequest so the two layers can
+// never disagree.
 //
-// Caveat (documented seam): inline injection can be blocked by a strict page Content Security
-// Policy. The header rewrite layer still applies there; the Firefox privileged wrappedJSObject and
-// exportFunction route is the CSP proof hardening left for a later pass.
+// The MAIN world has no extension APIs, so before/after captures are posted with window.postMessage
+// and forwarded to the background by the isolated-world relay (report-relay.ts).
 
 import { COMMON_PROFILE, type CommonProfile } from "./profile";
 import { REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER } from "./report";
 
 /**
- * Runs in the PAGE world. Must be fully self contained: it is serialized with `toString()` and may
- * reference only its arguments and standard globals, never module scope symbols. The report tag and
- * sentinels are passed in as arguments so it can post its before and after captures out of the page
- * world without importing anything.
+ * Runs in the page's MAIN world, reading and replacing the page's own globals, so it must rely only
+ * on its arguments and standard page globals, never on extension APIs. The report tag and sentinels
+ * are passed in as arguments so it can post its before and after captures to the isolated-world
+ * relay.
  */
 function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: string, neutralized: string): void {
   // Run at most once per document. If this override is injected twice into the same page (e.g. a
@@ -158,14 +159,6 @@ function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: s
   }
 }
 
-function inject(): void {
-  const code = `(${pageWorldOverride.toString()})(${JSON.stringify(COMMON_PROFILE)}, ${JSON.stringify(REPORT_MESSAGE_TYPE)}, ${JSON.stringify(OPAQUE_BEFORE)}, ${JSON.stringify(NEUTRALIZED_AFTER)});`;
-  const script = document.createElement("script");
-  script.textContent = code;
-  const root = document.documentElement ?? document.head ?? document.body;
-  if (!root) return;
-  root.prepend(script);
-  script.remove();
-}
-
-inject();
+// This file IS the page's MAIN world (world: "MAIN" content script), so apply the overrides
+// directly. The constants are bundled in by esbuild; no toString() serialization round trip.
+pageWorldOverride(COMMON_PROFILE, REPORT_MESSAGE_TYPE, OPAQUE_BEFORE, NEUTRALIZED_AFTER);
