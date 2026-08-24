@@ -15,9 +15,14 @@
   "devDependencies": {
     "@fontsource-variable/outfit": "^5.0.0",
     "@types/firefox-webext-browser": "^120.0.0",
-    "esbuild": "^0.24.0",
-    "sharp": "^0.33.0",
+    "esbuild": "^0.28.2",
+    "sharp": "^0.35.3",
     "typescript": "^5.5.0",
-    "web-ext": "^8.3.0"
+    "web-ext": "^5.5.0"
+  },
+  "dependencies": {
+    "puppeteer": "^25.8.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
