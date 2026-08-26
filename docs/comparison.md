@@ -19,3 +19,5 @@ Pixel scan address fingerprint inconsistencies. Fingerprint is defined as by tec
 # Cover your Tracks
 
 Cover your tracks works to blend your fingerprint so it's unrecognizable in a detection scan. It's to ensure your signature cannot be singled out.
+
+Fingerprints consist of browsers, timezones, proxies and masking
