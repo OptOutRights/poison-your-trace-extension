@@ -175,10 +175,14 @@ function installWorkerHooks(profile: CommonProfile): void {
     const key = `${isModule ? "m" : "c"} ${name} ${absolute}`;
     const cached = blobCache.get(key);
     if (cached) return cached;
-    // A module worker cannot importScripts (it is not defined there), so pull the original in with a
-    // dynamic import(); a classic worker uses importScripts(). Either way the original runs AFTER our
-    // synchronous overrides, from its real absolute URL so its own relative imports still resolve.
-    const load = isModule ? `import(${JSON.stringify(absolute)});` : `importScripts(${JSON.stringify(absolute)});`;
+    // Pull the site's original script in AFTER our synchronous overrides, from its real absolute URL
+    // so its own relative imports/importScripts still resolve. A classic worker uses the synchronous
+    // importScripts(), so the original (including any onmessage it installs) runs to completion before
+    // the worker's event loop starts. A module worker cannot importScripts, so it uses top-level
+    // `await import()`: the await keeps the bootstrap module evaluating — and the worker's message
+    // queue therefore paused — until the original module has evaluated and wired up its handlers, so a
+    // message the page posts right after `new Worker(...)` is not dropped on the floor.
+    const load = isModule ? `await import(${JSON.stringify(absolute)});` : `importScripts(${JSON.stringify(absolute)});`;
     const blobURL = URL.createObjectURL(new Blob([`${overrideSource}\n${load}`], { type: "text/javascript" }));
     blobCache.set(key, blobURL);
     return blobURL;
