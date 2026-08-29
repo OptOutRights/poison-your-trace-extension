@@ -53,12 +53,16 @@ const headers = new HeaderUniformizer(
 );
 
 // The page world scripts that make up fingerprint uniformization. `fingerprint.js` is the base
-// (navigator, screen, timezone, canvas); the others cover WebGL, Web Audio, and plugins/mimeTypes.
-// They run in the page's MAIN world (world: "MAIN") so the overrides apply directly to the page's
-// own globals and are visible to the site's scripts, and — unlike the old inline <script> injection
-// — survive a strict page Content Security Policy because the browser injects them, not the DOM.
+// (navigator, screen, timezone, canvas); `fingerprint-workers.js` extends that same profile into
+// Web Workers by wrapping the Worker/SharedWorker constructors (ticket #38); the others cover WebGL,
+// Web Audio, and plugins/mimeTypes. They run in the page's MAIN world (world: "MAIN") so the
+// overrides apply directly to the page's own globals and are visible to the site's scripts, and —
+// unlike the old inline <script> injection — survive a strict page Content Security Policy because
+// the browser injects them, not the DOM. The worker hook is registered before any site script so it
+// wraps the constructors before a page can spawn a worker.
 const FINGERPRINT_OVERRIDE_SCRIPTS = [
   "dist/fingerprint.js",
+  "dist/fingerprint-workers.js",
   "dist/fingerprint-webgl.js",
   "dist/fingerprint-audio.js",
   "dist/fingerprint-plugins.js",

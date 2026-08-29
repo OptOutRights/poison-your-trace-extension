@@ -143,6 +143,32 @@ function pageWorldOverride(p: CommonProfile, reportType: string, opaqueBefore: s
     ctxProto.getImageData = function getImageData(_x, _y, w, h) {
       return new ImageData(Math.max(1, w | 0), Math.max(1, h | 0));
     };
+
+    // OffscreenCanvas is a second canvas surface usable on the main thread too (via
+    // new OffscreenCanvas(...) or HTMLCanvasElement.transferControlToOffscreen()), with its own
+    // readback paths that bypass the HTMLCanvasElement patch above: convertToBlob() and the 2D
+    // context's getImageData(). Left alone they leak the same device drawn signature, so neutralize
+    // them identically — encode a FRESH blank OffscreenCanvas of the same size, and hand back
+    // transparent pixels — keeping the main-thread canvas signal consistent whichever surface a site
+    // reads. (The worker-side copy of this same neutralization lives in workers.ts.)
+    const offscreenCtor = (window as unknown as {
+      OffscreenCanvas?: { prototype: { convertToBlob?: (...args: unknown[]) => Promise<Blob> } } & (new (w: number, h: number) => { width: number; height: number });
+    }).OffscreenCanvas;
+    if (offscreenCtor && typeof offscreenCtor.prototype.convertToBlob === "function") {
+      const origConvertToBlob = offscreenCtor.prototype.convertToBlob;
+      offscreenCtor.prototype.convertToBlob = function convertToBlob(this: { width: number; height: number }, ...args: unknown[]): Promise<Blob> {
+        const blank = new offscreenCtor(Math.max(1, this.width | 0), Math.max(1, this.height | 0));
+        return origConvertToBlob.apply(blank, args);
+      };
+    }
+    const offscreenCtxProto = (window as unknown as {
+      OffscreenCanvasRenderingContext2D?: { prototype: { getImageData?: (x: number, y: number, w: number, h: number) => ImageData } };
+    }).OffscreenCanvasRenderingContext2D?.prototype;
+    if (offscreenCtxProto && typeof offscreenCtxProto.getImageData === "function") {
+      offscreenCtxProto.getImageData = function getImageData(_x, _y, w, h) {
+        return new ImageData(Math.max(1, w | 0), Math.max(1, h | 0));
+      };
+    }
     // Canvas readback has no scalar value to compare, so we report the agreed sentinels: the real
     // device drawn signature before, neutralized after.
     record("canvas.readback", "canvas", opaqueBefore, neutralized);

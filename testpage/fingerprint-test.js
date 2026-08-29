@@ -148,6 +148,84 @@
     });
   }
 
+  // Source for a dedicated worker that reads the same signals from INSIDE a worker realm and posts
+  // them back. A worker has its own WorkerNavigator and OffscreenCanvas, so without the extension's
+  // worker injection these return the real device values while the window shows the common profile —
+  // the window-vs-worker mismatch CreepJS flags. With the extension on and issue #38 applied, the
+  // worker reports the SAME common profile as the window. Runs immediately on startup and postMessages
+  // one result object. Kept as a string so the page can spawn it from a Blob with no build step.
+  var WORKER_SOURCE = [
+    "(function(){",
+    "  var out = {};",
+    "  function read(k, fn){ try { out[k] = String(fn()); } catch (e) { out[k] = 'err'; } }",
+    "  read('userAgent', function(){ return navigator.userAgent; });",
+    "  read('appVersion', function(){ return navigator.appVersion; });",
+    "  read('platform', function(){ return navigator.platform; });",
+    "  read('language', function(){ return navigator.language; });",
+    "  read('languages', function(){ return (navigator.languages || []).join(', '); });",
+    "  read('hardwareConcurrency', function(){ return navigator.hardwareConcurrency; });",
+    "  read('timezone', function(){ return new Intl.DateTimeFormat().resolvedOptions().timeZone; });",
+    "  read('offset', function(){ return new Date().getTimezoneOffset(); });",
+    "  try {",
+    "    if (typeof OffscreenCanvas !== 'undefined') {",
+    "      var c = new OffscreenCanvas(220, 40);",
+    "      var ctx = c.getContext('2d');",
+    "      ctx.fillStyle = '#f60'; ctx.fillRect(2, 2, 120, 22);",
+    "      ctx.fillStyle = '#069'; ctx.fillText('Poison \\u{1F489}', 4, 4);",
+    "      var px = ctx.getImageData(0, 0, c.width, c.height).data;",
+    "      var neutral = true;",
+    "      for (var i = 0; i < px.length; i++) { if (px[i] !== 0) { neutral = false; break; } }",
+    "      out.canvasNeutralized = neutral;",
+    "      var gc = new OffscreenCanvas(1, 1);",
+    "      var gl = gc.getContext('webgl');",
+    "      if (gl) {",
+    "        var dbg = gl.getExtension('WEBGL_debug_renderer_info');",
+    "        if (dbg) {",
+    "          out.webglUnmaskedVendor = String(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL));",
+    "          out.webglUnmaskedRenderer = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL));",
+    "        }",
+    "      }",
+    "    }",
+    "  } catch (e) { /* no OffscreenCanvas in this worker */ }",
+    "  self.postMessage(out);",
+    "})();",
+  ].join("\n");
+
+  // Spawn the worker from a Blob and resolve with its posted signals, or with { unavailable } if the
+  // worker cannot run — under a strict CSP (default-src/worker-src without blob:) the browser blocks
+  // blob workers entirely, so this degrades to an info row rather than a false failure.
+  function workerProbe() {
+    return new Promise(function (resolve) {
+      var w = null;
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        try {
+          if (w) w.terminate();
+        } catch (e) {
+          /* already gone */
+        }
+        resolve(v);
+      }
+      try {
+        var url = URL.createObjectURL(new Blob([WORKER_SOURCE], { type: "text/javascript" }));
+        w = new Worker(url);
+        w.onmessage = function (ev) {
+          finish(ev.data);
+        };
+        w.onerror = function (ev) {
+          finish({ unavailable: (ev && ev.message) || "worker blocked (likely CSP)" });
+        };
+        setTimeout(function () {
+          finish({ unavailable: "worker timed out (blocked or unsupported)" });
+        }, 2000);
+      } catch (e) {
+        finish({ unavailable: "cannot create worker (" + (e && e.message ? e.message : String(e)) + ")" });
+      }
+    });
+  }
+
   function pluginNames() {
     return safe(function () {
       var names = [];
@@ -259,7 +337,35 @@
     container.insertBefore(banner, container.firstChild);
   }
 
-  function render(audio) {
+  // Build the "workers" table from the dedicated worker's posted signals. Each navigator/timezone row
+  // compares against the SAME common profile the window rows use, so green here means worker == window
+  // (both uniformized). Canvas readback is pass/fail on whether the worker's OffscreenCanvas came back
+  // transparent; the WebGL unmasked strings compare to the common GPU identity. When the worker could
+  // not run, a single info row explains why (no false failure).
+  function workersTable(worker) {
+    if (!worker || worker.unavailable) {
+      return buildTable("workers (dedicated)", [
+        ["worker status", worker && worker.unavailable ? worker.unavailable : "no result", null],
+      ]);
+    }
+    var canvasOk = worker.canvasNeutralized === true ? true : worker.canvasNeutralized === false ? false : null;
+    var hasWebgl = typeof worker.webglUnmaskedRenderer === "string" && worker.webglUnmaskedRenderer.length > 0;
+    return buildTable("workers (dedicated)", [
+      ["navigator.userAgent", worker.userAgent, is(worker.userAgent, EXPECTED.ua)],
+      ["navigator.appVersion", worker.appVersion, is(worker.appVersion, EXPECTED.appVersion)],
+      ["navigator.platform", worker.platform, is(worker.platform, EXPECTED.platform)],
+      ["navigator.language", worker.language, is(worker.language, EXPECTED.language)],
+      ["navigator.languages", worker.languages, is(worker.languages, EXPECTED.languages)],
+      ["navigator.hardwareConcurrency", worker.hardwareConcurrency, is(worker.hardwareConcurrency, EXPECTED.hardwareConcurrency)],
+      ["Intl timeZone", worker.timezone, is(worker.timezone, EXPECTED.timezone)],
+      ["getTimezoneOffset (minutes)", worker.offset, is(worker.offset, EXPECTED.offset)],
+      ["OffscreenCanvas readback", canvasOk === true ? "transparent (neutralized)" : canvasOk === false ? "leaking real pixels" : "no OffscreenCanvas", canvasOk],
+      ["WebGL unmasked vendor", hasWebgl ? worker.webglUnmaskedVendor : "(not exposed)", hasWebgl ? is(worker.webglUnmaskedVendor, EXPECTED.webglUnmaskedVendor) : null],
+      ["WebGL unmasked renderer", hasWebgl ? worker.webglUnmaskedRenderer : "(not exposed)", hasWebgl ? is(worker.webglUnmaskedRenderer, EXPECTED.webglUnmaskedRenderer) : null],
+    ]);
+  }
+
+  function render(audio, worker) {
     var gl = webgl();
     var canvas = canvasProbe();
     var canvasOk = canvas && typeof canvas === "object" ? canvas.ok : null;
@@ -323,9 +429,14 @@
 
     container.appendChild(buildTable("Web Audio", [["readback hash", audio.text, audio.ok]]));
 
+    // Worker parity (issue #38): the same signals read from inside a dedicated worker.
+    container.appendChild(workersTable(worker));
+
     // Probe CSP last so the earlier tables are not disturbed, then print the verdict at the top.
     renderConclusion(container, inlineScriptsBlocked());
   }
 
-  audioProbe().then(render);
+  Promise.all([audioProbe(), workerProbe()]).then(function (results) {
+    render(results[0], results[1]);
+  });
 })();

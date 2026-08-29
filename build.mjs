@@ -25,6 +25,7 @@ await build({
     background: "src/background.ts",
     popup: "src/popup.ts",
     fingerprint: "src/fingerprint/inject.ts",
+    "fingerprint-workers": "src/fingerprint/workers.ts",
     "fingerprint-webgl": "src/fingerprint/webgl.ts",
     "fingerprint-audio": "src/fingerprint/audio.ts",
     "fingerprint-plugins": "src/fingerprint/plugins.ts",

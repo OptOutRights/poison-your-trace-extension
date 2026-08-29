@@ -106,8 +106,9 @@
       Signals in scope: navigator (userAgent, appVersion, platform, language, languages,
       hardwareConcurrency, oscpu), screen (width, height, availWidth, availHeight, colorDepth,
       pixelDepth, devicePixelRatio), timezone (Intl zone and getTimezoneOffset), canvas readback,
-      WebGL vendor and renderer, navigator plugins and mimeTypes, and Web Audio readback. Font
-      metrics are intentionally not modified in this version.
+      WebGL vendor and renderer, navigator plugins and mimeTypes, Web Audio readback, and the same
+      navigator, canvas and WebGL signals re-read from inside a dedicated Web Worker (worker == window
+      parity). Font metrics are intentionally not modified in this version.
     </footer>
     <script src="fingerprint-test.js"></script>
   </body>
