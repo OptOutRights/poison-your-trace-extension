@@ -24,69 +24,42 @@
           graphics card, and more) that together make your device unique and tractable. When several sites can read
           the same fingerprint and share cookies, they can join everything you do into one profile.
         </p>
-        <p>Poison your Trace breaks both links:</p>
+        <p>Poison your Trace breaks both links. See it for yourself:</p>
 
-        <svg
-          class="schema"
-          viewBox="0 0 700 250"
-          role="img"
-          aria-labelledby="schema-title schema-desc"
-        >
-          <title id="schema-title">Before and after Poison your Trace</title>
-          <desc id="schema-desc">
-            Without protection, three sites read a unique fingerprint and shared cookies and link
-            into one identity. With Poison your Trace, each site is sealed in its own container and
-            sees the same common profile, so nothing links to you.
-          </desc>
+        <!--
+          Interactive crowd demo. Flip the toggle and every user's pixel "fingerprint" (yours
+          included) snaps to one shared profile, while the tracker loses its target. The logic lives
+          in about.js because extension pages forbid inline scripts; the .crowd-caption paragraph is
+          the accessible, no-JS description of what the animation shows.
+        -->
+        <div class="crowd-demo" id="crowd-demo" data-state="exposed">
+          <div class="crowd-bar">
+            <span class="crowd-brand">
+              <img src="icons/seringueblack-32.png" alt="" />Poison your Trace
+            </span>
+            <span class="switch">
+              <label for="crowd-toggle">Enabled</label>
+              <input id="crowd-toggle" type="checkbox" />
+            </span>
+            <span class="status paused" id="crowd-status" role="status">Exposed</span>
+          </div>
 
-          <!-- Divider between the two panels. -->
-          <line class="s-divider" x1="350" y1="15" x2="350" y2="235" />
+          <div class="crowd-grid" id="crowd-grid" aria-hidden="true"></div>
 
-          <!-- BEFORE -->
-          <text class="s-panel-label s-bad-label" x="24" y="28">WITHOUT PROTECTION</text>
+          <p class="crowd-tracker" id="crowd-tracker">
+            <span class="crowd-eye" id="crowd-eye" aria-hidden="true">🎯</span>
+            <span id="crowd-tracker-text"
+              >A tracker looks for the odd one out — and locks onto <strong>you</strong>.</span
+            >
+          </p>
 
-          <path class="s-link" d="M59 94 L180 176" />
-          <path class="s-link" d="M169 94 L180 176" />
-          <path class="s-link" d="M279 94 L180 176" />
-
-          <rect class="s-box" x="24" y="52" width="70" height="42" rx="4" />
-          <rect class="s-box" x="134" y="52" width="70" height="42" rx="4" />
-          <rect class="s-box" x="244" y="52" width="70" height="42" rx="4" />
-          <text class="s-box-text" x="59" y="74" text-anchor="middle">Site A</text>
-          <text class="s-box-text" x="169" y="74" text-anchor="middle">Site B</text>
-          <text class="s-box-text" x="279" y="74" text-anchor="middle">Site C</text>
-          <text class="s-tag" x="59" y="88" text-anchor="middle">unique</text>
-          <text class="s-tag" x="169" y="88" text-anchor="middle">unique</text>
-          <text class="s-tag" x="279" y="88" text-anchor="middle">unique</text>
-
-          <rect class="s-node" x="90" y="176" width="180" height="42" rx="4" />
-          <text class="s-node-text" x="180" y="201" text-anchor="middle">one identity = you</text>
-          <text class="schema-caption" x="180" y="236" text-anchor="middle">
-            one fingerprint, shared cookies
-          </text>
-
-          <!-- AFTER -->
-          <text class="s-panel-label s-good-label" x="374" y="28">WITH POISON YOUR TRACE</text>
-
-          <rect class="s-box-good" x="374" y="52" width="70" height="42" rx="4" />
-          <rect class="s-box-good" x="484" y="52" width="70" height="42" rx="4" />
-          <rect class="s-box-good" x="594" y="52" width="70" height="42" rx="4" />
-          <rect class="s-marker" x="374" y="52" width="3" height="42" />
-          <rect class="s-marker" x="484" y="52" width="3" height="42" />
-          <rect class="s-marker" x="594" y="52" width="3" height="42" />
-          <text class="s-box-text" x="409" y="74" text-anchor="middle">Site A</text>
-          <text class="s-box-text" x="519" y="74" text-anchor="middle">Site B</text>
-          <text class="s-box-text" x="629" y="74" text-anchor="middle">Site C</text>
-          <text class="s-tag-good" x="409" y="88" text-anchor="middle">common</text>
-          <text class="s-tag-good" x="519" y="88" text-anchor="middle">common</text>
-          <text class="s-tag-good" x="629" y="88" text-anchor="middle">common</text>
-
-          <rect class="s-node-good" x="440" y="176" width="180" height="42" rx="4" />
-          <text class="s-node-text-good" x="530" y="201" text-anchor="middle">no one in particular</text>
-          <text class="schema-caption" x="530" y="236" text-anchor="middle">
-            same profile, sealed per site
-          </text>
-        </svg>
+          <p class="crowd-caption">
+            Every tile is one person's device fingerprint; the ringed one is you. Without protection
+            each is unique, so a tracker can single you out. With Poison your Trace everyone shows
+            the <strong>same</strong> common profile (Windows 10 + Firefox 140 + UTC + en-US), so the
+            signals point at no one in particular.
+          </p>
+        </div>
 
         <div class="callout">
           <strong>It uniformizes, it does not randomize.</strong> A random value per site would just
@@ -193,6 +166,16 @@
               for that.
             </li>
             <li>
+              <strong>Anything you sign into.</strong> The moment you log in, you have told the site
+              who you are. Containers stop that login following you to other sites, but inside the
+              session, you are you.
+            </li>
+            <li>
+              <strong>That you are in the crowd.</strong> The shared profile hides <em>which</em>
+              user you are, not the fact that you are running the extension — the same trade-off Tor
+              accepts.
+            </li>
+            <li>
               <strong>Email is a burner only.</strong> The alias lives at a domain that can never
               receive mail, so it hides your real address on signup forms but is not an inbox.
             </li>
@@ -206,5 +189,6 @@
         anything up about you.
       </footer>
     </main>
+    <script src="about.js"></script>
   </body>
 </html>

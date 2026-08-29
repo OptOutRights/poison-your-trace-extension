@@ -84,101 +84,156 @@ section > p {
   font-weight: 700;
 }
 
-/* Before/after schema. */
-.schema {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin: 8px 0 4px;
+/*
+  Interactive crowd demo. The whole block reacts to [data-state]; about.js flips that attribute and
+  repaints the tiles. Everything degrades gracefully: no JS means an empty grid and the .crowd-caption
+  paragraph still carries the full explanation.
+*/
+.crowd-demo {
+  margin: 16px 0 4px;
+  padding: 16px;
+  border: 1px solid var(--zinc-200);
+  border-radius: var(--radius-control);
+  background: var(--white);
+  transition: border-color 0.4s ease, background 0.4s ease;
 }
 
-.s-panel-label {
-  font-size: 11px;
+.crowd-demo[data-state="protected"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Toolbar: a nod to the popup, so flipping it here feels like flipping the real toggle. */
+.crowd-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+.crowd-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.01em;
 }
 
-.s-bad-label {
-  fill: var(--red-text);
+.crowd-brand img {
+  width: 20px;
+  height: 20px;
 }
 
-.s-good-label {
-  fill: var(--accent-ink);
+.crowd-bar .switch {
+  margin-left: auto;
 }
 
-.s-box {
-  fill: var(--white);
-  stroke: var(--zinc-300);
-  stroke-width: 1;
+/* The crowd itself: a responsive grid of device fingerprints. */
+.crowd-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin: 16px 0;
 }
 
-.s-box-good {
-  fill: var(--white);
-  stroke: var(--accent);
-  stroke-width: 1;
+.crowd-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px 6px;
+  border: 1px solid var(--zinc-200);
+  border-radius: 6px;
+  background: var(--zinc-050);
+  transition: border-color 0.4s ease, background 0.4s ease, transform 0.4s ease;
 }
 
-.s-marker {
-  fill: var(--accent);
+/* "You": ringed and lifted so it reads as the odd one out — until the crowd catches up. */
+.crowd-tile.is-you {
+  border-color: var(--zinc-500);
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--zinc-400);
+  transform: translateY(-2px);
 }
 
-.s-box-text {
-  fill: var(--zinc-800);
-  font-size: 12px;
-  font-weight: 600;
+.crowd-tile.is-you::after {
+  content: "you";
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--zinc-600);
+  text-transform: uppercase;
 }
 
-.s-tag {
-  fill: var(--zinc-500);
-  font-size: 10px;
+.crowd-demo[data-state="protected"] .crowd-tile {
+  border-color: var(--accent-soft-hover);
+  background: var(--white);
 }
 
-.s-tag-good {
-  fill: var(--accent-ink);
-  font-size: 10px;
-  font-weight: 600;
+.crowd-demo[data-state="protected"] .crowd-tile.is-you {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--accent);
+  transform: none; /* you drop back into the crowd */
 }
 
-.s-link {
-  stroke: var(--red-line);
-  stroke-width: 1.5;
-  fill: none;
+.crowd-demo[data-state="protected"] .crowd-tile.is-you::after {
+  color: var(--accent-ink);
 }
 
-.s-node {
-  fill: var(--red-bg);
-  stroke: var(--red-line);
-  stroke-width: 1;
+/* The 4x4 pixel "fingerprint". Cells are painted by about.js; the transition makes them ripple. */
+.crowd-pixels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  width: 32px;
+  height: 32px;
 }
 
-.s-node-good {
-  fill: var(--green-bg);
-  stroke: var(--green-line);
-  stroke-width: 1;
+.crowd-pixels span {
+  border-radius: 1px;
+  background: transparent;
+  transition: background 0.35s ease;
 }
 
-.s-node-text {
-  fill: var(--red-text);
-  font-size: 11px;
-  font-weight: 600;
+.crowd-sig {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--zinc-500);
+  min-height: 2.4em;
 }
 
-.s-node-text-good {
-  fill: var(--green-text);
-  font-size: 11px;
-  font-weight: 600;
+.crowd-demo[data-state="protected"] .crowd-sig {
+  color: var(--accent-ink);
 }
 
-.s-divider {
-  stroke: var(--zinc-200);
-  stroke-width: 1;
-}
-
-.schema-caption {
+/* The tracker's verdict line, with a status-pill flavour. */
+.crowd-tracker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
+  font-size: 13px;
+  color: var(--zinc-700);
+}
+
+.crowd-eye {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.crowd-caption {
+  margin: 12px 0 0;
   color: var(--zinc-500);
   font-size: 12px;
-  text-align: center;
+  line-height: 1.5;
+}
+
+/* Narrow screens: fewer columns so tiles stay legible. */
+@media (max-width: 560px) {
+  .crowd-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 /* "What it changes" cards. */
