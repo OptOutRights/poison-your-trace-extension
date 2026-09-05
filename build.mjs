@@ -1,7 +1,7 @@
 // Bundle each WebExtension entry point into a standalone IIFE so it can load as a classic
 // background/content/popup script (Firefox MV2). Type checking is done separately by tsc.
 //
-// Named entry points keep the output flat in dist/ (dist/background.js, dist/fingerprint.js, ...)
+// Named entry points keep the output flat in dist/ (dist/background.js, dist/popup-readout.js, ...)
 // even though the sources live in nested folders, so the manifest and background can reference
 // stable file names.
 import { build } from "esbuild";
@@ -24,18 +24,16 @@ await build({
   entryPoints: {
     background: "src/background.ts",
     popup: "src/popup.ts",
-    fingerprint: "src/fingerprint/inject.ts",
-    "fingerprint-webgl": "src/fingerprint/webgl.ts",
-    "fingerprint-audio": "src/fingerprint/audio.ts",
-    "fingerprint-plugins": "src/fingerprint/plugins.ts",
-    "fingerprint-report-relay": "src/fingerprint/report-relay.ts",
+    // The "what this site sees" probe, injected on demand by the popup via tabs.executeScript. It
+    // reads the already-RFP'd values from the active tab and stashes them on a page global.
+    "popup-readout": "src/popup-readout.ts",
     "email-autofill": "src/email/autofill.ts",
   },
   outdir: "dist",
   bundle: true,
   format: "iife",
   // Keep the output unminified so the shipped scripts stay readable when debugging in the page
-  // (the fingerprint overrides run in the page's MAIN world, where the page can read them anyway).
+  // (the readout probe runs in the page, where the page can read it anyway).
   minify: false,
   target: "firefox128",
   platform: "browser",

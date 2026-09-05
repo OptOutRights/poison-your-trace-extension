@@ -119,54 +119,55 @@ h1 img {
   color: var(--amber-text);
 }
 
-/* OS family control: shares the divided-row layout, so it sits directly under the enable row without
-   a doubled divider (the enable row's bottom border is the separator). */
-.os-control {
-  border-top: 0;
+/* The hero enable row has no bottom border: the details disclosure below owns the next divider, so we
+   never draw a doubled rule between them. */
+.control.hero {
+  border-bottom: 0;
 }
 
-/* Native select restyled to the system's angular grammar: clipped corners, 7px controls, focus ring. */
-.os-select {
-  appearance: none;
-  border: 1px solid var(--zinc-300);
-  background: var(--white);
-  color: var(--zinc-800);
-  padding: 5px 9px;
-  font-family: var(--font-sans);
+/* Collapsible per-protection breakdown. The <summary> is the "Détails" affordance; a CSS marker gives
+   it the disclosure caret so the row reads as expandable without extra markup. */
+.details {
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+.details > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 0;
+  color: var(--accent-ink);
   font-size: 12px;
   font-weight: 600;
-  cursor: pointer;
-  clip-path: polygon(
-    7px 0,
-    100% 0,
-    100% calc(100% - 7px),
-    calc(100% - 7px) 100%,
-    0 100%,
-    0 7px
-  );
+  user-select: none;
 }
 
-.os-select:focus-visible {
+/* Hide the platform's default triangle (both engines) and draw our own caret after the word. */
+.details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.details > summary::after {
+  content: " \25BE"; /* ▾ */
+  color: var(--zinc-400);
+}
+
+.details[open] > summary::after {
+  content: " \25B4"; /* ▴ */
+}
+
+.details > summary:focus-visible {
   outline: 0;
+  border-radius: 3px;
   box-shadow: var(--focus-ring);
 }
 
-/* The detected / presented readout under the selector: muted 11px metadata. */
-.os-note {
-  margin: 8px 0 0;
-  color: var(--zinc-600);
-  font-size: 11px;
-  line-height: 1.35;
+/* Each zone (Global / Ce site) inside the disclosure. */
+.zone {
+  padding-bottom: 8px;
 }
 
-/* Recap. */
-.recap {
-  margin-top: 12px;
-}
-
-/* Section labels: 11/13 uppercase metadata. */
-.recap h2 {
-  margin: 16px 0 6px;
+.zone h2 {
+  margin: 8px 0 4px;
   color: var(--zinc-500);
   font-size: 11px;
   font-weight: 600;
@@ -175,108 +176,101 @@ h1 img {
   line-height: 1.2;
 }
 
-.recap h2:first-child {
-  margin-top: 0;
-}
-
-/* Hero metric: strong number hierarchy with a 3px accent state marker. */
-.metric {
+/* One protection row: label + sentence on the left, a toggle on the right. */
+.prot {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
-  padding: 12px;
-  margin-bottom: 4px;
-  background: var(--zinc-050);
-  border-left: 3px solid var(--accent);
+  padding: 8px 0;
 }
 
-.metric .metric-value {
-  margin: 0;
-  font-size: 34px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
-  line-height: 0.9;
-  color: var(--zinc-950);
+.prot + .prot {
+  border-top: 1px solid var(--zinc-200);
 }
 
-.metric .metric-label {
-  margin: 0;
-  color: var(--zinc-700);
-  font-size: 12px;
-  font-weight: 500;
+.prot-text {
+  min-width: 0;
 }
 
-/* "This site" facts: label / value rows. */
-.fact {
-  margin: 6px 0;
-  font-size: 12px;
-  color: var(--zinc-700);
-}
-
-.fact b {
-  color: var(--zinc-800);
+.prot-text label {
+  display: block;
+  font-size: 13px;
   font-weight: 600;
+  color: var(--zinc-800);
+  cursor: pointer;
 }
 
-/* Capture rows: before -> after, with a 3px marker and tabular values. */
-.cap {
-  position: relative;
-  padding: 6px 0 6px 13px;
+.prot-desc {
+  margin: 2px 0 0;
+  color: var(--zinc-600);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* The RFP caveat note: a muted amber warning line, set apart from the plain description. */
+.prot-note {
+  margin: 3px 0 0;
+  color: var(--amber-text);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+/* Per-protection toggle: same 16px accent checkbox and focus ring as the hero switch. */
+.prot-toggle {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.prot-toggle:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+/* Live readout: "what this site sees" after RFP. */
+.readout {
+  margin-top: 12px;
+}
+
+.readout h2 {
+  margin: 0 0 6px;
+  color: var(--zinc-500);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+/* One label / value line. The value wraps and uses tabular numbers so the readouts align cleanly. */
+.see {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
   font-size: 12px;
   line-height: 1.35;
 }
 
-.cap::before {
-  position: absolute;
-  left: 0;
-  top: 8px;
-  width: 3px;
-  height: 16px;
-  background: var(--accent);
-  content: "";
-}
-
-.cap + .cap {
+.see + .see {
   border-top: 1px solid var(--zinc-200);
 }
 
-.cap .sig {
-  font-weight: 600;
+.see-label {
+  flex: 0 0 88px;
   color: var(--zinc-800);
+  font-weight: 600;
 }
 
-.cap .vals {
-  color: var(--zinc-600);
+.see-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--accent-ink);
   font-variant-numeric: tabular-nums;
   word-break: break-word;
-}
-
-.cap .before {
-  color: var(--red-text);
-}
-
-.cap .after {
-  color: var(--accent-ink);
-}
-
-.cap .arrow {
-  color: var(--zinc-400);
-  padding: 0 0.25em;
-}
-
-/* Honest gaps: a muted amber block for what is NOT hidden. */
-.fact.gap {
-  padding: 8px 9px;
-  margin: 4px 0;
-  border: 1px solid var(--amber-line);
-  background: var(--amber-bg);
-  color: var(--amber-text);
-  font-size: 11px;
-}
-
-.fact.gap b {
-  color: var(--amber-text);
 }
 
 /* Empty / off states. */
