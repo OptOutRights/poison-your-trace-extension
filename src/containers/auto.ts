@@ -36,18 +36,42 @@ function colorForDomain(domain: string): (typeof COLORS)[number] {
   return COLORS[hash % COLORS.length];
 }
 
-/**
- * The container a URL belongs to: one per registrable domain. Returns null for non web URLs
- * (about:, moz-extension:, file:) which must never be re containered.
- */
-export function targetFor(url: string): { name: string; color: (typeof COLORS)[number] } | null {
+/** Parse a web (http/https) URL, or null for anything unparseable or non web (about:, file:, ...). */
+function parseWebUrl(url: string): URL | null {
   let u: URL;
   try {
     u = new URL(url);
   } catch {
     return null;
   }
-  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+  return u.protocol === "http:" || u.protocol === "https:" ? u : null;
+}
+
+/**
+ * Is this URL a Google *search results* page? Conservative on purpose: host must be a Google web
+ * search domain (`www.google.com`, `google.co.uk`, `www.google.de`, ...) AND the path must be the
+ * search endpoint (`/search`). We match the registrable domain `google.*` rather than an exact
+ * host so ccTLDs (google.fr, google.co.jp, ...) are covered, but we reject Google *properties* that
+ * are not web search (mail.google.com, docs.google.com, maps.google.com, ...) via the `/search`
+ * path check — losing the "go back to my results" affordance only matters on a results page.
+ */
+export function isGoogleSearch(url: string): boolean {
+  const u = parseWebUrl(url);
+  if (!u) return false;
+  // registrableDomain collapses `www.google.com` -> `google.com` and multi label ccTLDs like
+  // `www.google.co.uk` -> `google.co.uk`, so `google.` prefix matches every real Google web search
+  // host. It also rejects look-alikes like `google.evil.com`, whose registrable domain is `evil.com`.
+  if (!registrableDomain(u.hostname).startsWith("google.")) return false;
+  return u.pathname === "/search";
+}
+
+/**
+ * The container a URL belongs to: one per registrable domain. Returns null for non web URLs
+ * (about:, moz-extension:, file:) which must never be re containered.
+ */
+export function targetFor(url: string): { name: string; color: (typeof COLORS)[number] } | null {
+  const u = parseWebUrl(url);
+  if (!u) return null;
   const domain = registrableDomain(u.hostname);
   return { name: domain, color: colorForDomain(domain) };
 }
@@ -78,8 +102,24 @@ export class AutoContainer {
     const container = await this.containers.getOrCreate(target.name, target.color);
     if (tab.cookieStoreId === container.cookieStoreId) return {}; // already in the right container
 
-    // Wrong container: reopen this URL in the correct one, then discard the old tab. The reopened
-    // tab starts in the right container, so its own navigation passes straight through, no loop.
+    // Wrong container: reopen this URL in the correct one. The reopened tab starts in the right
+    // container, so its own navigation passes straight through, no loop.
+    //
+    // Structural limitation: a Firefox tab is bound to ONE cookieStoreId for its whole life, and
+    // there is no API to move a tab's session history across containers (Mozilla's own Multi
+    // Account Containers hits the exact same wall). So a cross container navigation can never be an
+    // in place redirect that preserves "back" — the destination MUST land in a fresh tab, which
+    // starts with empty session history. Normally we then remove the source tab (reopen in place),
+    // but that is precisely what strands the user: click a Google result, land in a new tab, and
+    // "back" can no longer return to the search because the tab that held that history is gone.
+    //
+    // Mitigation (Google search only, for now): when the source tab is sitting on a Google search
+    // results page, we KEEP it alive instead of removing it. The result opens in the new containered
+    // tab; the search stays put in its own tab, one click / Ctrl+W away — the closest thing to
+    // "back" that the container model permits. We scope this to Google because it is the highest
+    // traffic case and we want a conservative, well understood match; extending the same treatment
+    // to Bing / DuckDuckGo / social feeds is tracked as issue #58 and is out of scope here.
+    const keepSource = isGoogleSearch(tab.url ?? "");
     await browser.tabs.create({
       url: details.url,
       cookieStoreId: container.cookieStoreId,
@@ -87,7 +127,7 @@ export class AutoContainer {
       active: tab.active,
       windowId: tab.windowId,
     });
-    await browser.tabs.remove(details.tabId);
+    if (!keepSource) await browser.tabs.remove(details.tabId);
     return { cancel: true };
   };
 
