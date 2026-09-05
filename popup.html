@@ -9,27 +9,86 @@
     <header class="masthead">
       <h1><img src="icons/seringueblack-32.png" alt="" />Poison your Trace</h1>
       <p class="intro">
-        Every site gets its own container and your browser fingerprint is uniformized.
+        Every site gets its own container and Firefox's own anti-fingerprinting hides what this site sees.
       </p>
     </header>
-    <div class="control">
+
+    <!-- Hero master toggle: the one switch that arms or stands down every protection at once. -->
+    <div class="control hero">
       <label for="enabled">Enabled</label>
       <span class="switch">
         <input id="enabled" type="checkbox" />
         <span id="status" class="status"></span>
       </span>
     </div>
-    <div class="control os-control">
-      <label for="os-family">Operating system</label>
-      <select id="os-family" class="os-select">
-        <option value="auto">Auto-detect</option>
-        <option value="windows">Windows</option>
-        <option value="mac">macOS</option>
-        <option value="linux">Linux</option>
-      </select>
-    </div>
-    <p id="os-note" class="os-note"></p>
-    <div id="recap" class="recap"></div>
+
+    <!-- Collapsible per-protection breakdown. Closed by default: the hero toggle is the whole surface
+         for most users; the details are here for anyone who needs to turn one protection off. -->
+    <details id="details" class="details">
+      <summary>Détails</summary>
+
+      <section class="zone">
+        <h2>Global</h2>
+        <div class="prot" data-key="rfp">
+          <div class="prot-text">
+            <label for="prot-rfp">Fingerprint (RFP)</label>
+            <p class="prot-desc">Firefox uniformizes what this site can measure about your browser.</p>
+            <p class="prot-note">global, may break a site — turn it off here if a site misbehaves</p>
+          </div>
+          <input id="prot-rfp" type="checkbox" class="prot-toggle" />
+        </div>
+        <div class="prot" data-key="webrtc">
+          <div class="prot-text">
+            <label for="prot-webrtc">WebRTC</label>
+            <p class="prot-desc">Stops calls from leaking your real or local IP address.</p>
+          </div>
+          <input id="prot-webrtc" type="checkbox" class="prot-toggle" />
+        </div>
+        <div class="prot" data-key="trackingProtection">
+          <div class="prot-text">
+            <label for="prot-trackingProtection">Tracking protection</label>
+            <p class="prot-desc">Blocks known trackers on every site, always.</p>
+          </div>
+          <input id="prot-trackingProtection" type="checkbox" class="prot-toggle" />
+        </div>
+        <div class="prot" data-key="hyperlinkAuditing">
+          <div class="prot-text">
+            <label for="prot-hyperlinkAuditing">Hyperlink auditing</label>
+            <p class="prot-desc">Stops links from silently pinging a third party when you click.</p>
+          </div>
+          <input id="prot-hyperlinkAuditing" type="checkbox" class="prot-toggle" />
+        </div>
+        <div class="prot" data-key="networkPrediction">
+          <div class="prot-text">
+            <label for="prot-networkPrediction">Network prediction</label>
+            <p class="prot-desc">Stops the browser from reaching out to sites before you ask.</p>
+          </div>
+          <input id="prot-networkPrediction" type="checkbox" class="prot-toggle" />
+        </div>
+      </section>
+
+      <section class="zone">
+        <h2>Ce site</h2>
+        <div class="prot" data-key="container">
+          <div class="prot-text">
+            <label for="prot-container">Container</label>
+            <p class="prot-desc">Keeps this site's cookies in their own jar, apart from every other site.</p>
+          </div>
+          <input id="prot-container" type="checkbox" class="prot-toggle" />
+        </div>
+        <div class="prot" data-key="burnerEmail">
+          <div class="prot-text">
+            <label for="prot-burnerEmail">Burner email</label>
+            <p class="prot-desc">Fills signup forms with a throwaway alias unique to this site.</p>
+          </div>
+          <input id="prot-burnerEmail" type="checkbox" class="prot-toggle" />
+        </div>
+      </section>
+    </details>
+
+    <!-- Live "what this site sees" readout: the values the active tab observes after RFP. -->
+    <div id="readout" class="readout"></div>
+
     <footer class="popup-footer">
       <a href="about.html" target="_blank" rel="noopener">How it works &amp; what is hidden</a>
     </footer>

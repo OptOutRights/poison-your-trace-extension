@@ -18,6 +18,7 @@
   "permissions": [
     "contextualIdentities",
     "cookies",
+    "privacy",
     "storage",
     "tabs",
     "webNavigation",

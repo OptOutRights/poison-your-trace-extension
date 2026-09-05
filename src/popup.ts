@@ -1,15 +1,12 @@
-// Toolbar popup: the Enabled toggle plus a plain recap of what is being hidden on the active tab
-// (ticket #6). The toggle still writes the on device config and asks the background to re apply
-// immediately; below it the recap reads the active tab's before and after captures, its container,
-// and its burner email, and states honestly what is NOT hidden (the IP, which the popup never
-// fetches from anywhere).
+// Toolbar popup: the hero Enabled toggle, a collapsible per-protection breakdown, and a live "what
+// this site sees" readout. The hero toggle and each protection toggle write the on-device config and
+// ask the background to re-apply immediately. The readout injects the popup-readout probe into the
+// active tab, reads back the values the site observes AFTER Firefox's Resist Fingerprinting has
+// reshaped them, and shows them as the current truth (after only — RFP does the hiding, so there is no
+// before/after to draw).
 
-import { loadConfig, saveConfig } from "./config";
-import {
-  GET_CAPTURES_MESSAGE_TYPE,
-  type SignalCapture,
-} from "./fingerprint/report";
-import type { OsFamily } from "./fingerprint/profiles";
+import { loadConfig, saveConfig, PROTECTION_KEYS } from "./config";
+import type { SiteView } from "./popup-readout";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -17,143 +14,9 @@ function el<T extends HTMLElement>(id: string): T {
   return node as T;
 }
 
-// The fingerprint groups the recap lays out, in a readable order. Any group the captures carry that
-// is not listed here still renders, appended after these, so a new signal group never goes missing.
-const GROUP_ORDER = [
-  "navigator",
-  "screen",
-  "timezone",
-  "canvas",
-  "webgl",
-  "plugins",
-  "audio",
-  "headers",
-] as const;
-
-const GROUP_LABEL: Record<string, string> = {
-  navigator: "Navigator",
-  screen: "Screen",
-  timezone: "Timezone",
-  canvas: "Canvas",
-  webgl: "WebGL",
-  plugins: "Plugins",
-  audio: "Audio",
-  headers: "Request headers",
-};
-
-// The active tab, resolved once per render. Returns undefined when there is no ordinary web tab
-// (e.g. an about: page), so the recap can fall back to a graceful message.
-async function activeTab(): Promise<browser.tabs.Tab | undefined> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  return tab;
-}
-
-function hostnameOf(tab: browser.tabs.Tab): string | undefined {
-  if (!tab.url) return undefined;
-  try {
-    return new URL(tab.url).hostname || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-async function getCaptures(tabId: number): Promise<SignalCapture[]> {
-  const reply = (await browser.runtime.sendMessage({
-    type: GET_CAPTURES_MESSAGE_TYPE,
-    tabId,
-  })) as { captures?: SignalCapture[] } | undefined;
-  return reply?.captures ?? [];
-}
-
-// The container name for the active tab. "firefox-default" means the tab is not in a per site
-// container yet, so we report that plainly rather than showing a raw cookie store id.
-async function containerName(tab: browser.tabs.Tab): Promise<string> {
-  const id = tab.cookieStoreId;
-  if (!id || id === "firefox-default") return "none yet, opens in its own container on next load";
-  try {
-    const identity = await browser.contextualIdentities.get(id);
-    return identity.name;
-  } catch {
-    return "unknown";
-  }
-}
-
-// The burner email the extension would fill on this site. Uses the same "poison:burner" message the
-// autofill content script uses, so a disabled extension returns nothing and we say so.
-async function burnerEmail(hostname: string): Promise<string | undefined> {
-  const reply = (await browser.runtime.sendMessage({
-    type: "poison:burner",
-    hostname,
-  })) as { address?: string } | undefined;
-  return reply?.address;
-}
-
-// OS family readout. The background is the single source of truth: it detects the real family and
-// applies any override, so the popup only reads it back and offers the override control.
-type OsChoice = OsFamily | "auto";
-interface OsInfo {
-  detected: OsFamily;
-  resolved: boolean;
-  override: OsChoice;
-  effective: OsFamily;
-}
-
-const OS_LABEL: Record<OsChoice, string> = {
-  auto: "Auto-detect",
-  windows: "Windows",
-  mac: "macOS",
-  linux: "Linux",
-};
-
-async function getOsInfo(): Promise<OsInfo> {
-  return (await browser.runtime.sendMessage({ type: "poison:osinfo" })) as OsInfo;
-}
-
-// The one-line explanation under the OS selector: what was detected and what is actually presented,
-// flagging an override or a failed detection so a wrong guess is easy to spot and correct.
-function osNote(info: OsInfo): string {
-  if (info.override !== "auto") {
-    const detected = info.resolved ? OS_LABEL[info.detected] : "an undetected OS";
-    return `Detected ${detected}. Overridden to present ${OS_LABEL[info.effective]}.`;
-  }
-  if (!info.resolved) {
-    return `Could not detect your OS; presenting ${OS_LABEL[info.effective]}. Pick your OS if that is wrong.`;
-  }
-  return `Detected ${OS_LABEL[info.detected]}, presenting the matching profile.`;
-}
-
-async function renderOsControl(): Promise<void> {
-  const select = el<HTMLSelectElement>("os-family");
-  const note = el<HTMLElement>("os-note");
-  const info = await getOsInfo();
-  select.value = info.override;
-  note.textContent = osNote(info);
-}
-
-function heading(text: string): HTMLElement {
-  const h = document.createElement("h2");
-  h.textContent = text;
-  return h;
-}
-
-// The hero metric: how many fingerprint signals were rewritten on this tab. Leads the recap with
-// the design system's strong number hierarchy and a 3px accent marker.
-function metricBlock(count: number): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "metric";
-
-  const value = document.createElement("p");
-  value.className = "metric-value";
-  value.textContent = String(count);
-
-  const label = document.createElement("p");
-  label.className = "metric-label";
-  label.textContent =
-    count === 1 ? "signal rewritten on this tab" : "signals rewritten on this tab";
-
-  wrap.append(value, label);
-  return wrap;
-}
+// The per-protection toggle ids share the `prot-<key>` convention, so we bind them by iterating
+// PROTECTION_KEYS (the schema's own authoritative key list) — adding a protection to config.ts and the
+// HTML is enough, no bespoke wiring here.
 
 // Reflect the enabled state in the status pill: colour AND a word, so the state never depends on
 // colour alone (design system: state is redundant).
@@ -162,93 +25,55 @@ function setStatus(status: HTMLElement, enabled: boolean): void {
   status.className = enabled ? "status active" : "status paused";
 }
 
-// One "before to after" line. The two values are separated by the word style arrow "to" (never a
-// dash), and canvas and audio arrive already carrying the "device signature" and "neutralized"
-// sentinels, so they render as is.
-function captureLine(cap: SignalCapture): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "cap";
-
-  const sig = document.createElement("span");
-  sig.className = "sig";
-  sig.textContent = `${cap.signal}: `;
-
-  const vals = document.createElement("span");
-  vals.className = "vals";
-
-  const before = document.createElement("span");
-  before.className = "before";
-  before.textContent = cap.before;
-
-  const arrow = document.createElement("span");
-  arrow.className = "arrow";
-  arrow.textContent = "to";
-
-  const after = document.createElement("span");
-  after.className = "after";
-  after.textContent = cap.after;
-
-  vals.append(before, " ", arrow, " ", after);
-  wrap.append(sig, vals);
-  return wrap;
+// The active tab, resolved once per readout. Returns undefined when there is no ordinary web tab
+// (e.g. an about: page), so the readout can fall back to a graceful message.
+async function activeTab(): Promise<browser.tabs.Tab | undefined> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  return tab;
 }
 
-// Render the grouped fingerprint captures. Groups appear in GROUP_ORDER first, then any extras.
-function renderCaptures(container: HTMLElement, captures: SignalCapture[]): void {
-  const byGroup = new Map<string, SignalCapture[]>();
-  for (const cap of captures) {
-    const list = byGroup.get(cap.group) ?? [];
-    list.push(cap);
-    byGroup.set(cap.group, list);
-  }
-
-  const ordered = [
-    ...GROUP_ORDER.filter((g) => byGroup.has(g)),
-    ...[...byGroup.keys()].filter((g) => !GROUP_ORDER.includes(g as (typeof GROUP_ORDER)[number])),
-  ];
-
-  for (const group of ordered) {
-    container.append(heading(GROUP_LABEL[group] ?? group));
-    for (const cap of byGroup.get(group) ?? []) container.append(captureLine(cap));
+// Ask the active tab what it sees. We inject the bundled probe (which stashes the reading on a page
+// global), then run a second tiny snippet to read that global back — executeScript resolves to the
+// last expression of the injected code, so the snippet's bare object access is what we receive. Both
+// injections can fail on a privileged page (about:, view-source:, the add-ons site), which we treat as
+// "no readout available" rather than an error.
+async function readSiteView(tabId: number): Promise<SiteView | undefined> {
+  try {
+    await browser.tabs.executeScript(tabId, { file: "dist/popup-readout.js", runAt: "document_end" });
+    const results = await browser.tabs.executeScript(tabId, { code: "window.__poisonSiteView" });
+    return results?.[0] as SiteView | undefined;
+  } catch {
+    return undefined;
   }
 }
 
-function factLine(label: string, value: string): HTMLElement {
-  const p = document.createElement("div");
-  p.className = "fact";
-  const b = document.createElement("b");
-  b.textContent = `${label}: `;
-  p.append(b, document.createTextNode(value));
-  return p;
+// One readout row: a label and the current value the site observes. Values are plain text; the value
+// column uses tabular numbers so the aligned rows read cleanly.
+function readoutRow(label: string, value: string): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "see";
+  const b = document.createElement("span");
+  b.className = "see-label";
+  b.textContent = label;
+  const v = document.createElement("span");
+  v.className = "see-value";
+  v.textContent = value;
+  row.append(b, v);
+  return row;
 }
 
-// The honest gaps: what this extension does NOT hide. The IP is never shown and never fetched from
-// anywhere; email is a burner alias so replies land nowhere the extension controls.
-function renderGaps(container: HTMLElement): void {
-  container.append(heading("Not hidden"));
-  const ip = document.createElement("div");
-  ip.className = "fact gap";
-  const ipb = document.createElement("b");
-  ipb.textContent = "IP address: ";
-  ip.append(ipb, document.createTextNode("not hidden (use a VPN or Tor for that)."));
-  container.append(ip);
-
-  const mail = document.createElement("div");
-  mail.className = "fact gap";
-  mail.textContent = "Email is a burner alias only, so no mail comes back to you through it.";
-  container.append(mail);
-}
-
-async function renderRecap(): Promise<void> {
-  const recap = el<HTMLElement>("recap");
-  recap.textContent = "";
+// Render the live readout for the active tab. Off, non-web, and freshly-opened tabs each get a plain
+// sentence rather than an empty or misleading list.
+async function renderReadout(): Promise<void> {
+  const readout = el<HTMLElement>("readout");
+  readout.textContent = "";
 
   const config = await loadConfig();
   if (!config.enabled) {
     const off = document.createElement("div");
     off.className = "empty";
-    off.textContent = "Protections are off. Turn Enabled on to hide this site's fingerprint.";
-    recap.append(off);
+    off.textContent = "Protections are off. Turn Enabled on to hide what this site sees.";
+    readout.append(off);
     return;
   }
 
@@ -256,43 +81,36 @@ async function renderRecap(): Promise<void> {
   if (!tab || typeof tab.id !== "number") {
     const none = document.createElement("div");
     none.className = "empty";
-    none.textContent = "Nothing captured yet on this tab.";
-    recap.append(none);
+    none.textContent = "No web page in this tab to read.";
+    readout.append(none);
     return;
   }
 
-  const hostname = hostnameOf(tab);
-
-  // Fingerprint before and after, grouped. A tab that just opened (or a non web page) has no
-  // captures yet, so we say so plainly rather than showing an empty list.
-  const captures = hostname ? await getCaptures(tab.id) : [];
-
-  // Hero metric first: the count of signals rewritten on this tab. Omitted when nothing was
-  // captured, so the metric never reads a misleading zero.
-  if (captures.length > 0) recap.append(metricBlock(captures.length));
-
-  // Site context: container and burner email. Both resolve independently of the captures.
-  recap.append(heading("This site"));
-  recap.append(factLine("Container", await containerName(tab)));
-  if (hostname) {
-    const address = await burnerEmail(hostname);
-    recap.append(factLine("Burner email", address ?? "none for this site."));
-  } else {
-    recap.append(factLine("Burner email", "not a web page, no burner in use."));
+  const view = await readSiteView(tab.id);
+  if (!view) {
+    const none = document.createElement("div");
+    none.className = "empty";
+    none.textContent = "Cannot read this page (it may be a browser or add-on page).";
+    readout.append(none);
+    return;
   }
 
-  if (captures.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "Nothing captured yet on this tab. Reload the page to see the recap.";
-    recap.append(empty);
-  } else {
-    renderCaptures(recap, captures);
-  }
+  const heading = document.createElement("h2");
+  heading.textContent = "What this site sees";
+  readout.append(heading);
 
-  renderGaps(recap);
+  readout.append(readoutRow("User agent", view.userAgent));
+  readout.append(readoutRow("Screen", `${view.screenWidth} × ${view.screenHeight}`));
+  readout.append(readoutRow("Timezone", view.timeZone));
+  readout.append(readoutRow("CPU cores", String(view.hardwareConcurrency)));
+  readout.append(readoutRow("Pixel ratio", String(view.devicePixelRatio)));
+  readout.append(readoutRow("Canvas hash", view.canvasHash));
 }
 
+// Bind the hero toggle and every protection toggle from the current config, then wire their change
+// handlers. Each write is a partial patch (deep-merged for protections in saveConfig), followed by a
+// "poison:apply" so the background re-wires immediately, then a readout refresh so the shown values
+// reflect the new state.
 async function render(): Promise<void> {
   const enabled = el<HTMLInputElement>("enabled");
   const status = el<HTMLElement>("status");
@@ -301,24 +119,18 @@ async function render(): Promise<void> {
   enabled.checked = config.enabled;
   setStatus(status, config.enabled);
 
-  await renderOsControl();
-  await renderRecap();
+  // Reflect each protection flag onto its checkbox.
+  for (const key of PROTECTION_KEYS) {
+    el<HTMLInputElement>(`prot-${key}`).checked = config.protections[key];
+  }
 
-  // OS override: save the chosen family and re-apply so both layers pick it up. The change lands on
-  // the next page load, so we refresh the readout (which reflects the new effective family) too.
-  const osSelect = el<HTMLSelectElement>("os-family");
-  osSelect.addEventListener("change", () => {
-    void (async () => {
-      try {
-        await saveConfig({ osFamily: osSelect.value as OsChoice });
-        await browser.runtime.sendMessage({ type: "poison:apply" });
-        await renderOsControl();
-      } catch (err) {
-        status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
-        status.className = "status paused";
-      }
-    })();
-  });
+  await renderReadout();
+
+  // Surface an error inline on the status pill without throwing out of the handler.
+  const showError = (err: unknown): void => {
+    status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+    status.className = "status paused";
+  };
 
   enabled.addEventListener("change", () => {
     void (async () => {
@@ -327,14 +139,30 @@ async function render(): Promise<void> {
         await saveConfig({ enabled: on });
         await browser.runtime.sendMessage({ type: "poison:apply" });
         setStatus(status, on);
-        // The enabled state changed, so refresh the recap to match (show the list or mark it off).
-        await renderRecap();
+        // The enabled state changed, so refresh the readout to match (show it or mark it off).
+        await renderReadout();
       } catch (err) {
-        status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
-        status.className = "status paused";
+        showError(err);
       }
     })();
   });
+
+  for (const key of PROTECTION_KEYS) {
+    const toggle = el<HTMLInputElement>(`prot-${key}`);
+    toggle.addEventListener("change", () => {
+      void (async () => {
+        try {
+          // Deep-merge patch: only this one protection key changes, the rest are preserved.
+          await saveConfig({ protections: { [key]: toggle.checked } });
+          await browser.runtime.sendMessage({ type: "poison:apply" });
+          // A protection change can alter what the site sees (RFP especially), so refresh the readout.
+          await renderReadout();
+        } catch (err) {
+          showError(err);
+        }
+      })();
+    });
+  }
 }
 
 // Run immediately if the document is already parsed (DOMContentLoaded may have fired before this
