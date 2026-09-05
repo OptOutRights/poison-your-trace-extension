@@ -163,6 +163,16 @@ async function render(): Promise<void> {
       })();
     });
   }
+
+  // Firefox Relay hand-off (issue #60). The built-in burner is an inert throwaway that RECEIVES
+  // nothing; Relay gives a real address-mask that forwards mail to your inbox, for genuine sign-ups.
+  // The extension CANNOT enable Relay programmatically — there is no API — so this button is guidance
+  // only: it opens Relay's onboarding in a new tab and lets Firefox take it from there. No "step aside"
+  // detection is needed: the burner is now on-demand (context menu), so it never fights Relay's inline
+  // chip; it only ever acts on an explicit user gesture.
+  el<HTMLButtonElement>("relay-open").addEventListener("click", () => {
+    void browser.tabs.create({ url: "https://relay.firefox.com/" });
+  });
 }
 
 // Run immediately if the document is already parsed (DOMContentLoaded may have fired before this

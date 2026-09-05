@@ -79,9 +79,23 @@
         <div class="prot" data-key="burnerEmail">
           <div class="prot-text">
             <label for="prot-burnerEmail">Burner email</label>
-            <p class="prot-desc">Fills signup forms with a throwaway alias unique to this site.</p>
+            <p class="prot-desc">
+              Right-click any email field and pick "Insérer une adresse jetable" to fill it with a
+              throwaway alias unique to this site.
+            </p>
           </div>
           <input id="prot-burnerEmail" type="checkbox" class="prot-toggle" />
+        </div>
+
+        <!-- Hand-off to Firefox's native Relay (issue #60). The built-in burner is inert (it receives
+             nothing); Relay gives a real address that RECEIVES mail, for genuine sign-ups. This button
+             is guidance only — the extension cannot enable Relay programmatically. -->
+        <div class="relay">
+          <p class="relay-note">
+            Besoin de recevoir vraiment le courriel (inscription réelle) ? L'adresse jetable ci-dessus
+            ne reçoit rien. Firefox Relay vous donne une vraie adresse-masque qui relaie le courrier.
+          </p>
+          <button id="relay-open" type="button" class="relay-button">Activer Firefox Relay →</button>
         </div>
       </section>
     </details>
