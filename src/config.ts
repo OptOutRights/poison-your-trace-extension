@@ -23,7 +23,8 @@ export interface Protections {
   networkPrediction: boolean;
   /** Auto per site containers, so each site's cookies live in their own jar (the containers unit owns the mechanism). */
   container: boolean;
-  /** Burner email autofill, so a signup form is filled with a per site alias (the email unit owns the mechanism). */
+  /** On-demand burner email: a right-click "Insérer une adresse jetable" context menu fills the chosen
+   *  field with a per site alias (the email unit owns the mechanism). */
   burnerEmail: boolean;
 }
 

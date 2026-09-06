@@ -27,7 +27,9 @@ await build({
     // The "what this site sees" probe, injected on demand by the popup via tabs.executeScript. It
     // reads the already-RFP'd values from the active tab and stashes them on a page global.
     "popup-readout": "src/popup-readout.ts",
-    "email-autofill": "src/email/autofill.ts",
+    // The on-demand burner insertion content script: it tracks the right-clicked field and fills it
+    // when the "Insérer une adresse jetable" context-menu item is clicked (see src/email/insert.ts).
+    "email-insert": "src/email/insert.ts",
   },
   outdir: "dist",
   bundle: true,
