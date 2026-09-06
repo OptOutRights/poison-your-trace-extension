@@ -9,7 +9,7 @@
     <header class="masthead">
       <h1><img src="icons/seringueblack-32.png" alt="" />Poison your Trace</h1>
       <p class="intro">
-        Every site gets its own container and Firefox's own anti-fingerprinting hides what this site sees.
+        Every site gets its own container and Firefox hides what this site can measure about you.
       </p>
     </header>
 
@@ -25,7 +25,7 @@
     <!-- Collapsible per-protection breakdown. Closed by default: the hero toggle is the whole surface
          for most users; the details are here for anyone who needs to turn one protection off. -->
     <details id="details" class="details">
-      <summary>Détails</summary>
+      <summary>Details</summary>
 
       <section class="zone">
         <h2>Global</h2>
@@ -33,7 +33,7 @@
           <div class="prot-text">
             <label for="prot-rfp">Fingerprint (RFP)</label>
             <p class="prot-desc">Firefox uniformizes what this site can measure about your browser.</p>
-            <p class="prot-note">global, may break a site — turn it off here if a site misbehaves</p>
+            <p class="prot-note">Global. Turn it off here if a site stops working.</p>
           </div>
           <input id="prot-rfp" type="checkbox" class="prot-toggle" />
         </div>
@@ -68,7 +68,7 @@
       </section>
 
       <section class="zone">
-        <h2>Ce site</h2>
+        <h2>This site</h2>
         <div class="prot" data-key="container">
           <div class="prot-text">
             <label for="prot-container">Container</label>
@@ -79,9 +79,23 @@
         <div class="prot" data-key="burnerEmail">
           <div class="prot-text">
             <label for="prot-burnerEmail">Burner email</label>
-            <p class="prot-desc">Fills signup forms with a throwaway alias unique to this site.</p>
+            <p class="prot-desc">
+              Right click any email field and pick "Insert a throwaway email" to fill it with a
+              throwaway alias that is unique to this site.
+            </p>
           </div>
           <input id="prot-burnerEmail" type="checkbox" class="prot-toggle" />
+        </div>
+
+        <!-- Hand-off to Firefox's native Relay (issue #60). The built-in burner is inert (it receives
+             nothing); Relay gives a real address that RECEIVES mail, for genuine sign-ups. This button
+             is guidance only — the extension cannot enable Relay programmatically. -->
+        <div class="relay">
+          <p class="relay-note">
+            Need to really receive the email for a signup? The throwaway address above receives nothing.
+            Firefox Relay gives you a real masked address that forwards the mail to your inbox.
+          </p>
+          <button id="relay-open" type="button" class="relay-button">Turn on Firefox Relay</button>
         </div>
       </section>
     </details>

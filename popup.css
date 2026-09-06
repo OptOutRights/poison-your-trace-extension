@@ -161,7 +161,18 @@ h1 img {
   box-shadow: var(--focus-ring);
 }
 
-/* Each zone (Global / Ce site) inside the disclosure. */
+/* When the master switch is off, the breakdown is inactive: dim it and let the disabled controls read
+   as unavailable, so it never looks like protections are on while nothing is running. The summary stays
+   readable so the section can still be opened. */
+.details.disabled .zone {
+  opacity: 0.45;
+}
+
+.details.disabled .prot-toggle {
+  cursor: not-allowed;
+}
+
+/* Each zone (Global / This site) inside the disclosure. */
 .zone {
   padding-bottom: 8px;
 }
@@ -231,6 +242,58 @@ h1 img {
   box-shadow: var(--focus-ring);
 }
 
+/* Firefox Relay hand-off: an explanatory note plus a call-to-action button, set apart from the burner
+   toggle row above it with a thin top rule. */
+.relay {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--zinc-200);
+}
+
+.relay-note {
+  margin: 0 0 8px;
+  color: var(--zinc-600);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Same accent grammar as the status pill: angular clipped corners, accent fill, redundant to any
+   colour cue via its label. Full width so it reads as the section's primary action. */
+.relay-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 6px 12px;
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+
+.relay-button:hover {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.relay-button:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
 /* Live readout: "what this site sees" after RFP. */
 .readout {
   margin-top: 12px;
@@ -271,6 +334,14 @@ h1 img {
   color: var(--accent-ink);
   font-variant-numeric: tabular-nums;
   word-break: break-word;
+}
+
+/* Plain-language note under the single readout value. */
+.readout-note {
+  margin: 6px 0 0;
+  color: var(--zinc-600);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 /* Empty / off states. */

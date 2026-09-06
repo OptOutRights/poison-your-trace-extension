@@ -1,9 +1,9 @@
 // Toolbar popup: the hero Enabled toggle, a collapsible per-protection breakdown, and a live "what
 // this site sees" readout. The hero toggle and each protection toggle write the on-device config and
-// ask the background to re-apply immediately. The readout injects the popup-readout probe into the
-// active tab, reads back the values the site observes AFTER Firefox's Resist Fingerprinting has
-// reshaped them, and shows them as the current truth (after only — RFP does the hiding, so there is no
-// before/after to draw).
+// ask the background to re-apply immediately. The readout reads back the values the active site observes
+// (which the background's MAIN-world probe stamped onto the page's DOM) AFTER Firefox's fingerprint
+// protection has reshaped them, and shows them as the current truth (after only — the browser does the
+// hiding, so there is no before/after to draw).
 
 import { loadConfig, saveConfig, PROTECTION_KEYS } from "./config";
 import type { SiteView } from "./popup-readout";
@@ -25,6 +25,16 @@ function setStatus(status: HTMLElement, enabled: boolean): void {
   status.className = enabled ? "status active" : "status paused";
 }
 
+// When the master switch is off, the per-protection flags are only GATED, not cleared, so their
+// checkboxes would still read "on" while nothing is actually active. That was misleading. Disable and
+// dim the whole details section while off, so the breakdown reads as inactive and matches reality.
+function setDetailsEnabled(enabled: boolean): void {
+  el<HTMLElement>("details").classList.toggle("disabled", !enabled);
+  for (const key of PROTECTION_KEYS) {
+    el<HTMLInputElement>(`prot-${key}`).disabled = !enabled;
+  }
+}
+
 // The active tab, resolved once per readout. Returns undefined when there is no ordinary web tab
 // (e.g. an about: page), so the readout can fall back to a graceful message.
 async function activeTab(): Promise<browser.tabs.Tab | undefined> {
@@ -32,16 +42,20 @@ async function activeTab(): Promise<browser.tabs.Tab | undefined> {
   return tab;
 }
 
-// Ask the active tab what it sees. We inject the bundled probe (which stashes the reading on a page
-// global), then run a second tiny snippet to read that global back — executeScript resolves to the
-// last expression of the injected code, so the snippet's bare object access is what we receive. Both
-// injections can fail on a privileged page (about:, view-source:, the add-ons site), which we treat as
-// "no readout available" rather than an error.
+// Ask the active tab what it sees. The MAIN-world probe (registered by the background) has already
+// stamped the reading onto document.documentElement.dataset.poisonSiteView, so we only read that shared
+// DOM attribute back with a tiny isolated-world snippet — executeScript resolves to its last expression.
+// We must NOT inject the probe from here: executeScript runs in the extension's world, which Firefox
+// exempts from fingerprint protection, so a read from here would report the real values, not what the
+// site sees. Returns undefined on a privileged page (executeScript throws) OR when the attribute is
+// absent (the page loaded before the probe registered — a reload populates it).
 async function readSiteView(tabId: number): Promise<SiteView | undefined> {
   try {
-    await browser.tabs.executeScript(tabId, { file: "dist/popup-readout.js", runAt: "document_end" });
-    const results = await browser.tabs.executeScript(tabId, { code: "window.__poisonSiteView" });
-    return results?.[0] as SiteView | undefined;
+    const results = await browser.tabs.executeScript(tabId, {
+      code: "document.documentElement.dataset.poisonSiteView || null",
+    });
+    const raw = results?.[0];
+    return typeof raw === "string" ? (JSON.parse(raw) as SiteView) : undefined;
   } catch {
     return undefined;
   }
@@ -90,7 +104,7 @@ async function renderReadout(): Promise<void> {
   if (!view) {
     const none = document.createElement("div");
     none.className = "empty";
-    none.textContent = "Cannot read this page (it may be a browser or add-on page).";
+    none.textContent = "No reading yet. Reload this page to see what it exposes.";
     readout.append(none);
     return;
   }
@@ -99,12 +113,15 @@ async function renderReadout(): Promise<void> {
   heading.textContent = "What this site sees";
   readout.append(heading);
 
-  readout.append(readoutRow("User agent", view.userAgent));
-  readout.append(readoutRow("Screen", `${view.screenWidth} × ${view.screenHeight}`));
-  readout.append(readoutRow("Timezone", view.timeZone));
-  readout.append(readoutRow("CPU cores", String(view.hardwareConcurrency)));
-  readout.append(readoutRow("Pixel ratio", String(view.devicePixelRatio)));
-  readout.append(readoutRow("Canvas hash", view.canvasHash));
+  // One clear signal: the processor cores. Firefox reports a common value instead of your real number,
+  // so the site cannot tell you apart by it. The other readable values are already the same for everyone
+  // on this browser, so we do not list them.
+  readout.append(readoutRow("Processor cores", String(view.hardwareConcurrency)));
+
+  const note = document.createElement("p");
+  note.className = "readout-note";
+  note.textContent = "This site reads a shared value, not your real core count, so you blend in.";
+  readout.append(note);
 }
 
 // Bind the hero toggle and every protection toggle from the current config, then wire their change
@@ -123,6 +140,7 @@ async function render(): Promise<void> {
   for (const key of PROTECTION_KEYS) {
     el<HTMLInputElement>(`prot-${key}`).checked = config.protections[key];
   }
+  setDetailsEnabled(config.enabled);
 
   await renderReadout();
 
@@ -139,6 +157,7 @@ async function render(): Promise<void> {
         await saveConfig({ enabled: on });
         await browser.runtime.sendMessage({ type: "poison:apply" });
         setStatus(status, on);
+        setDetailsEnabled(on);
         // The enabled state changed, so refresh the readout to match (show it or mark it off).
         await renderReadout();
       } catch (err) {
@@ -163,6 +182,16 @@ async function render(): Promise<void> {
       })();
     });
   }
+
+  // Firefox Relay hand-off (issue #60). The built-in burner is an inert throwaway that RECEIVES
+  // nothing; Relay gives a real address-mask that forwards mail to your inbox, for genuine sign-ups.
+  // The extension CANNOT enable Relay programmatically — there is no API — so this button is guidance
+  // only: it opens Relay's onboarding in a new tab and lets Firefox take it from there. No "step aside"
+  // detection is needed: the burner is now on-demand (context menu), so it never fights Relay's inline
+  // chip; it only ever acts on an explicit user gesture.
+  el<HTMLButtonElement>("relay-open").addEventListener("click", () => {
+    void browser.tabs.create({ url: "https://relay.firefox.com/" });
+  });
 }
 
 // Run immediately if the document is already parsed (DOMContentLoaded may have fired before this

@@ -89,10 +89,10 @@
         </svg>
 
         <div class="callout">
-          <strong>It uniformizes, it does not randomize.</strong> A random value per site would just
-          be a new unique label. Everyone running the extension shows the same common profile
-          (Windows 10 + Firefox 140 + UTC + en-US), so the crowd blends together and the signals
-          point at no one in particular.
+          <strong>It hides you in a crowd, it does not randomize.</strong> A random value per site would
+          just be a new unique label. The extension turns on Firefox's own protection, which makes your
+          browser report common values that many people share, so the crowd blends together and the
+          signals point at no one in particular.
         </div>
       </section>
 
@@ -109,75 +109,68 @@
           <div class="card">
             <h3>One shared fingerprint</h3>
             <p>
-              Instead of your unique device signature, every site sees the same common profile. You
-              are hidden into the crowd.
+              Firefox's own protection makes every site see common values instead of your unique device
+              signature. You are hidden in the crowd.
             </p>
           </div>
           <div class="card">
             <h3>A burner email</h3>
             <p>
-              Signup forms get a throwaway address like amber.otter42@example.invalid, a different
-              one per site so they cannot be linked.
+              Right click any email field to fill it with a throwaway address like
+              amber.otter42@example.invalid, a different one per site so they cannot be linked.
             </p>
           </div>
         </div>
       </section>
 
       <section aria-labelledby="hidden">
-        <h2 id="hidden">What gets uniformized</h2>
+        <h2 id="hidden">What it turns on</h2>
         <p>
-          When enabled, these fingerprint signals are reshaped toward one shared profile. The popup
-          shows each one for the current tab, as its real value "to" the shared value.
+          When enabled, the extension turns on Firefox's own fingerprint protection plus a few privacy
+          settings, and gives every site its own container. The popup shows one clear signal for the
+          current tab: your processor core count, which Firefox reports as a common value instead of your
+          real one.
         </p>
         <ul class="signals">
           <li>
-            <span class="signal-name">Navigator</span>
+            <span class="signal-name">Fingerprint protection</span>
             <span class="signal-desc"
-              >The basics your browser announces: its name and version, your operating system, and
-              your languages.</span
+              >Firefox reshapes what a site can measure (canvas, screen, timezone, processor cores,
+              audio and more) toward values that many users share.</span
             >
           </li>
           <li>
-            <span class="signal-name">Screen</span>
-            <span class="signal-desc">Your screen's size, resolution, and colour depth.</span>
-          </li>
-          <li>
-            <span class="signal-name">Timezone</span>
+            <span class="signal-name">Containers</span>
             <span class="signal-desc"
-              >Your time zone and clock offset, which hint at where in the world you are.</span
+              >Each site gets its own sealed cookie jar, so a login or tracker on one site cannot follow
+              you to another.</span
             >
           </li>
           <li>
-            <span class="signal-name">Canvas</span>
+            <span class="signal-name">WebRTC</span>
+            <span class="signal-desc">Stops calls from leaking your real or local IP address.</span>
+          </li>
+          <li>
+            <span class="signal-name">Tracking protection</span>
+            <span class="signal-desc">Blocks known trackers on every site, always.</span>
+          </li>
+          <li>
+            <span class="signal-name">Hyperlink auditing</span>
             <span class="signal-desc"
-              >A hidden image your browser draws; tiny hardware quirks make it unique to your device.
-              It is neutralized to a shared value.</span
+              >Stops links from silently pinging a third party when you click.</span
             >
           </li>
           <li>
-            <span class="signal-name">WebGL</span>
+            <span class="signal-name">Network prediction</span>
             <span class="signal-desc"
-              >The name of your graphics card and driver, exposed when a page renders 3D.</span
+              >Stops the browser from reaching out to sites before you ask.</span
             >
           </li>
           <li>
-            <span class="signal-name">Plugins</span>
+            <span class="signal-name">Burner email</span>
             <span class="signal-desc"
-              >The list of browser plugins and file types your browser reports supporting.</span
-            >
-          </li>
-          <li>
-            <span class="signal-name">Audio</span>
-            <span class="signal-desc"
-              >A hidden sound your browser processes; like canvas, its quirks identify your device.
-              It is neutralized.</span
-            >
-          </li>
-          <li>
-            <span class="signal-name">Request headers</span>
-            <span class="signal-desc"
-              >Labels attached to every request (the User-Agent and Accept-Language), sent before any
-              page script even runs.</span
+              >Right click any email field to fill it with a throwaway address, a different one per site
+              so they cannot be linked.</span
             >
           </li>
         </ul>
@@ -194,9 +187,14 @@
             </li>
             <li>
               <strong>Email is a burner only.</strong> The alias lives at a domain that can never
-              receive mail, so it hides your real address on signup forms but is not an inbox.
+              receive mail, so it hides your real address but is not an inbox. For a real signup that
+              needs to receive mail, use Firefox Relay.
             </li>
-            <li><strong>Font metrics</strong> are not covered yet.</li>
+            <li>
+              <strong>Your platform stays visible.</strong> The browser still reports whether you are on
+              Mac, Windows or Linux. Everything else in that label is already the same for everyone on
+              your Firefox version.
+            </li>
           </ul>
         </div>
       </section>
