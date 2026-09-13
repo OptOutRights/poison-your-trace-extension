@@ -1,7 +1,7 @@
 /*
   "How it works" page. Tokens, the font, and the reset come from theme.css; this file lays out a
-  single readable column and the beginner-oriented components (the before/after schema, the list of
-  what is hidden, and the honest-gaps block), all in the same design-system grammar as the popup.
+  single readable column and the beginner-oriented components (the "what it changes" cards, the list
+  of what is hidden, and the honest-gaps block), all in the same design-system grammar as the popup.
 */
 
 @import "theme.css";
@@ -82,103 +82,6 @@ section > p {
 
 .callout strong {
   font-weight: 700;
-}
-
-/* Before/after schema. */
-.schema {
-  display: block;
-  width: 100%;
-  height: auto;
-  margin: 8px 0 4px;
-}
-
-.s-panel-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.s-bad-label {
-  fill: var(--red-text);
-}
-
-.s-good-label {
-  fill: var(--accent-ink);
-}
-
-.s-box {
-  fill: var(--white);
-  stroke: var(--zinc-300);
-  stroke-width: 1;
-}
-
-.s-box-good {
-  fill: var(--white);
-  stroke: var(--accent);
-  stroke-width: 1;
-}
-
-.s-marker {
-  fill: var(--accent);
-}
-
-.s-box-text {
-  fill: var(--zinc-800);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.s-tag {
-  fill: var(--zinc-500);
-  font-size: 10px;
-}
-
-.s-tag-good {
-  fill: var(--accent-ink);
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.s-link {
-  stroke: var(--red-line);
-  stroke-width: 1.5;
-  fill: none;
-}
-
-.s-node {
-  fill: var(--red-bg);
-  stroke: var(--red-line);
-  stroke-width: 1;
-}
-
-.s-node-good {
-  fill: var(--green-bg);
-  stroke: var(--green-line);
-  stroke-width: 1;
-}
-
-.s-node-text {
-  fill: var(--red-text);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.s-node-text-good {
-  fill: var(--green-text);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.s-divider {
-  stroke: var(--zinc-200);
-  stroke-width: 1;
-}
-
-.schema-caption {
-  margin: 0;
-  color: var(--zinc-500);
-  font-size: 12px;
-  text-align: center;
 }
 
 /* "What it changes" cards. */
