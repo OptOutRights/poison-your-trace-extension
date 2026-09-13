@@ -29,7 +29,6 @@ const BURNER_MENU_ID = "poison-insert-burner";
 
 type RegisteredScript = Awaited<ReturnType<typeof browser.contentScripts.register>>;
 let insertHandle: RegisteredScript | null = null;
-let readoutHandle: RegisteredScript | null = null;
 // Track whether the menu item currently exists, so create/remove stay idempotent (contextMenus.create
 // throws on a duplicate id, and remove() throws on an unknown id).
 let burnerMenuPresent = false;
@@ -69,29 +68,6 @@ async function setBurnerContextMenu(on: boolean): Promise<void> {
   } else if (!on && burnerMenuPresent) {
     await browser.contextMenus.remove(BURNER_MENU_ID);
     burnerMenuPresent = false;
-  }
-}
-
-// The "what this site sees" readout probe. Registered in the page's MAIN world (world: "MAIN") so it
-// reads the values a site actually observes AFTER Firefox's fingerprint protection has reshaped them —
-// a content script would run in the extension's world, which Firefox EXEMPTS from that protection, and
-// would report the real values instead (the bug this replaces). The probe stamps its reading onto
-// document.documentElement.dataset.poisonSiteView, a shared-DOM slot the popup's ordinary
-// (isolated-world) executeScript can read back across the world boundary. Registered at document_idle so
-// protection and the page have settled. It only reaches pages loaded AFTER it registers, so a page open
-// before the extension was enabled shows no reading until it is reloaded (the popup says so).
-async function setReadoutProbe(on: boolean): Promise<void> {
-  if (on && readoutHandle === null) {
-    readoutHandle = await browser.contentScripts.register({
-      matches: ["http://*/*", "https://*/*"],
-      js: [{ file: "dist/popup-readout.js" }],
-      runAt: "document_idle",
-      allFrames: false,
-      world: "MAIN",
-    });
-  } else if (!on && readoutHandle !== null) {
-    await readoutHandle.unregister();
-    readoutHandle = null;
   }
 }
 
@@ -199,10 +175,6 @@ async function applyConfig(): Promise<void> {
   // On-demand burner email: gated on enabled AND the burnerEmail flag. Wires (or tears down) both the
   // insertion content script and the "Insérer une adresse jetable" context-menu item together.
   await setBurnerContextMenu(config.enabled && config.protections.burnerEmail);
-
-  // The MAIN-world readout probe: on whenever the extension is enabled, so the popup can show what the
-  // active site actually sees. It only reads, so it is gated on `enabled` alone, not a protection flag.
-  await setReadoutProbe(config.enabled);
 
   console.info(
     config.enabled

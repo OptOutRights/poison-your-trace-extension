@@ -95,8 +95,6 @@ To load it by hand: open `about:debugging` > **This Firefox** > **Load Temporary
 
 A single **background script** is the only control point. It reads the on-device config and, for each protection, either flips the matching Firefox `privacy.*` setting on or clears it back to your own preference. Fingerprint uniformization is `privacy.websites.resistFingerprinting`, so there is no in-page script rewriting `navigator` or canvas: the browser reshapes those values itself, in every world, before a site can read them. The only mechanisms that live inside the extension are the per-site containers and the on-demand burner email. The popup writes the config and asks the background to re-apply it.
 
-The "what this site sees" recap is read by a tiny probe registered in the page's **MAIN world**, so it reports the values a site actually observes after RFP (a normal content script runs in a world Firefox exempts from RFP, and would show the real values instead). The probe stamps its reading onto a shared DOM slot the popup reads back.
-
 ```
 manifest.json          extension manifest (Firefox MV2)
 popup.html / popup.css the toolbar popup: one hero toggle + a per-protection Details panel
@@ -106,7 +104,6 @@ src/
   background.ts        the single control point: applies every protection from the config
   config.ts            the on-device config: { enabled, protections }
   popup.ts             the popup toggles and their wiring
-  popup-readout.ts     MAIN-world probe: reads what the active site sees after RFP
   containers/
     manager.ts         creates one Firefox container per site
     auto.ts            reopens every navigation in its per-site container

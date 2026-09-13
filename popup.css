@@ -294,63 +294,6 @@ h1 img {
   box-shadow: var(--focus-ring);
 }
 
-/* Live readout: "what this site sees" after RFP. */
-.readout {
-  margin-top: 12px;
-}
-
-.readout h2 {
-  margin: 0 0 6px;
-  color: var(--zinc-500);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-}
-
-/* One label / value line. The value wraps and uses tabular numbers so the readouts align cleanly. */
-.see {
-  display: flex;
-  gap: 8px;
-  padding: 5px 0;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.see + .see {
-  border-top: 1px solid var(--zinc-200);
-}
-
-.see-label {
-  flex: 0 0 88px;
-  color: var(--zinc-800);
-  font-weight: 600;
-}
-
-.see-value {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--accent-ink);
-  font-variant-numeric: tabular-nums;
-  word-break: break-word;
-}
-
-/* Plain-language note under the single readout value. */
-.readout-note {
-  margin: 6px 0 0;
-  color: var(--zinc-600);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-/* Empty / off states. */
-.empty {
-  color: var(--zinc-500);
-  font-size: 12px;
-  font-style: italic;
-}
-
 /* Footer link to the how-it-works page. */
 .popup-footer {
   margin-top: 16px;
