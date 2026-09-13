@@ -1,7 +1,7 @@
 // Bundle each WebExtension entry point into a standalone IIFE so it can load as a classic
 // background/content/popup script (Firefox MV2). Type checking is done separately by tsc.
 //
-// Named entry points keep the output flat in dist/ (dist/background.js, dist/popup-readout.js, ...)
+// Named entry points keep the output flat in dist/ (dist/background.js, dist/email-insert.js, ...)
 // even though the sources live in nested folders, so the manifest and background can reference
 // stable file names.
 import { build } from "esbuild";
@@ -24,18 +24,14 @@ await build({
   entryPoints: {
     background: "src/background.ts",
     popup: "src/popup.ts",
-    // The "what this site sees" probe, injected on demand by the popup via tabs.executeScript. It
-    // reads the already-RFP'd values from the active tab and stashes them on a page global.
-    "popup-readout": "src/popup-readout.ts",
     // The on-demand burner insertion content script: it tracks the right-clicked field and fills it
-    // when the "Insérer une adresse jetable" context-menu item is clicked (see src/email/insert.ts).
+    // when the "Insert a throwaway email" context-menu item is clicked (see src/email/insert.ts).
     "email-insert": "src/email/insert.ts",
   },
   outdir: "dist",
   bundle: true,
   format: "iife",
-  // Keep the output unminified so the shipped scripts stay readable when debugging in the page
-  // (the readout probe runs in the page, where the page can read it anyway).
+  // Keep the output unminified so the shipped scripts stay readable when debugging in the page.
   minify: false,
   target: "firefox128",
   platform: "browser",
