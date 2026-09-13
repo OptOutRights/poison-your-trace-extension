@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="icons/seringuewhite-512.png" width="96" alt="Poison your Trace" />
+<img src="icons/firesnake-512.png" width="96" alt="Poison your Trace" />
 
 # Poison your Trace
 

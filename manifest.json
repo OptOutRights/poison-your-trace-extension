@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Poison your Trace",
-  "version": "0.1.10",
+  "version": "1.0.0",
   "description": "Stops your separate activities from being joined into one identity. Every site gets its own container and your browser fingerprint is uniformized.",
   "browser_specific_settings": {
     "gecko": {
@@ -34,18 +34,18 @@
     "default_title": "Poison your Trace",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/seringueblack-16.png",
-      "32": "icons/seringueblack-32.png"
+      "16": "icons/firesnake-16.png",
+      "32": "icons/firesnake-32.png"
     },
     "theme_icons": [
       {
-        "light": "icons/seringuewhite-16.png",
-        "dark": "icons/seringueblack-16.png",
+        "light": "icons/firesnake-16.png",
+        "dark": "icons/firesnake-16.png",
         "size": 16
       },
       {
-        "light": "icons/seringuewhite-32.png",
-        "dark": "icons/seringueblack-32.png",
+        "light": "icons/firesnake-32.png",
+        "dark": "icons/firesnake-32.png",
         "size": 32
       }
     ]
@@ -54,15 +54,15 @@
     "default_title": "Poison your Trace, what this site sees",
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/seringuewhite-16.png",
-      "32": "icons/seringuewhite-32.png"
+      "16": "icons/firesnake-16.png",
+      "32": "icons/firesnake-32.png"
     },
     "show_matches": ["http://*/*", "https://*/*"]
   },
   "icons": {
-    "16": "icons/seringuewhite-16.png",
-    "32": "icons/seringuewhite-32.png",
-    "48": "icons/seringuewhite-48.png",
-    "96": "icons/seringuewhite-96.png"
+    "16": "icons/firesnake-16.png",
+    "32": "icons/firesnake-32.png",
+    "48": "icons/firesnake-48.png",
+    "96": "icons/firesnake-96.png"
   }
 }
