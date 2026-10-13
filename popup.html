@@ -42,6 +42,16 @@
       </p>
     </div>
 
+    <!-- "What's happening on this site" readout. Reflects the real, live protection state for the active
+         tab in plain language: which protections are active, paused, or off, and the visible side effects
+         (reshaped graphics, a clean container) so they read as the extension working, not breakage. Built
+         entirely by popup.ts; hidden on non-web tabs (about:, moz-extension:, file:). -->
+    <section id="readout" class="readout" hidden>
+      <h2 class="readout-head">On this site now</h2>
+      <p id="readout-summary" class="readout-summary"></p>
+      <ul id="readout-list" class="readout-list"></ul>
+    </section>
+
     <!-- Collapsible per-protection breakdown. Closed by default: the hero toggle is the whole surface
          for most users; the details are here for anyone who needs to turn one protection off. -->
     <details id="details" class="details">
