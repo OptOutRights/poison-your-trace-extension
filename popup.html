@@ -22,6 +22,25 @@
       </span>
     </div>
 
+    <!-- Current site pause ("whitelist"). Lets the user leave one site alone when it breaks. Shows the
+         site's registrable domain and a toggle; hidden/disabled on non-web tabs (about:, extensions). -->
+    <div id="site-card" class="site-card" hidden>
+      <div class="site-row">
+        <div class="site-text">
+          <span class="site-label">This site</span>
+          <span id="site-domain" class="site-domain"></span>
+        </div>
+        <label class="site-toggle-wrap" for="site-pause">
+          <span class="site-toggle-label">Pause here</span>
+          <input id="site-pause" type="checkbox" class="prot-toggle" />
+        </label>
+      </div>
+      <p id="site-note" class="site-note" hidden>
+        Paused on this site. Note: pausing fingerprint protection is browser-wide, so it also relaxes
+        other tabs while this one is in front.
+      </p>
+    </div>
+
     <!-- Collapsible per-protection breakdown. Closed by default: the hero toggle is the whole surface
          for most users; the details are here for anyone who needs to turn one protection off. -->
     <details id="details" class="details">
@@ -77,6 +96,13 @@
           <input id="prot-container" type="checkbox" class="prot-toggle" />
         </div>
       </section>
+    </details>
+
+    <!-- Managed list of paused sites. Tucked in its own disclosure; each row removes its domain. The
+         summary count and the rows are filled in by popup.ts. Hidden entirely when the list is empty. -->
+    <details id="whitelist" class="details" hidden>
+      <summary>Paused sites (<span id="whitelist-count">0</span>)</summary>
+      <ul id="whitelist-list" class="whitelist-list"></ul>
     </details>
 
     <footer class="popup-footer">

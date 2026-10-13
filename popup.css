@@ -125,6 +125,130 @@ h1 img {
   border-bottom: 0;
 }
 
+/* Current-site pause card: the site's domain on the left, a "Pause here" toggle on the right, with an
+   amber caveat note that appears while paused. Bordered top and bottom like a control row. */
+.site-card {
+  padding: 12px 0;
+  border-top: 1px solid var(--zinc-200);
+  border-bottom: 1px solid var(--zinc-200);
+}
+
+.site-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.site-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.site-label {
+  color: var(--zinc-500);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+
+.site-domain {
+  overflow: hidden;
+  color: var(--zinc-800);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-toggle-wrap {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.site-toggle-label {
+  color: var(--zinc-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Same muted amber grammar as the RFP caveat note. */
+.site-note {
+  margin: 8px 0 0;
+  color: var(--amber-text);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+/* Managed list of paused sites: one row per domain, each with a Remove button. */
+.whitelist-list {
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
+}
+
+.whitelist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.whitelist-item + .whitelist-item {
+  border-top: 1px solid var(--zinc-200);
+}
+
+.whitelist-domain {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--zinc-800);
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Angular clipped button, neutral by default, amber on hover to read as a mild "remove". */
+.whitelist-remove {
+  flex: 0 0 auto;
+  border: 1px solid var(--zinc-300);
+  background: var(--white);
+  padding: 4px 10px;
+  color: var(--zinc-700);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+
+.whitelist-remove:hover {
+  border-color: var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+}
+
+.whitelist-remove:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
 /* Collapsible per-protection breakdown. The <summary> is the "Détails" affordance; a CSS marker gives
    it the disclosure caret so the row reads as expandable without extra markup. */
 .details {
