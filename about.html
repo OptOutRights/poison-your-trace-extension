@@ -11,30 +11,33 @@
       <header class="masthead">
         <h1><img src="icons/firesnake-32.png" alt="" />How Poison your Trace works</h1>
         <p class="lede">
-          Poison your Trace stops your separate activities from being joined into one identity.
-          Here is what that means in plain terms, and exactly what it hides.
+          Poison your Trace makes it harder for websites to recognise you and stitch everything you do
+          into a single profile. Here is what that means in plain terms, and exactly what it hides.
         </p>
       </header>
 
       <section aria-labelledby="how">
         <h2 id="how">How it works</h2>
         <p>
-          Websites recognise you in two ways: the cookies they store in your browser, and your
-          browser's <strong>fingerprint</strong>: the mix of small details (your screen, time zone,
-          graphics card, and more) that together make your device unique and tractable. When several sites can read
-          the same fingerprint and share cookies, they can join everything you do into one profile.
+          Websites recognise you in two main ways. First, with <strong>cookies</strong>: small files a
+          site leaves in your browser so it remembers you next time. Second, with your browser's
+          <strong>fingerprint</strong>: the mix of small details about your device (your screen size,
+          time zone, graphics card, and dozens more) that together make you stand out from the crowd.
+          When sites can share cookies and read the same fingerprint, they can join everything you do
+          into one profile.
         </p>
         <p>
-          Poison your Trace breaks both links: it gives every site its own sealed container so cookies
-          cannot follow you, and it turns on Firefox's own fingerprint protection so your browser reports
-          the same common values as everyone else running it.
+          Poison your Trace breaks both. It keeps each site in its own box, so cookies from one site
+          can't follow you to another. And it turns on Firefox's built-in protection that smooths over
+          those telltale details, so your browser looks like a lot of other people's instead of like
+          only you.
         </p>
 
         <div class="callout">
-          <strong>It hides you in a crowd, it does not randomize.</strong> A random value per site would
-          just be a new unique label. The extension turns on Firefox's own protection, which makes your
-          browser report common values that many people share, so the crowd blends together and the
-          signals point at no one in particular.
+          <strong>It hides you in a crowd. It does not disguise you.</strong> Giving each site a random,
+          made-up device would just create a new one-of-a-kind label. Instead, this makes your browser
+          report the same ordinary details that many people already report, so you blend in and nothing
+          points clearly at you.
         </div>
       </section>
 
@@ -42,17 +45,17 @@
         <h2 id="changes">What it changes</h2>
         <div class="cards">
           <div class="card">
-            <h3>A container per site</h3>
+            <h3>Each site in its own box</h3>
             <p>
-              Each website gets its own sealed cookie jar, so a login or tracker on one site cannot
-              follow you to another.
+              Every website gets its own private space for cookies and logins. What you do on one site
+              stays sealed off from every other site.
             </p>
           </div>
           <div class="card">
-            <h3>One shared fingerprint</h3>
+            <h3>A browser that looks ordinary</h3>
             <p>
-              Firefox's own protection makes every site see common values instead of your unique device
-              signature. You are hidden in the crowd.
+              Firefox's built-in protection replaces the details that make your device unique with
+              common ones that many people share, so you blend into the crowd.
             </p>
           </div>
         </div>
@@ -61,50 +64,50 @@
       <section aria-labelledby="hidden">
         <h2 id="hidden">What it turns on</h2>
         <p>
-          When enabled, the extension turns on Firefox's own fingerprint protection plus a few privacy
-          settings, and gives every site its own container. Everything defaults on; the popup's
-          <strong>Details</strong> panel lets you turn any single protection off if a site misbehaves.
+          When you switch it on, the extension turns on Firefox's built-in fingerprint protection and a
+          few privacy settings, and starts giving every site its own box. Everything is on by default.
+          If a site misbehaves, the popup's <strong>Details</strong> panel lets you turn any single
+          protection off.
         </p>
         <p>
-          If one site keeps breaking, the popup's <strong>Pause here</strong> switch adds it to a list
-          of paused sites: on a paused site the extension stops re-containering it. Because the
-          fingerprint and privacy settings are Firefox-wide (there is no per-site switch for them),
-          pausing also relaxes those while the paused tab is the one in front — so it eases them for
-          your other tabs too until you switch back.
+          If one site keeps breaking, use <strong>Pause here</strong> in the popup to add it to your
+          list of paused sites. On a paused site the extension stops putting it in its own box. One
+          thing to know: the "look ordinary" protection is a single Firefox-wide setting, not per-site,
+          so pausing it also eases it for your other tabs while the paused tab is the one in front.
         </p>
         <ul class="signals">
           <li>
-            <span class="signal-name">Fingerprint protection</span>
+            <span class="signal-name">Make your browser look ordinary</span>
             <span class="signal-desc"
-              >Firefox reshapes what a site can measure (canvas, screen, timezone, processor cores,
-              audio and more) toward values that many users share.</span
+              >Smooths over the details that make your device unique (screen, time zone, graphics card,
+              and more) toward values many people share.</span
             >
           </li>
           <li>
-            <span class="signal-name">Containers</span>
+            <span class="signal-name">Each site in its own box</span>
             <span class="signal-desc"
-              >Each site gets its own sealed cookie jar, so a login or tracker on one site cannot follow
-              you to another.</span
+              >Every site gets its own private space for cookies and logins, so one site can't see what
+              you do on another.</span
             >
           </li>
           <li>
-            <span class="signal-name">WebRTC</span>
-            <span class="signal-desc">Stops calls from leaking your real or local IP address.</span>
+            <span class="signal-name">Keep your IP address from leaking</span>
+            <span class="signal-desc">Stops video and voice calls from revealing your real address.</span>
           </li>
           <li>
-            <span class="signal-name">Tracking protection</span>
-            <span class="signal-desc">Blocks known trackers on every site, always.</span>
+            <span class="signal-name">Block known trackers</span>
+            <span class="signal-desc">Blocks companies known for following you, on every site.</span>
           </li>
           <li>
-            <span class="signal-name">Hyperlink auditing</span>
+            <span class="signal-name">Stop silent click reports</span>
             <span class="signal-desc"
-              >Stops links from silently pinging a third party when you click.</span
+              >Keeps the links you click from quietly reporting back to other companies.</span
             >
           </li>
           <li>
-            <span class="signal-name">Network prediction</span>
+            <span class="signal-name">Don't contact sites early</span>
             <span class="signal-desc"
-              >Stops the browser from reaching out to sites before you ask.</span
+              >Stops Firefox from reaching out to sites before you actually open them.</span
             >
           </li>
         </ul>
@@ -115,14 +118,14 @@
         <div class="gaps">
           <ul>
             <li>
-              <strong>Your IP address.</strong> The extension shows no IP and never looks one up, but
-              it cannot change the address a site sees when your browser connects. Use a VPN or Tor
-              for that.
+              <strong>Your IP address.</strong> Think of this as your internet return address. The
+              extension never leaks it, but it can't change the address a site sees when you connect.
+              For that, use a VPN or Tor alongside it.
             </li>
             <li>
-              <strong>Your platform stays visible.</strong> The browser still reports whether you are on
-              Mac, Windows or Linux. Everything else in that label is already the same for everyone on
-              your Firefox version.
+              <strong>Which system you use.</strong> Sites can still tell whether you are on Mac,
+              Windows or Linux. Everything else in that part of the label is already the same for
+              everyone on your version of Firefox.
             </li>
           </ul>
         </div>

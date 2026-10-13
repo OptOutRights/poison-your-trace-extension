@@ -9,7 +9,8 @@
     <header class="masthead">
       <h1><img src="icons/firesnake-32.png" alt="" />Poison your Trace</h1>
       <p class="intro">
-        Every site gets its own container and Firefox hides what this site can measure about you.
+        Websites try to recognise you and follow you around. This keeps each site in its own box and
+        makes your browser look like everyone else's, so you are harder to track.
       </p>
     </header>
 
@@ -36,8 +37,8 @@
         </label>
       </div>
       <p id="site-note" class="site-note" hidden>
-        Paused on this site. Note: pausing fingerprint protection is browser-wide, so it also relaxes
-        other tabs while this one is in front.
+        Paused on this site. Heads up: the "look ordinary" protection is browser-wide, so pausing it
+        here also eases your other tabs while this one is in front.
       </p>
     </div>
 
@@ -47,51 +48,63 @@
       <summary>Details</summary>
 
       <section class="zone">
-        <h2>Global</h2>
+        <h2>Applies to every site</h2>
         <div class="prot" data-key="rfp">
           <div class="prot-text">
-            <label for="prot-rfp">Fingerprint (RFP)</label>
-            <p class="prot-desc">Firefox uniformizes what this site can measure about your browser.</p>
-            <p class="prot-note">Global. Turn it off here if a site stops working.</p>
+            <label for="prot-rfp">Make your browser look ordinary</label>
+            <p class="prot-desc">
+              Hides the small details that make your device stand out, so sites can't single you out.
+              Uses Firefox's own protection (RFP).
+            </p>
+            <p class="prot-note">Turn this off if a site stops working.</p>
           </div>
           <input id="prot-rfp" type="checkbox" class="prot-toggle" />
         </div>
         <div class="prot" data-key="webrtc">
           <div class="prot-text">
-            <label for="prot-webrtc">WebRTC</label>
-            <p class="prot-desc">Stops calls from leaking your real or local IP address.</p>
+            <label for="prot-webrtc">Keep your IP address from leaking</label>
+            <p class="prot-desc">Stops video and voice calls from revealing your real address (WebRTC).</p>
           </div>
           <input id="prot-webrtc" type="checkbox" class="prot-toggle" />
         </div>
         <div class="prot" data-key="trackingProtection">
           <div class="prot-text">
-            <label for="prot-trackingProtection">Tracking protection</label>
-            <p class="prot-desc">Blocks known trackers on every site, always.</p>
+            <label for="prot-trackingProtection">Block known trackers</label>
+            <p class="prot-desc">Blocks companies known for following you, on every site.</p>
           </div>
           <input id="prot-trackingProtection" type="checkbox" class="prot-toggle" />
         </div>
         <div class="prot" data-key="hyperlinkAuditing">
           <div class="prot-text">
-            <label for="prot-hyperlinkAuditing">Hyperlink auditing</label>
-            <p class="prot-desc">Stops links from silently pinging a third party when you click.</p>
+            <label for="prot-hyperlinkAuditing">Stop silent click reports</label>
+            <p class="prot-desc">
+              Keeps the links you click from quietly reporting back to other companies (hyperlink
+              auditing).
+            </p>
           </div>
           <input id="prot-hyperlinkAuditing" type="checkbox" class="prot-toggle" />
         </div>
         <div class="prot" data-key="networkPrediction">
           <div class="prot-text">
-            <label for="prot-networkPrediction">Network prediction</label>
-            <p class="prot-desc">Stops the browser from reaching out to sites before you ask.</p>
+            <label for="prot-networkPrediction">Don't contact sites early</label>
+            <p class="prot-desc">
+              Stops Firefox from reaching out to sites before you actually open them (network
+              prediction).
+            </p>
           </div>
           <input id="prot-networkPrediction" type="checkbox" class="prot-toggle" />
         </div>
       </section>
 
       <section class="zone">
-        <h2>This site</h2>
+        <h2>Just this site</h2>
         <div class="prot" data-key="container">
           <div class="prot-text">
-            <label for="prot-container">Container</label>
-            <p class="prot-desc">Keeps this site's cookies in their own jar, apart from every other site.</p>
+            <label for="prot-container">Keep this site in its own box</label>
+            <p class="prot-desc">
+              Stores this site's cookies and login on their own, so it can't see what you do on other
+              sites (container).
+            </p>
           </div>
           <input id="prot-container" type="checkbox" class="prot-toggle" />
         </div>
