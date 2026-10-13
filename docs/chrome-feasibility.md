@@ -1,5 +1,10 @@
 # Can we port Poison your Trace to Chrome?
 
+> **Historical / internal research — not the shipped design.** This note was written while an
+> email-burner feature was still in the product. That feature has since been removed, so the "Email
+> burner" rows below describe something the extension no longer ships. The core finding (containers and
+> fingerprint protection are Firefox-only, so Chrome is a separate project) still holds.
+
 Short answer: **not as a port.** The two features that make this extension what it is — per-site
 container isolation and fingerprint uniformization — both rest on **Firefox-only** browser APIs
 with **no Chrome equivalent**. Shipping on Chrome means *reinventing* isolation with a different,

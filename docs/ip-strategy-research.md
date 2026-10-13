@@ -1,5 +1,10 @@
 # IP strategy research
 
+> **Historical / internal research — not the shipped design.** This is a research note that informed
+> the project's direction, not a description of a shipped feature. The shipped extension closes the
+> WebRTC IP leak (the "look ordinary" and privacy settings) but does not hide or share your IP address;
+> for that it points users at a VPN or Tor. Read this as background on why.
+
 ## Executive summary
 
 Poison your Trace uniformizes the browser fingerprint so its users blend into one crowd, but it

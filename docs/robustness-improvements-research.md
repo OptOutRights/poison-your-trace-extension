@@ -1,5 +1,11 @@
 # Robustness improvements research
 
+> **Historical / internal research — not the shipped design.** This note analyses the old custom
+> fingerprint engine (the page-world `<script>` that reshaped `navigator`, canvas, etc.) and argues for
+> switching to Firefox's own protection. That switch has since happened: the shipped extension no longer
+> runs its own engine and instead turns on Firefox RFP. Keep this as the reasoning behind that decision,
+> not a description of current behaviour.
+
 ## Executive summary
 
 Poison your Trace already covers the highest-entropy JavaScript surfaces (UA, screen, timezone,

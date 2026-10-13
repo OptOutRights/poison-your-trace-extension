@@ -1,8 +1,15 @@
 # Beginner's guide
 
-An in-depth, beginner-friendly tour of how Poison your Trace works, what it reshapes, and where it is
-honest about its limits. If you just want to install and use the extension, the [README](../README.md)
-covers that; this guide is for readers who want to understand the how and the why.
+> **Historical / outdated — not the shipped design.** This guide describes an earlier version of
+> Poison your Trace that ran its own fingerprint engine (content scripts, page-world `<script>`
+> injection, a before/after readout) and filled a burner email on signup forms. The shipped extension
+> no longer does any of that: it relies on Firefox's own fingerprint protection (RFP) plus a few
+> `privacy.*` settings, uses per-site containers, and has no burner email. For the current, accurate
+> explanation in plain language, see the [README](../README.md) and the in-extension **How it works**
+> page (`about.html`). This file is kept only as a record of the old design.
+
+An in-depth, beginner-friendly tour of how Poison your Trace worked in that earlier version, what it
+reshaped, and where it was honest about its limits.
 
 ## How it works (for a JavaScript newcomer)
 
