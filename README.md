@@ -7,7 +7,7 @@
 ### Free yourself from constant web tracking.
 #### You're not you. You are everyone. 
 
-One switch. Every site gets its own container, and Firefox's own fingerprint protection makes your browser report common values shared by a crowd, so you're not the one anyone is looking at.
+One switch. Every site goes in its own box, and Firefox's own protection makes your browser look like everyone else's, so you're not the one anyone is looking at.
 
 <br/>
 
@@ -22,23 +22,17 @@ One switch. Every site gets its own container, and Firefox's own fingerprint pro
 
 ---
 
-<!-- TODO(screenshot): drop the toolbar popup PNG at docs/screenshots/popup.png, then uncomment.
-<div align="center">
-
-<img src="docs/screenshots/popup.png" width="320" alt="The toolbar popup: a single Enabled toggle and a recap of what the active site sees" />
-
-<em>One toggle. A plain recap of what's being hidden on the site you're on.</em>
-
-</div>
--->
-
 ## The purpose
 
-Websites collect and sell your activity across the web to form a single profile of you and follow you everywhere you go. For this, some ways they use are:
-- cookies that follow you 
-- **your fingerprint** built from your screen, timezone, fonts, graphics card, and dozens of other quiet signals. 
+Websites try to recognise you and follow you from site to site, building up one big profile of
+everything you do. They mainly do this in two ways:
 
-Poison your Trace neutralizes both joins at once.
+- **Cookies** that tag your browser so a site remembers you next time.
+- **Your fingerprint**: the mix of small details about your device (your screen, time zone, fonts,
+  graphics card, and dozens of other quiet signals) that together make you stand out.
+
+Poison your Trace shuts down both at once. It keeps each site in its own box so cookies can't follow
+you around, and it makes your browser look like everyone else's so your device no longer stands out.
 
 ## Install
 
@@ -55,24 +49,24 @@ Firefox keeps the extension up to date automatically from addons.mozilla.org. In
 
 ## What it does
 
-Poison your Trace ships as one brick: a single on/off switch arms everything. Under it, a **Details** disclosure lets you turn any one protection off (useful if a site breaks) without losing the rest. Everything defaults on.
+There is one on/off switch that turns on everything below. If a site breaks, open the **Details** panel in the popup and turn off just that one protection, keeping the rest. Everything is on by default.
 
 | | |
 |---|---|
-| **Per-site containers** | Every site opens in its own Firefox container. Cookies and logins never cross between sites. |
-| **Uniformized fingerprint** | Firefox's built-in Resist Fingerprinting (RFP) reshapes what a site can measure (canvas, screen, timezone, processor cores, audio, fonts and more) toward *one common profile* many users share. Values are not randomized per site: you become part of a crowd. |
-| **Privacy switches** | WebRTC is stopped from leaking your real or local IP, tracking protection is forced on everywhere, hyperlink-auditing beacons are killed, and speculative network prediction is turned off. |
-| **Pause a site** | Hit **Pause here** in the popup to add the current site to a whitelist. On a paused site the extension stops re-containering it; because RFP and the privacy switches are Firefox-wide, they also relax while a paused tab is in front. |
+| **Each site in its own box** | Every site gets its own private space for cookies and logins (a Firefox "container"), so one site can't see what you do on another. |
+| **A browser that looks ordinary** | Firefox's built-in protection smooths over the details that make your device unique (screen, time zone, graphics card, fonts, and more) so your browser looks like a lot of other people's. You blend into a crowd instead of being randomly disguised. |
+| **Privacy settings turned on** | Keeps your IP address from leaking in calls (WebRTC), blocks known trackers everywhere, stops the links you click from quietly reporting back (hyperlink auditing), and stops Firefox from contacting sites before you open them (network prediction). |
+| **Pause a site** | Hit **Pause here** in the popup to leave one site alone. The extension stops putting it in its own box. The "look ordinary" protection is Firefox-wide, so it also eases while a paused tab is in front. |
 
 Poison your Trace does not run its own fingerprint engine. It turns on protections Firefox already ships but leaves off by default, so the values a site sees come from the browser itself and stay consistent all the way down the stack.
 
-> **Why uniformize, not randomize?** A random value nobody else has is itself a unique label. Presenting the *same* common profile as every other user is what actually makes you disappear.
+> **Why look ordinary instead of disguising yourself?** A made-up device nobody else has is itself a one-of-a-kind label. Looking the same as everyone else is what actually lets you blend in.
 
 
 ## Current limitations
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
-- **Your OS family stays visible.** The browser still reports whether you are on Mac, Windows or Linux. Everything else in that label is already common to everyone on your Firefox version.
+- **Which system you use stays visible.** Sites can still tell whether you are on Mac, Windows or Linux. Everything else in that part of the label is already common to everyone on your Firefox version.
 - **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Hit **Pause here** in the popup to whitelist that site, then try again. We are working to improve this.
 
 ## Build from source
