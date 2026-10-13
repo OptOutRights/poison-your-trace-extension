@@ -76,27 +76,6 @@
           </div>
           <input id="prot-container" type="checkbox" class="prot-toggle" />
         </div>
-        <div class="prot" data-key="burnerEmail">
-          <div class="prot-text">
-            <label for="prot-burnerEmail">Burner email</label>
-            <p class="prot-desc">
-              Right click any email field and pick "Insert a throwaway email" to fill it with a
-              throwaway alias that is unique to this site.
-            </p>
-          </div>
-          <input id="prot-burnerEmail" type="checkbox" class="prot-toggle" />
-        </div>
-
-        <!-- Hand-off to Firefox's native Relay (issue #60). The built-in burner is inert (it receives
-             nothing); Relay gives a real address that RECEIVES mail, for genuine sign-ups. This button
-             is guidance only — the extension cannot enable Relay programmatically. -->
-        <div class="relay">
-          <p class="relay-note">
-            Need to really receive the email for a signup? The throwaway address above receives nothing.
-            Firefox Relay gives you a real masked address that forwards the mail to your inbox.
-          </p>
-          <button id="relay-open" type="button" class="relay-button">Turn on Firefox Relay</button>
-        </div>
       </section>
     </details>
 

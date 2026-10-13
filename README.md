@@ -62,7 +62,6 @@ Poison your Trace ships as one brick: a single on/off switch arms everything. Un
 | **Per-site containers** | Every site opens in its own Firefox container. Cookies and logins never cross between sites. |
 | **Uniformized fingerprint** | Firefox's built-in Resist Fingerprinting (RFP) reshapes what a site can measure (canvas, screen, timezone, processor cores, audio, fonts and more) toward *one common profile* many users share. Values are not randomized per site: you become part of a crowd. |
 | **Privacy switches** | WebRTC is stopped from leaking your real or local IP, tracking protection is forced on everywhere, hyperlink-auditing beacons are killed, and speculative network prediction is turned off. |
-| **Burner email** | Right-click any email field and pick **Insert a throwaway email** to fill it with a stable, per-site alias at `example.invalid`. Your real address never leaves your keyboard. |
 
 Poison your Trace does not run its own fingerprint engine. It turns on protections Firefox already ships but leaves off by default, so the values a site sees come from the browser itself and stay consistent all the way down the stack.
 
@@ -74,7 +73,6 @@ Poison your Trace does not run its own fingerprint engine. It turns on protectio
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
 - **Your OS family stays visible.** The browser still reports whether you are on Mac, Windows or Linux. Everything else in that label is already common to everyone on your Firefox version.
 - **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Try temporarily deactivating the extension for that site, then try again. We are working to improve this.
-- **The burner email only sends, it never receives.** For a signup that must receive mail, the popup can hand off to Firefox Relay, which gives you a real masked address.
 
 ## Build from source
 
@@ -93,7 +91,7 @@ To load it by hand: open `about:debugging` > **This Firefox** > **Load Temporary
 
 ### Architecture
 
-A single **background script** is the only control point. It reads the on-device config and, for each protection, either flips the matching Firefox `privacy.*` setting on or clears it back to your own preference. Fingerprint uniformization is `privacy.websites.resistFingerprinting`, so there is no in-page script rewriting `navigator` or canvas: the browser reshapes those values itself, in every world, before a site can read them. The only mechanisms that live inside the extension are the per-site containers and the on-demand burner email. The popup writes the config and asks the background to re-apply it.
+A single **background script** is the only control point. It reads the on-device config and, for each protection, either flips the matching Firefox `privacy.*` setting on or clears it back to your own preference. Fingerprint uniformization is `privacy.websites.resistFingerprinting`, so there is no in-page script rewriting `navigator` or canvas: the browser reshapes those values itself, in every world, before a site can read them. The only mechanism that lives inside the extension is the per-site containers. The popup writes the config and asks the background to re-apply it.
 
 ```
 manifest.json          extension manifest (Firefox MV2)
@@ -107,10 +105,6 @@ src/
   containers/
     manager.ts         creates one Firefox container per site
     auto.ts            reopens every navigation in its per-site container
-  email/
-    generator.ts       derives a burner alias from the domain (two words + a number)
-    store.ts           keeps each site's burner stable in storage
-    insert.ts          content script: fills the right-clicked field with the burner
 testpage/
   fingerprint.html     a standalone page that shows every in-scope signal
 ```
