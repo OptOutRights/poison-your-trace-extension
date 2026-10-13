@@ -63,6 +63,7 @@ Poison your Trace ships as one brick: a single on/off switch arms everything. Un
 | **Uniformized fingerprint** | Firefox's built-in Resist Fingerprinting (RFP) reshapes what a site can measure (canvas, screen, timezone, processor cores, audio, fonts and more) toward *one common profile* many users share. Values are not randomized per site: you become part of a crowd. |
 | **Privacy switches** | WebRTC is stopped from leaking your real or local IP, tracking protection is forced on everywhere, hyperlink-auditing beacons are killed, and speculative network prediction is turned off. |
 | **Burner email** | Right-click any email field and pick **Insert a throwaway email** to fill it with a stable, per-site alias at `example.invalid`. Your real address never leaves your keyboard. |
+| **Pause a site** | Hit **Pause here** in the popup to add the current site to a whitelist. On a paused site the extension stops re-containering and the burner stands down; because RFP and the privacy switches are Firefox-wide, they also relax while a paused tab is in front. |
 
 Poison your Trace does not run its own fingerprint engine. It turns on protections Firefox already ships but leaves off by default, so the values a site sees come from the browser itself and stay consistent all the way down the stack.
 
@@ -73,7 +74,7 @@ Poison your Trace does not run its own fingerprint engine. It turns on protectio
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
 - **Your OS family stays visible.** The browser still reports whether you are on Mac, Windows or Linux. Everything else in that label is already common to everyone on your Firefox version.
-- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Try temporarily deactivating the extension for that site, then try again. We are working to improve this.
+- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Hit **Pause here** in the popup to whitelist that site, then try again. We are working to improve this.
 - **The burner email only sends, it never receives.** For a signup that must receive mail, the popup can hand off to Firefox Relay, which gives you a real masked address.
 
 ## Build from source
@@ -103,6 +104,7 @@ build.mjs              bundles each entry point into dist/ with esbuild
 src/
   background.ts        the single control point: applies every protection from the config
   config.ts            the on-device config: { enabled, protections }
+  whitelist.ts         the per-site pause list: registrable domains the extension leaves alone
   popup.ts             the popup toggles and their wiring
   containers/
     manager.ts         creates one Firefox container per site

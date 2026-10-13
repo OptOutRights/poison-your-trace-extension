@@ -2,11 +2,25 @@
 // and each protection toggle write the on-device config and ask the background to re-apply immediately.
 
 import { loadConfig, saveConfig, PROTECTION_KEYS } from "./config";
+import { registrableDomain } from "./containers/auto";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`missing element #${id}`);
   return node as T;
+}
+
+// The current tab's hostname, or null on a non-web tab (about:, moz-extension:, no url) where pausing
+// makes no sense. Used to drive the "This site" card.
+async function currentHostname(): Promise<string | null> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) return null;
+  try {
+    const url = new URL(tab.url);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.hostname : null;
+  } catch {
+    return null;
+  }
 }
 
 // The per-protection toggle ids share the `prot-<key>` convention, so we bind them by iterating
@@ -91,6 +105,74 @@ async function render(): Promise<void> {
   el<HTMLButtonElement>("relay-open").addEventListener("click", () => {
     void browser.tabs.create({ url: "https://relay.firefox.com/" });
   });
+
+  // Whitelist ("pause on this site"): the current-site card plus the managed list of paused sites.
+  // State lives in the background (own storage key); the popup only reads and mutates it via messages.
+  const sitePause = el<HTMLInputElement>("site-pause");
+  const siteNote = el<HTMLElement>("site-note");
+  const whitelistDetails = el<HTMLElement>("whitelist");
+  const whitelistList = el<HTMLUListElement>("whitelist-list");
+
+  const hostname = await currentHostname();
+  const currentDomain = hostname ? registrableDomain(hostname) : null;
+
+  // Redraw the managed list and reflect whether the current site is among the paused ones.
+  const applyList = (list: string[]): void => {
+    whitelistList.replaceChildren();
+    for (const domain of list) {
+      const item = document.createElement("li");
+      item.className = "whitelist-item";
+      const name = document.createElement("span");
+      name.className = "whitelist-domain";
+      name.textContent = domain;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "whitelist-remove";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () => {
+        void (async () => {
+          try {
+            const res = (await browser.runtime.sendMessage({ type: "poison:whitelist-remove", domain })) as { list?: string[] };
+            applyList(res?.list ?? []);
+          } catch (err) {
+            showError(err);
+          }
+        })();
+      });
+      item.append(name, remove);
+      whitelistList.append(item);
+    }
+    el<HTMLElement>("whitelist-count").textContent = String(list.length);
+    whitelistDetails.hidden = list.length === 0;
+
+    if (currentDomain) {
+      const paused = list.includes(currentDomain);
+      sitePause.checked = paused;
+      siteNote.hidden = !paused;
+    }
+  };
+
+  // The current-site card only makes sense on a web tab; leave it hidden on about:/extension pages.
+  if (currentDomain) {
+    el<HTMLElement>("site-card").hidden = false;
+    el<HTMLElement>("site-domain").textContent = currentDomain;
+    sitePause.addEventListener("change", () => {
+      void (async () => {
+        try {
+          const message = sitePause.checked
+            ? { type: "poison:whitelist-add", hostname }
+            : { type: "poison:whitelist-remove", domain: currentDomain };
+          const res = (await browser.runtime.sendMessage(message)) as { list?: string[] };
+          applyList(res?.list ?? []);
+        } catch (err) {
+          showError(err);
+        }
+      })();
+    });
+  }
+
+  const initial = (await browser.runtime.sendMessage({ type: "poison:whitelist-list" })) as { list?: string[] };
+  applyList(initial?.list ?? []);
 }
 
 // Run immediately if the document is already parsed (DOMContentLoaded may have fired before this
