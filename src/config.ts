@@ -23,9 +23,6 @@ export interface Protections {
   networkPrediction: boolean;
   /** Auto per site containers, so each site's cookies live in their own jar (the containers unit owns the mechanism). */
   container: boolean;
-  /** On-demand burner email: a right-click "Insérer une adresse jetable" context menu fills the chosen
-   *  field with a per site alias (the email unit owns the mechanism). */
-  burnerEmail: boolean;
 }
 
 /** The complete user facing state: the master switch plus the per protection breakdown. */
@@ -45,7 +42,6 @@ const DEFAULT_PROTECTIONS: Protections = {
   hyperlinkAuditing: true,
   networkPrediction: true,
   container: true,
-  burnerEmail: true,
 };
 
 /**

@@ -16,7 +16,6 @@
     }
   },
   "permissions": [
-    "contextMenus",
     "contextualIdentities",
     "cookies",
     "privacy",
