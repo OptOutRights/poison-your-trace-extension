@@ -12,7 +12,7 @@
         <h1><img src="icons/firesnake-32.png" alt="" />How Poison your Trace works</h1>
         <p class="lede">
           Poison your Trace makes it harder for websites to recognise you and stitch everything you do
-          into a single profile. Here is what that means in plain terms, and exactly what it hides.
+          into a single profile.
         </p>
       </header>
 
@@ -27,21 +27,21 @@
           into one profile.
         </p>
         <p>
-          Poison your Trace breaks both. It keeps each site in its own box, so cookies from one site
-          can't follow you to another. And it turns on Firefox's built-in protection that smooths over
-          those telltale details, so your browser looks like a lot of other people's instead of like
+          Poison your Trace helps breaking both. It keeps each site in its own jar, so cookies from one site
+          can't follow you to another. And it turns on Firefox's built-in protections that smooth over
+          your browsing information. Your browser looks like many other people instead of like
           only you.
         </p>
 
-        <div class="callout">
+        <!-- <div class="callout">
           <strong>It hides you in a crowd. It does not disguise you.</strong> Giving each site a random,
           made-up device would just create a new one-of-a-kind label. Instead, this makes your browser
           report the same ordinary details that many people already report, so you blend in and nothing
           points clearly at you.
-        </div>
+        </div> -->
       </section>
 
-      <section aria-labelledby="changes">
+      <!-- <section aria-labelledby="changes">
         <h2 id="changes">What it changes</h2>
         <div class="cards">
           <div class="card">
@@ -59,59 +59,131 @@
             </p>
           </div>
         </div>
-      </section>
+      </section> -->
 
       <section aria-labelledby="hidden">
-        <h2 id="hidden">What it turns on</h2>
+        <h2 id="hidden">The parameters that you can select</h2>
         <p>
           When you switch it on, the extension turns on Firefox's built-in fingerprint protection and a
-          few privacy settings, and starts giving every site its own box. Everything is on by default.
-          If a site misbehaves, the popup's <strong>Details</strong> panel lets you turn any single
-          protection off.
+          few privacy settings. It also starts giving every site its own jar. Everything is on by default.
+          Each protection has its own tick box in the popup's panel, so
+          if a site misbehaves you can partly turn off the extension.
         </p>
         <p>
-          If one site keeps breaking, use <strong>Pause here</strong> in the popup to add it to your
-          list of paused sites. On a paused site the extension stops putting it in its own box. One
-          thing to know: the "look ordinary" protection is a single Firefox-wide setting, not per-site,
-          so pausing it also eases it for your other tabs while the paused tab is the one in front.
+          If one site keeps breaking, disable the extension and feel free to contact. 
+          We will do our best to improve the extension.
         </p>
         <ul class="signals">
           <li>
             <span class="signal-name">Make your browser look ordinary</span>
             <span class="signal-desc"
-              >Smooths over the details that make your device unique (screen, time zone, graphics card,
-              and more) toward values many people share.</span
+              >Turns on Firefox's Resist Fingerprinting (RFP): it reports common, shared values for the
+              details that make your device unique (screen size, time zone, graphics card, number of CPU
+              cores, and more).
+              <a class="signal-source" href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/websites" target="_blank" rel="noopener">Source: MDN privacy.websites.resistFingerprinting ↗</a></span
             >
+            <div class="about-demo" data-demo="rfp"></div>
           </li>
           <li>
-            <span class="signal-name">Each site in its own box</span>
+            <span class="signal-name">Each site in its own jar</span>
             <span class="signal-desc"
-              >Every site gets its own private space for cookies and logins, so one site can't see what
-              you do on another.</span
+              >Puts every site in its own Firefox container, a separate cookie and storage jar. So one
+              site can't see what you do on another.
+              <a class="signal-source" href="https://support.mozilla.org/en-US/kb/containers" target="_blank" rel="noopener">Source: Firefox Containers ↗</a></span
             >
+            <div class="about-demo" data-demo="container"></div>
           </li>
           <li>
             <span class="signal-name">Keep your IP address from leaking</span>
-            <span class="signal-desc">Stops video and voice calls from revealing your real address.</span>
+            <span class="signal-desc"
+              >Sets WebRTC to <code>disable_non_proxied_udp</code>, so a video or voice call can't quietly
+              reveal your real or local address through a STUN request.
+              <a class="signal-source" href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network" target="_blank" rel="noopener">Source: MDN privacy.network.webRTCIPHandlingPolicy ↗</a></span
+            >
+            <div class="about-demo" data-demo="webrtc"></div>
           </li>
           <li>
             <span class="signal-name">Block known trackers</span>
-            <span class="signal-desc">Blocks companies known for following you, on every site.</span>
+            <span class="signal-desc"
+              >Forces Firefox's Enhanced Tracking Protection to "always", blocking companies on Firefox's
+              known-tracker list in every window.
+              <a class="signal-source" href="https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop" target="_blank" rel="noopener">Source: Enhanced Tracking Protection ↗</a></span
+            >
+            <div class="about-demo" data-demo="trackingProtection"></div>
           </li>
           <li>
             <span class="signal-name">Stop silent click reports</span>
             <span class="signal-desc"
-              >Keeps the links you click from quietly reporting back to other companies.</span
+              >Disables hyperlink auditing, the hidden <code>&lt;a ping&gt;</code> beacon that fires a
+              background report to a third party when you click certain links.
+              <a class="signal-source" href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/websites" target="_blank" rel="noopener">Source: MDN privacy.websites.hyperlinkAuditingEnabled ↗</a></span
             >
+            <div class="about-demo" data-demo="hyperlinkAuditing"></div>
           </li>
           <li>
             <span class="signal-name">Don't contact sites early</span>
             <span class="signal-desc"
-              >Stops Firefox from reaching out to sites before you actually open them.</span
+              >Turns off network prediction, so Firefox stops pre-resolving DNS, pre-connecting and
+              prefetching sites before you actually open them.
+              <a class="signal-source" href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network" target="_blank" rel="noopener">Source: MDN privacy.network.networkPredictionEnabled ↗</a></span
             >
+            <div class="about-demo" data-demo="networkPrediction"></div>
           </li>
         </ul>
       </section>
+
+      <section aria-labelledby="facets">
+        <!-- <h2 id="facets">What "look ordinary" actually changes</h2>
+        <p>
+          The "look ordinary" protection (Firefox's RFP) works on many small signals at once. The popup's
+          <strong>On this site now</strong> panel shows these as little before→after demos under
+          <strong>See how</strong>. Here are the ones you are most likely to notice.
+        </p>
+        <ul class="signals">
+          <li>
+            <span class="signal-name">A picture a script reads back</span>
+            <span class="signal-desc"
+              >A site can quietly draw a picture and read the pixels back as a hidden id. Normally that id
+              is the same on every visit, so it tags you. RFP does not change what you see on screen — it
+              randomises what a script <em>reads back</em>, strongly and differently every session, so the
+              id never settles. This is also why an image a site processes through a canvas (for example,
+              resized before upload) can come out visibly grainy: the site is reading the randomised
+              read-back, not the clean picture you see.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Your time zone</span>
+            <span class="signal-desc"
+              >Without protection a site reads your exact local zone. With it on, every site sees the same
+              UTC time instead, so your zone can't help single you out.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">A sound a script measures</span>
+            <span class="signal-desc"
+              >A site can play a silent sound and measure its exact shape as another id. Here RFP doesn't
+              add noise — it flattens the measurement (locking the sample rate and evening out
+              hardware-specific maths) toward a value everyone shares, so there is nothing distinctive to
+              read.</span
+            >
+          </li>
+          <li>
+            <span class="signal-name">Screen, graphics card, CPU and more</span>
+            <span class="signal-desc"
+              >Your screen/window size, graphics details, CPU core count and user-agent are reported as
+              common, shared values instead of your own.</span
+            >
+          </li>
+        </ul> -->
+        <!-- <p class="sources-note">
+          Sources:
+          <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/websites" target="_blank" rel="noopener">MDN: resistFingerprinting ↗</a>
+          ·
+          <a href="https://wiki.mozilla.org/Security/Fingerprinting" target="_blank" rel="noopener">Mozilla wiki: Fingerprinting ↗</a>
+          ·
+          <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1816189" target="_blank" rel="noopener">Bugzilla 1816189: canvas read-back randomisation ↗</a>
+        </p>
+      </section> -->
 
       <section aria-labelledby="different">
         <h2 id="different">Why some pages may look or behave differently</h2>
@@ -121,11 +193,11 @@
         </p>
         <ul class="signals">
           <li>
-            <span class="signal-name">Slightly off or noisy images</span>
+            <span class="signal-name">Noisy images</span>
             <span class="signal-desc"
-              >Some pictures, graphics, or charts may look a little off or grainy. That is the fingerprint
+              >Some pictures, graphics, or charts may look noise. That is the fingerprint
               protection reshaping what the page is allowed to read from your device, so you blend in with
-              the crowd.</span
+              the crowd. If you need to send a video or an image, we highly recommend disabling the extension!</span
             >
           </li>
           <li>
@@ -133,14 +205,14 @@
             <span class="signal-desc"
               >A site may open with nothing remembered, as if it were your first visit. That is the
               per-site box starting clean, so this site can't be matched to what you do anywhere
-              else.</span
+              else. Recent updates should have reduced this case of failure.</span
             >
           </li>
           <li>
             <span class="signal-name">Occasional sign-in friction</span>
             <span class="signal-desc"
               >Now and then a site may ask you to sign in again or stumble on a login. If a site keeps
-              misbehaving, use <strong>Pause here</strong> in the popup to leave that one site alone.</span
+              misbehaving, disable the extension for the log in phase, then activate it again.</span
             >
           </li>
         </ul>
@@ -151,7 +223,7 @@
         <div class="gaps">
           <ul>
             <li>
-              <strong>Your IP address.</strong> Think of this as your internet return address. The
+              <strong>Your IP address.</strong> The
               extension never leaks it, but it can't change the address a site sees when you connect.
               For that, use a VPN or Tor alongside it.
             </li>
@@ -169,5 +241,6 @@
         anything up about you.
       </footer>
     </main>
+      <script src="dist/about.js"></script>
   </body>
 </html>

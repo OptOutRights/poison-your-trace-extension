@@ -1,0 +1,178 @@
+/*
+  "See how" demo styling — the compact before→after illustrations built by src/demos.ts. Shared by the
+  popup (popup.css) and the How-it-works page (about.css) so the flag/sound/clock/chip visuals look the
+  same in both. Uses the role tokens from theme.css, so import this after theme.css.
+*/
+
+.demo {
+  padding: 8px;
+  border: 1px solid var(--zinc-200);
+  background: var(--zinc-050);
+}
+
+.demo-facet + .demo-facet {
+  margin-top: 10px;
+}
+
+.demo-facet-label {
+  color: var(--zinc-500);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.demo-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.demo-cell {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.demo-arrow {
+  flex: 0 0 auto;
+  color: var(--zinc-400);
+  font-size: 14px;
+}
+
+.demo-cap {
+  color: var(--zinc-600);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.demo-before .demo-cap {
+  color: var(--amber-text);
+}
+
+.demo-after .demo-cap {
+  color: var(--accent-ink);
+}
+
+/* Canvas visuals (flag, waveform): pixelated so the injected noise reads as noise, not blur. */
+.demo-canvas {
+  width: 104px;
+  height: auto;
+  border: 1px solid var(--zinc-300);
+  image-rendering: pixelated;
+}
+
+.demo-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.demo-sig {
+  color: var(--zinc-700);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.demo-clock {
+  color: var(--zinc-800);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-honest {
+  margin: 8px 0 0;
+  color: var(--zinc-500);
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+/* Chip / jar / page mini-diagrams for the container, tracker, WebRTC, click and prediction demos. */
+.demo-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.demo-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+}
+
+.demo-chip-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.demo-chip {
+  display: inline-block;
+  border: 1px solid var(--zinc-300);
+  background: var(--white);
+  padding: 2px 6px;
+  color: var(--zinc-700);
+  font-size: 10px;
+}
+
+.demo-chip-blocked {
+  border-color: var(--amber-line);
+  background: var(--amber-bg);
+  color: var(--amber-text);
+  text-decoration: line-through;
+}
+
+.demo-chip-ok {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.demo-jar {
+  border: 1px dashed var(--zinc-400);
+  padding: 3px 8px;
+  color: var(--zinc-600);
+  font-size: 10px;
+}
+
+.demo-jar-mini {
+  border-style: solid;
+}
+
+.demo-arrow-down {
+  color: var(--zinc-400);
+  font-size: 12px;
+}
+
+.demo-pair {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.demo-pair + .demo-pair {
+  margin-top: 3px;
+}
+
+.demo-page {
+  border: 1px solid var(--zinc-200);
+  background: var(--zinc-050);
+  padding: 8px;
+}
+
+.demo-page-label {
+  color: var(--zinc-500);
+  font-size: 10px;
+  font-weight: 600;
+}
