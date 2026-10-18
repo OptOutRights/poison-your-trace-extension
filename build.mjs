@@ -24,6 +24,7 @@ await build({
   entryPoints: {
     background: "src/background.ts",
     popup: "src/popup.ts",
+    about: "src/about.ts",
   },
   outdir: "dist",
   bundle: true,

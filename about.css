@@ -5,6 +5,7 @@
 */
 
 @import "theme.css";
+@import "demos.css";
 
 body {
   margin: 0;
@@ -140,6 +141,52 @@ section > p {
 .signals .signal-desc {
   color: var(--zinc-600);
   font-size: 14px;
+}
+
+/* The before→after demo under a signal spans both grid columns and sits on its own row, capped so the
+   compact visuals don't stretch across the full page width. */
+.about-demo {
+  grid-column: 1 / -1;
+  max-width: 340px;
+  margin-top: 4px;
+}
+
+/* Ground-truth link under each signal: its own line, accent, a touch smaller than the description. */
+.signal-source {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--accent-ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signal-source:hover {
+  text-decoration: underline;
+}
+
+.signals code,
+.sources-note code {
+  padding: 1px 4px;
+  background: var(--zinc-100, #f4f4f5);
+  font-size: 12px;
+}
+
+/* Sources line under the RFP facets: small, muted, with accent links. */
+.sources-note {
+  margin-top: 12px;
+  color: var(--zinc-500);
+  font-size: 12px;
+}
+
+.sources-note a {
+  color: var(--accent-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sources-note a:hover {
+  text-decoration: underline;
 }
 
 /* Honest gaps: amber block, matching the popup's "Not hidden". */

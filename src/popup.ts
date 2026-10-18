@@ -1,8 +1,10 @@
-// Toolbar popup: the hero Enabled toggle and a collapsible per-protection breakdown. The hero toggle
-// and each protection toggle write the on-device config and ask the background to re-apply immediately.
+// Toolbar popup: the hero Enabled toggle and one merged per-protection panel where each row carries its
+// tick box, a one-line description, and a "See how" drop-down with a before→after visual. The hero
+// toggle and each protection toggle write the on-device config and ask the background to re-apply.
 
 import { loadConfig, saveConfig, PROTECTION_KEYS, type PoisonConfig } from "./config";
-import { registrableDomain, targetFor } from "./containers/auto";
+import { registrableDomain } from "./containers/auto";
+import { buildDemo, type ReadoutKey } from "./demos";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -45,113 +47,57 @@ function setDetailsEnabled(enabled: boolean): void {
   }
 }
 
-// One line of the per-site readout: a plain-language title and a supporting sentence. `tone` picks the
-// left marker colour — "on" (accent) for an active protection, "off" (muted) when it is not in effect.
-interface ReadoutLine {
-  title: string;
-  detail: string;
-  tone: "on" | "off";
+// A short plain-language sentence shown at the top of each protection's "See how" drop-down, above the
+// before→after visual. One per protection key; the authoritative key list is PROTECTION_KEYS.
+const EASY: Record<ReadoutKey, string> = {
+  rfp: "Your device reports common, shared values instead of its own.",
+  webrtc: "Video and voice calls can't reveal your real or local address.",
+  trackingProtection: "Known tracking companies are stopped before they load.",
+  hyperlinkAuditing: "Links can't quietly report your clicks to other companies.",
+  networkPrediction: "Firefox won't contact sites before you actually open them.",
+  container: "This site gets its own sealed box for cookies and logins.",
+};
+
+// Attach a "See how" disclosure (the easy sentence + the before→after visual) to each protection row.
+// The rows already carry the toggle and the one-line description from the HTML; this folds the old
+// readout's demos onto the same rows, so the tick box, the explanation and the illustration live
+// together. Built once — the visuals are static (they teach the mechanism, not live per-tab state).
+function injectDemos(): void {
+  for (const key of PROTECTION_KEYS) {
+    const row = document.querySelector<HTMLElement>(`.prot[data-key="${key}"]`);
+    if (!row || row.querySelector(".prot-see")) continue;
+    const demo = buildDemo(key as ReadoutKey);
+    if (!demo) continue;
+
+    const see = document.createElement("details");
+    see.className = "prot-see";
+    const summary = document.createElement("summary");
+    summary.textContent = "See how";
+    const easy = document.createElement("p");
+    easy.className = "readout-easy";
+    easy.textContent = EASY[key as ReadoutKey];
+    see.append(summary, easy, demo);
+    row.append(see);
+  }
 }
 
-// Build the readout lines for the active tab from the REAL state: the master switch, each protection
-// flag, and whether this site is paused. We never fabricate counts; a browser-wide on/off setting is
-// reported as on/off, not as a made-up number. `url` is the active tab's web URL (so we can show the
-// container name/colour cheaply via targetFor); null means a non-web tab and the caller hides the card.
-function readoutLines(config: PoisonConfig, url: string | null, paused: boolean): { summary: string; lines: ReadoutLine[] } {
-  // Master switch off: nothing is running, say so plainly and show no per-protection lines.
+// Update the one-line summary above the rows to match the REAL state — master off, paused, all-off, or
+// active. No fabricated counts: just the honest overall state, so the panel never overclaims.
+function renderSummary(config: PoisonConfig, paused: boolean): void {
+  const summary = el<HTMLElement>("readout-summary");
   if (!config.enabled) {
-    return {
-      summary: "Protection is off. Nothing is active on this or any site. Flip Enabled to turn it back on.",
-      lines: [],
-    };
-  }
-
-  const p = config.protections;
-
-  // Paused (whitelisted) site: container isolation is skipped here and the browser-wide settings are
-  // relaxed while this tab is in front. Be honest about what is and isn't in effect.
-  if (paused) {
-    return {
-      summary: "Protection is paused on this site. Things are relaxed here so it works normally.",
-      lines: [
-        { title: "Cookies not isolated", detail: "This site is not kept in its own box while it is paused.", tone: "off" },
-        {
-          title: "Other protections eased",
-          detail:
-            "The look-ordinary protection, tracker blocking, and IP leak guard are browser-wide, so they are eased for your other tabs too while this one is in front.",
-          tone: "off",
-        },
-      ],
-    };
-  }
-
-  // Active, unpaused site: report each protection that is actually on. Respect the individual flags:
-  // if a protection's own toggle is off we don't claim it.
-  const lines: ReadoutLine[] = [];
-
-  if (p.container) {
-    const target = url ? targetFor(url) : null;
-    lines.push({
-      title: "Cookies isolated",
-      detail: target
-        ? `This site is kept in its own box (container "${target.name}"), so it can't see what you do elsewhere.`
-        : "This site is kept in its own box, so it can't see what you do elsewhere.",
-      tone: "on",
-    });
-  }
-
-  if (p.rfp) {
-    lines.push({
-      title: "Fingerprint reshaped",
-      detail:
-        "This site sees common, shared values instead of your device's. Some images or graphics may look slightly off or noisy. That is expected, not a broken page.",
-      tone: "on",
-    });
-  }
-
-  if (p.trackingProtection) {
-    lines.push({ title: "Trackers blocked", detail: "Known trackers are blocked on this site.", tone: "on" });
-  }
-
-  if (p.webrtc) {
-    lines.push({ title: "IP leak guarded", detail: "Video and voice calls can't reveal your local or real address.", tone: "on" });
-  }
-
-  const summary =
-    lines.length > 0
-      ? "These protections are active on this site right now:"
-      : "Protection is on, but every protection is turned off in Details, so nothing is active here.";
-
-  return { summary, lines };
-}
-
-// Paint the readout section for the active tab. Hidden entirely on non-web tabs (no currentUrl). Kept
-// separate from render() so it can be repainted when the pause toggle flips without a full re-render.
-function renderReadout(config: PoisonConfig, currentUrl: string | null, paused: boolean): void {
-  const section = el<HTMLElement>("readout");
-  if (!currentUrl) {
-    section.hidden = true;
+    summary.textContent = "Protection is off. Nothing is active on this or any site. Flip Enabled to turn it back on.";
     return;
   }
-  section.hidden = false;
-
-  const { summary, lines } = readoutLines(config, currentUrl, paused);
-  el<HTMLElement>("readout-summary").textContent = summary;
-
-  const list = el<HTMLUListElement>("readout-list");
-  list.replaceChildren();
-  for (const line of lines) {
-    const item = document.createElement("li");
-    item.className = `readout-item readout-${line.tone}`;
-    const title = document.createElement("span");
-    title.className = "readout-title";
-    title.textContent = line.title;
-    const detail = document.createElement("span");
-    detail.className = "readout-detail";
-    detail.textContent = line.detail;
-    item.append(title, detail);
-    list.append(item);
+  if (paused) {
+    summary.textContent =
+      "Paused on this site. The per-site box is off here, and the browser-wide protections are eased while this tab is in front.";
+    return;
   }
+  const anyOn = PROTECTION_KEYS.some((k) => config.protections[k]);
+  summary.textContent = anyOn
+    ? "These protections are working on this site. Open any one to see how."
+    : "Protection is on, but every protection below is turned off, so nothing is active here.";
 }
 
 // Bind the hero toggle and every protection toggle from the current config, then wire their change
@@ -174,6 +120,11 @@ async function render(): Promise<void> {
   }
   setDetailsEnabled(config.enabled);
 
+  // Fold the before→after visuals onto their protection rows (once) and paint the initial summary. The
+  // pause-dependent summary is repainted later once the whitelist state is known (see applyList).
+  injectDemos();
+  renderSummary(config, pausedNow);
+
   // Surface an error inline on the status pill without throwing out of the handler.
   const showError = (err: unknown): void => {
     status.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
@@ -189,7 +140,7 @@ async function render(): Promise<void> {
         setStatus(status, on);
         setDetailsEnabled(on);
         config.enabled = on;
-        renderReadout(config, currentUrl, pausedNow);
+        renderSummary(config, pausedNow);
       } catch (err) {
         showError(err);
       }
@@ -205,7 +156,7 @@ async function render(): Promise<void> {
           await saveConfig({ protections: { [key]: toggle.checked } });
           await browser.runtime.sendMessage({ type: "poison:apply" });
           config.protections[key] = toggle.checked;
-          renderReadout(config, currentUrl, pausedNow);
+          renderSummary(config, pausedNow);
         } catch (err) {
           showError(err);
         }
@@ -260,9 +211,9 @@ async function render(): Promise<void> {
       siteNote.hidden = !paused;
     }
 
-    // Repaint the per-site readout: its content depends on the live pause state, so it must follow every
-    // whitelist change (initial load, add, remove) and not just the first render.
-    renderReadout(config, currentUrl, paused);
+    // Repaint the summary: it depends on the live pause state, so it must follow every whitelist change
+    // (initial load, add, remove) and not just the first render.
+    renderSummary(config, paused);
   };
 
   // The current-site card only makes sense on a web tab; leave it hidden on about:/extension pages.

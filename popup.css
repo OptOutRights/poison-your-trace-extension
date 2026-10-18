@@ -6,6 +6,7 @@
 */
 
 @import "theme.css";
+@import "demos.css";
 
 body {
   width: 320px;
@@ -187,14 +188,24 @@ h1 img {
   line-height: 1.3;
 }
 
-/* "On this site now" readout: a plain-language status for the active tab. Bordered bottom like the
-   control rows, with a short summary line and a list of one row per protection. */
-.readout {
+/* Merged per-site panel ("On this site now"): a head, a live summary line, then the protection zones.
+   Bordered bottom like the control rows. Replaces the old readout + Details disclosure. */
+.protections {
   padding: 12px 0;
   border-bottom: 1px solid var(--zinc-200);
 }
 
-.readout-head {
+/* While the master switch is off the whole panel reads as inactive: dim the zones and mark the toggles
+   unavailable, so it never looks like protections are on while nothing is running. */
+.protections.disabled .zone {
+  opacity: 0.45;
+}
+
+.protections.disabled .prot-toggle {
+  cursor: not-allowed;
+}
+
+.panel-head {
   margin: 0;
   color: var(--zinc-500);
   font-size: 11px;
@@ -211,44 +222,52 @@ h1 img {
   line-height: 1.35;
 }
 
-.readout-list {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* One readout row: a 3px state marker on the left, title and detail stacked. Accent marker when the
-   protection is on, muted marker when it is off or eased. */
-.readout-item {
-  padding: 6px 0 6px 10px;
-  border-left: 3px solid var(--zinc-300);
-}
-
-.readout-item + .readout-item {
-  margin-top: 4px;
-}
-
-.readout-on {
-  border-left-color: var(--accent);
-}
-
-.readout-off {
-  border-left-color: var(--amber-line);
-}
-
-.readout-title {
-  display: block;
-  color: var(--zinc-800);
-  font-size: 13px;
+/* The easy one-line sentence at the top of a "See how" drop-down, above the before→after visual. */
+.readout-easy {
+  margin: 8px 0;
+  color: var(--zinc-700);
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.35;
 }
 
-.readout-detail {
-  display: block;
-  margin-top: 1px;
-  color: var(--zinc-600);
+/* "See how" disclosure folded onto each protection row, beneath its toggle and description. The .prot
+   row is allowed to wrap so this sits full-width on its own line under the toggle. */
+.prot {
+  flex-wrap: wrap;
+}
+
+.prot-see {
+  flex: 1 0 100%;
+  margin-top: 6px;
+}
+
+.prot-see > summary {
+  color: var(--accent-ink);
   font-size: 11px;
-  line-height: 1.35;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.prot-see > summary::-webkit-details-marker {
+  display: none;
+}
+
+.prot-see > summary::after {
+  content: " \25BE"; /* ▾ */
+  color: var(--zinc-400);
+}
+
+.prot-see[open] > summary::after {
+  content: " \25B4"; /* ▴ */
+}
+
+.prot-see > summary:focus-visible {
+  outline: 0;
+  border-radius: 3px;
+  box-shadow: var(--focus-ring);
 }
 
 /* Managed list of paused sites: one row per domain, each with a Remove button. */
