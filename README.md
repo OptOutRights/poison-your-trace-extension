@@ -4,35 +4,26 @@
 
 # Poison your Trace
 
-### Free yourself from constant web tracking.
-#### You're not you. You are everyone. 
-
-One switch. Every site goes in its own box, and Firefox's own protection makes your browser look like everyone else's, so you're not the one anyone is looking at.
+### Upgrade your firefox to be less trackable.
+#### Block unwanted contact and information acces. 
 
 <br/>
 
-<!-- TODO(store): replace <slug> below once the addons.mozilla.org listing is created (see docs/store-migration.md). -->
-[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)
 
-![Firefox 140+](https://img.shields.io/badge/Firefox-140%2B-6b4d21?logo=firefoxbrowser&logoColor=white)
-![Manifest V2](https://img.shields.io/badge/Manifest-V2-52525b)
-![License Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-0a7d3c)
+[![Install for Firefox](https://img.shields.io/badge/Install%20on-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)
 
 </div>
 
----
 
 ## The purpose
 
-Websites try to recognise you and follow you from site to site, building up one big profile of
-everything you do. They mainly do this in two ways:
+Websites try to recognise you and follow you from site to site, building up one big profile of everything you do. They mainly do this in two ways:
 
 - **Cookies** that tag your browser so a site remembers you next time.
 - **Your fingerprint**: the mix of small details about your device (your screen, time zone, fonts,
-  graphics card, and dozens of other quiet signals) that together make you stand out.
+  graphics card, and dozens of other quiet signals) that together make you unique therefore trackable.
 
-Poison your Trace shuts down both at once. It keeps each site in its own jar so cookies can't follow
-you around, and it makes your browser look like everyone else's so your device no longer stands out.
+Poison your Trace helps you shutting it down.
 
 ## Install
 
