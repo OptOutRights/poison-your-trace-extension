@@ -7,7 +7,6 @@
 // right container, so its navigation is allowed through, no loop.
 
 import { loadConfig } from "../config";
-import { isWhitelisted } from "../whitelist";
 import { ContainerManager } from "./manager";
 
 type BlockingResponse = browser.webRequest.BlockingResponse;
@@ -90,10 +89,6 @@ export class AutoContainer {
 
     const target = targetFor(details.url);
     if (!target) return {};
-
-    // Whitelisted site ("disable on this site"): never re-container it, leave the navigation alone.
-    // target implies a parseable web URL, so new URL() here cannot throw.
-    if (await isWhitelisted(new URL(details.url).hostname)) return {};
 
     // Read the tab BEFORE creating any container, so a navigation whose tab has already gone away
     // (fast close, prerender discarded) never leaves an orphan container behind in the picker.

@@ -172,6 +172,32 @@ section > p {
   font-size: 12px;
 }
 
+/* Click-to-copy pref names in the test panel: a Firefox page can't link to about:config, so each pref
+   is one click to copy. Hover/focus signal it is interactive; a brief check mark confirms the copy. */
+code.copyable {
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+code.copyable:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+code.copyable:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+code.copyable.copied {
+  background: var(--accent);
+  color: var(--white);
+}
+
+code.copyable.copied::after {
+  content: " \2713";
+}
+
 /* Sources line under the RFP facets: small, muted, with accent links. */
 .sources-note {
   margin-top: 12px;
@@ -187,6 +213,57 @@ section > p {
 
 .sources-note a:hover {
   text-decoration: underline;
+}
+
+/* Live test panel. The master switch sits in an accent-soft bar; each protection row carries a
+   16px accent checkbox in its own leading column, with the name and pref stacked beside it. */
+.verify-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+}
+
+.verify-control label {
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.verify-note {
+  margin: 0 0 12px;
+  color: var(--zinc-500);
+  font-size: 13px;
+}
+
+.verify-list li {
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.verify-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.verify-toggle {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.verify-toggle:focus-visible {
+  outline: 0;
+  box-shadow: var(--focus-ring);
 }
 
 /* Honest gaps: amber block, matching the popup's "Not hidden". */

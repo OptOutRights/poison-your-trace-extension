@@ -23,30 +23,15 @@
       </span>
     </div>
 
-    <!-- Current site pause ("whitelist"). Lets the user leave one site alone when it breaks. Shows the
-         site's registrable domain and a toggle; hidden/disabled on non-web tabs (about:, extensions). -->
-    <div id="site-card" class="site-card" hidden>
-      <div class="site-row">
-        <div class="site-text">
-          <span class="site-label">This site</span>
-          <span id="site-domain" class="site-domain"></span>
-        </div>
-        <label class="site-toggle-wrap" for="site-pause">
-          <span class="site-toggle-label">Pause here</span>
-          <input id="site-pause" type="checkbox" class="prot-toggle" />
-        </label>
-      </div>
-      <p id="site-note" class="site-note" hidden>
-        Paused on this site. Heads up: the "look ordinary" protection is browser-wide, so pausing it
-        here also eases your other tabs while this one is in front.
-      </p>
-    </div>
-
     <!-- Merged per-site panel: a short live summary, then one row per protection. Each row is just the
          setting name with its tick box at the end; a "See how" disclosure (injected by popup.ts) sits on
          the line below with the plain-language explanation and the before→after visual. The old separate
          readout and "Details" disclosure are folded into this one panel. -->
     <section id="details" class="protections">
+
+      <!-- Honest one-line state for the active tab (master off / paused / all-off / active). Filled by
+           popup.ts's renderSummary; the element must exist or render() throws before the toggles bind. -->
+      <p id="readout-summary" class="readout-summary"></p>
 
       <section class="zone">
         <h2>Applies to every site</h2>
@@ -93,13 +78,6 @@
         </div>
       </section>
     </section>
-
-    <!-- Managed list of paused sites. Tucked in its own disclosure; each row removes its domain. The
-         summary count and the rows are filled in by popup.ts. Hidden entirely when the list is empty. -->
-    <details id="whitelist" class="details" hidden>
-      <summary>Paused sites (<span id="whitelist-count">0</span>)</summary>
-      <ul id="whitelist-list" class="whitelist-list"></ul>
-    </details>
 
     <footer class="popup-footer">
       <a href="about.html" target="_blank" rel="noopener">How it works &amp; what is hidden</a>

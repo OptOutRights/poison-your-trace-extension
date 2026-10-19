@@ -4,35 +4,26 @@
 
 # Poison your Trace
 
-### Free yourself from constant web tracking.
-#### You're not you. You are everyone. 
-
-One switch. Every site goes in its own box, and Firefox's own protection makes your browser look like everyone else's, so you're not the one anyone is looking at.
+### Upgrade your firefox to be less trackable.
+#### Block unwanted contact and information acces. 
 
 <br/>
 
-<!-- TODO(store): replace <slug> below once the addons.mozilla.org listing is created (see docs/store-migration.md). -->
-[![Install for Firefox](https://img.shields.io/badge/Install%20for-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)
 
-![Firefox 140+](https://img.shields.io/badge/Firefox-140%2B-6b4d21?logo=firefoxbrowser&logoColor=white)
-![Manifest V2](https://img.shields.io/badge/Manifest-V2-52525b)
-![License Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-0a7d3c)
+[![Install for Firefox](https://img.shields.io/badge/Install%20on-Firefox-0a7d3c?style=for-the-badge&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/en-US/firefox/addon/poison-your-trace/)
 
 </div>
 
----
 
 ## The purpose
 
-Websites try to recognise you and follow you from site to site, building up one big profile of
-everything you do. They mainly do this in two ways:
+Websites try to recognise you and follow you from site to site, building up one big profile of everything you do. They mainly do this in two ways:
 
 - **Cookies** that tag your browser so a site remembers you next time.
 - **Your fingerprint**: the mix of small details about your device (your screen, time zone, fonts,
-  graphics card, and dozens of other quiet signals) that together make you stand out.
+  graphics card, and dozens of other quiet signals) that together make you unique therefore trackable.
 
-Poison your Trace shuts down both at once. It keeps each site in its own jar so cookies can't follow
-you around, and it makes your browser look like everyone else's so your device no longer stands out.
+Poison your Trace helps you shutting it down.
 
 ## Install
 
@@ -56,7 +47,6 @@ There is one on/off switch that turns on everything below. If a site breaks, ope
 | **Each site in its own jar** | Every site gets its own private space for cookies and logins (a Firefox "container"), so one site can't see what you do on another. |
 | **A browser that looks ordinary** | Firefox's built-in protection smooths over the details that make your device unique (screen, time zone, graphics card, fonts, and more) so your browser looks like a lot of other people's. You blend into a crowd instead of being randomly disguised. |
 | **Privacy settings turned on** | Keeps your IP address from leaking in calls (WebRTC), blocks known trackers everywhere, stops the links you click from quietly reporting back (hyperlink auditing), and stops Firefox from contacting sites before you open them (network prediction). |
-| **Pause a site** | Hit **Pause here** in the popup to leave one site alone. The extension stops putting it in its own box. The "look ordinary" protection is Firefox-wide, so it also eases while a paused tab is in front. |
 
 Poison your Trace does not run its own fingerprint engine. It turns on protections Firefox already ships but leaves off by default, so the values a site sees come from the browser itself and stay consistent all the way down the stack.
 
@@ -67,7 +57,7 @@ Poison your Trace does not run its own fingerprint engine. It turns on protectio
 
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
 - **Which system you use stays visible.** Sites can still tell whether you are on Mac, Windows or Linux. Everything else in that part of the label is already common to everyone on your Firefox version.
-- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Hit **Pause here** in the popup to whitelist that site, then try again. We are working to improve this.
+- **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Open the popup and turn off the one protection that trips the site up (usually **Make your browser look ordinary**), then try again. We are working to improve this.
 
 ## Build from source
 
@@ -96,7 +86,6 @@ build.mjs              bundles each entry point into dist/ with esbuild
 src/
   background.ts        the single control point: applies every protection from the config
   config.ts            the on-device config: { enabled, protections }
-  whitelist.ts         the per-site pause list: registrable domains the extension leaves alone
   popup.ts             the popup toggles and their wiring
   containers/
     manager.ts         creates one Firefox container per site
