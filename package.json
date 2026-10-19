@@ -1,6 +1,6 @@
 {
   "name": "poison-your-trace-web-extension",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Poison your Trace, a Firefox extension that stops your separate activities from being joined into one identity.",
   "type": "module",
