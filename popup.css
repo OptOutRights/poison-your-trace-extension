@@ -133,13 +133,21 @@ h1 img {
   border-bottom: 1px solid var(--zinc-200);
 }
 
-/* While the master switch is off the panel reads as inactive: dim the labels and demos so it never
-   looks like protections are running. We dim the TEXT (not the whole zone) so the toggles stay
-   full-strength and clickable — they double as test switches you can flip and then re-arm. */
+/* While the master switch is off the panel reads as unavailable: dim the labels, demos AND the toggles
+   so nothing looks like it's running. The toggles are also disabled in popup.ts, so the dimming pairs
+   with a greyed, unclickable checkbox — the changed aspect that tells you these do nothing until the
+   master switch is back on. */
 .protections.disabled .zone h2,
 .protections.disabled .prot-text,
-.protections.disabled .prot-see {
+.protections.disabled .prot-see,
+.protections.disabled .prot-toggle {
   opacity: 0.45;
+}
+
+/* A disabled protection toggle shows the not-allowed cursor so the "unavailable" state is felt on hover
+   too, not just seen. */
+.prot-toggle:disabled {
+  cursor: not-allowed;
 }
 
 .panel-head {

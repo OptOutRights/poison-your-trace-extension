@@ -22,12 +22,14 @@ function setStatus(status: HTMLElement, enabled: boolean): void {
   status.className = enabled ? "status active" : "status paused";
 }
 
-// When the master switch is off, the per-protection flags are only GATED, not cleared. We DIM the panel
-// so it reads as inactive (nothing is actually running), but leave the toggles clickable: they double
-// as test switches, so you can flip one and — once the master is back on — watch its Firefox setting
-// change. A flip made while the master is off just writes the flag; it reaches Firefox when you re-arm.
+// When the master switch is off nothing is running, so the per-protection panel reads as unavailable:
+// we DIM it AND disable every toggle so they can't be clicked. The changed aspect (dimmed + the native
+// disabled checkbox) is the cue that these controls do nothing until Enabled is turned back on.
 function setDetailsEnabled(enabled: boolean): void {
   el<HTMLElement>("details").classList.toggle("disabled", !enabled);
+  for (const key of PROTECTION_KEYS) {
+    el<HTMLInputElement>(`prot-${key}`).disabled = !enabled;
+  }
 }
 
 // A short plain-language sentence shown at the top of each protection's "See how" drop-down, above the
