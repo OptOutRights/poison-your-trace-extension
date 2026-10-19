@@ -132,59 +132,90 @@
         </ul>
       </section>
 
-      <section aria-labelledby="facets">
-        <!-- <h2 id="facets">What "look ordinary" actually changes</h2>
+      <section aria-labelledby="verify">
+        <h2 id="verify">Under the hood</h2>
         <p>
-          The "look ordinary" protection (Firefox's RFP) works on many small signals at once. The popup's
-          <strong>On this site now</strong> panel shows these as little before→after demos under
-          <strong>See how</strong>. Here are the ones you are most likely to notice.
+          open <code>about:config</code> and copy paste the setting name to see it getting modified.
         </p>
-        <ul class="signals">
-          <li>
-            <span class="signal-name">A picture a script reads back</span>
-            <span class="signal-desc"
-              >A site can quietly draw a picture and read the pixels back as a hidden id. Normally that id
-              is the same on every visit, so it tags you. RFP does not change what you see on screen — it
-              randomises what a script <em>reads back</em>, strongly and differently every session, so the
-              id never settles. This is also why an image a site processes through a canvas (for example,
-              resized before upload) can come out visibly grainy: the site is reading the randomised
-              read-back, not the clean picture you see.</span
-            >
-          </li>
-          <li>
-            <span class="signal-name">Your time zone</span>
-            <span class="signal-desc"
-              >Without protection a site reads your exact local zone. With it on, every site sees the same
-              UTC time instead, so your zone can't help single you out.</span
-            >
-          </li>
-          <li>
-            <span class="signal-name">A sound a script measures</span>
-            <span class="signal-desc"
-              >A site can play a silent sound and measure its exact shape as another id. Here RFP doesn't
-              add noise — it flattens the measurement (locking the sample rate and evening out
-              hardware-specific maths) toward a value everyone shares, so there is nothing distinctive to
-              read.</span
-            >
-          </li>
-          <li>
-            <span class="signal-name">Screen, graphics card, CPU and more</span>
-            <span class="signal-desc"
-              >Your screen/window size, graphics details, CPU core count and user-agent are reported as
-              common, shared values instead of your own.</span
-            >
-          </li>
-        </ul> -->
-        <!-- <p class="sources-note">
-          Sources:
-          <a href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/websites" target="_blank" rel="noopener">MDN: resistFingerprinting ↗</a>
-          ·
-          <a href="https://wiki.mozilla.org/Security/Fingerprinting" target="_blank" rel="noopener">Mozilla wiki: Fingerprinting ↗</a>
-          ·
-          <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1816189" target="_blank" rel="noopener">Bugzilla 1816189: canvas read-back randomisation ↗</a>
+        <!-- Live test panel: the same config the popup writes, exposed here so you can flip the master
+             switch or a single protection and immediately refresh about:config to watch its pref change.
+             Wired by about.ts; the toggles do nothing on a plain (non-extension) page load. -->
+        <div class="verify-control">
+          <input id="verify-enabled" type="checkbox" class="verify-toggle" />
+          <label for="verify-enabled">Protection enabled (master switch)</label>
+        </div>
+        <p class="verify-note">
+          Flip a protection below to toggle it right now to see
+          its preference change.
+          <strong>Tip:</strong> click any pref name to copy it, then paste it into the
+          <code>about:config</code> search box.
         </p>
-      </section> -->
+        <ul class="signals verify-list">
+          <li data-key="rfp">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: make your browser look ordinary" />
+            <div class="verify-text">
+              <span class="signal-name">Make your browser look ordinary</span>
+              <span class="signal-desc"><code>privacy.resistFingerprinting</code> &rarr; <code>true</code></span>
+            </div>
+          </li>
+          <li data-key="webrtc">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: keep your IP address from leaking" />
+            <div class="verify-text">
+              <span class="signal-name">Keep your IP address from leaking</span>
+              <span class="signal-desc"
+                ><code>media.peerconnection.ice.default_address_only</code>,
+                <code>media.peerconnection.ice.no_host</code> and
+                <code>media.peerconnection.ice.proxy_only_if_behind_proxy</code> &rarr; all
+                <code>true</code></span
+              >
+            </div>
+          </li>
+          <li data-key="trackingProtection">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: block known trackers" />
+            <div class="verify-text">
+              <span class="signal-name">Block known trackers</span>
+              <span class="signal-desc"
+                ><code>privacy.trackingprotection.enabled</code> &rarr; <code>true</code>.
+              >
+            </div>
+          </li>
+          <li data-key="networkPrediction">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: don't contact sites early" />
+            <div class="verify-text">
+              <span class="signal-name">Don't contact sites early</span>
+              <span class="signal-desc"
+                ><code>network.http.speculative-parallel-limit</code> &rarr; <code>0</code> (normally
+                <code>20</code>), plus <code>network.dns.disablePrefetch</code> &rarr; <code>true</code> and
+                <code>network.predictor.enabled</code> / <code>network.prefetch-next</code> &rarr;
+                <code>false</code>.
+              >
+            </div>
+          </li>
+          <li data-key="hyperlinkAuditing">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: stop silent click reports" />
+            <div class="verify-text">
+              <span class="signal-name">Stop silent click reports</span>
+              <span class="signal-desc"
+                ><code>browser.send_pings</code> &rarr; <code>false</code>. Heads up: Firefox already
+                defaults this to <code>false</code>, so on a normal profile you won't see it change. The
+                extension simply keeps it off (and locks it off on profiles where it was turned on).</span
+              >
+            </div>
+          </li>
+          <li data-key="container">
+            <input type="checkbox" class="verify-toggle" aria-label="Toggle: each site in its own jar" />
+            <div class="verify-text">
+              <span class="signal-name">Each site in its own jar</span>
+              <span class="signal-desc"
+                >Not a preference. This one is the extension's own mechanism, not a Firefox setting. You
+                can see it working in the tab bar: each site opens in its own coloured container.</span
+              >
+            </div>
+          </li>
+        </ul>
+      </section>
 
+      <section aria-labelledby="facets">
       <section aria-labelledby="different">
         <h2 id="different">Why some pages may look or behave differently</h2>
         <p>

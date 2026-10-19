@@ -3,27 +3,12 @@
 // toggle and each protection toggle write the on-device config and ask the background to re-apply.
 
 import { loadConfig, saveConfig, PROTECTION_KEYS, type PoisonConfig } from "./config";
-import { registrableDomain } from "./containers/auto";
 import { buildDemo, type ReadoutKey } from "./demos";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
   if (!node) throw new Error(`missing element #${id}`);
   return node as T;
-}
-
-// The current tab's full web URL, or null on a non-web tab (about:, moz-extension:, file:, no url)
-// where pausing and the readout make no sense. The caller derives the hostname/registrable domain from
-// it to drive the "This site" card, and passes the URL to the readout so it can name the container.
-async function currentWebUrl(): Promise<string | null> {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url) return null;
-  try {
-    const url = new URL(tab.url);
-    return url.protocol === "http:" || url.protocol === "https:" ? tab.url : null;
-  } catch {
-    return null;
-  }
 }
 
 // The per-protection toggle ids share the `prot-<key>` convention, so we bind them by iterating
@@ -37,14 +22,12 @@ function setStatus(status: HTMLElement, enabled: boolean): void {
   status.className = enabled ? "status active" : "status paused";
 }
 
-// When the master switch is off, the per-protection flags are only GATED, not cleared, so their
-// checkboxes would still read "on" while nothing is actually active. That was misleading. Disable and
-// dim the whole details section while off, so the breakdown reads as inactive and matches reality.
+// When the master switch is off, the per-protection flags are only GATED, not cleared. We DIM the panel
+// so it reads as inactive (nothing is actually running), but leave the toggles clickable: they double
+// as test switches, so you can flip one and — once the master is back on — watch its Firefox setting
+// change. A flip made while the master is off just writes the flag; it reaches Firefox when you re-arm.
 function setDetailsEnabled(enabled: boolean): void {
   el<HTMLElement>("details").classList.toggle("disabled", !enabled);
-  for (const key of PROTECTION_KEYS) {
-    el<HTMLInputElement>(`prot-${key}`).disabled = !enabled;
-  }
 }
 
 // A short plain-language sentence shown at the top of each protection's "See how" drop-down, above the
@@ -81,17 +64,12 @@ function injectDemos(): void {
   }
 }
 
-// Update the one-line summary above the rows to match the REAL state — master off, paused, all-off, or
-// active. No fabricated counts: just the honest overall state, so the panel never overclaims.
-function renderSummary(config: PoisonConfig, paused: boolean): void {
+// Update the one-line summary above the rows to match the REAL state — master off, all-off, or active.
+// No fabricated counts: just the honest overall state, so the panel never overclaims.
+function renderSummary(config: PoisonConfig): void {
   const summary = el<HTMLElement>("readout-summary");
   if (!config.enabled) {
     summary.textContent = "Protection is off. Nothing is active on this or any site. Flip Enabled to turn it back on.";
-    return;
-  }
-  if (paused) {
-    summary.textContent =
-      "Paused on this site. The per-site box is off here, and the browser-wide protections are eased while this tab is in front.";
     return;
   }
   const anyOn = PROTECTION_KEYS.some((k) => config.protections[k]);
@@ -107,10 +85,9 @@ async function render(): Promise<void> {
   const enabled = el<HTMLInputElement>("enabled");
   const status = el<HTMLElement>("status");
 
-  // Live copy of the config and the current site's pause state, so the toggle handlers can repaint the
-  // readout without reloading everything. Both are updated in place as the user flips switches.
+  // Live copy of the config so the toggle handlers can repaint the summary without reloading
+  // everything. It is updated in place as the user flips switches.
   const config = await loadConfig();
-  let pausedNow = false;
   enabled.checked = config.enabled;
   setStatus(status, config.enabled);
 
@@ -120,10 +97,9 @@ async function render(): Promise<void> {
   }
   setDetailsEnabled(config.enabled);
 
-  // Fold the before→after visuals onto their protection rows (once) and paint the initial summary. The
-  // pause-dependent summary is repainted later once the whitelist state is known (see applyList).
+  // Fold the before→after visuals onto their protection rows (once) and paint the summary.
   injectDemos();
-  renderSummary(config, pausedNow);
+  renderSummary(config);
 
   // Surface an error inline on the status pill without throwing out of the handler.
   const showError = (err: unknown): void => {
@@ -140,7 +116,7 @@ async function render(): Promise<void> {
         setStatus(status, on);
         setDetailsEnabled(on);
         config.enabled = on;
-        renderSummary(config, pausedNow);
+        renderSummary(config);
       } catch (err) {
         showError(err);
       }
@@ -156,87 +132,13 @@ async function render(): Promise<void> {
           await saveConfig({ protections: { [key]: toggle.checked } });
           await browser.runtime.sendMessage({ type: "poison:apply" });
           config.protections[key] = toggle.checked;
-          renderSummary(config, pausedNow);
+          renderSummary(config);
         } catch (err) {
           showError(err);
         }
       })();
     });
   }
-
-  // Whitelist ("pause on this site"): the current-site card plus the managed list of paused sites.
-  // State lives in the background (own storage key); the popup only reads and mutates it via messages.
-  const sitePause = el<HTMLInputElement>("site-pause");
-  const siteNote = el<HTMLElement>("site-note");
-  const whitelistDetails = el<HTMLElement>("whitelist");
-  const whitelistList = el<HTMLUListElement>("whitelist-list");
-
-  const currentUrl = await currentWebUrl();
-  const hostname = currentUrl ? new URL(currentUrl).hostname : null;
-  const currentDomain = hostname ? registrableDomain(hostname) : null;
-
-  // Redraw the managed list and reflect whether the current site is among the paused ones.
-  const applyList = (list: string[]): void => {
-    whitelistList.replaceChildren();
-    for (const domain of list) {
-      const item = document.createElement("li");
-      item.className = "whitelist-item";
-      const name = document.createElement("span");
-      name.className = "whitelist-domain";
-      name.textContent = domain;
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "whitelist-remove";
-      remove.textContent = "Remove";
-      remove.addEventListener("click", () => {
-        void (async () => {
-          try {
-            const res = (await browser.runtime.sendMessage({ type: "poison:whitelist-remove", domain })) as { list?: string[] };
-            applyList(res?.list ?? []);
-          } catch (err) {
-            showError(err);
-          }
-        })();
-      });
-      item.append(name, remove);
-      whitelistList.append(item);
-    }
-    el<HTMLElement>("whitelist-count").textContent = String(list.length);
-    whitelistDetails.hidden = list.length === 0;
-
-    const paused = currentDomain ? list.includes(currentDomain) : false;
-    pausedNow = paused;
-    if (currentDomain) {
-      sitePause.checked = paused;
-      siteNote.hidden = !paused;
-    }
-
-    // Repaint the summary: it depends on the live pause state, so it must follow every whitelist change
-    // (initial load, add, remove) and not just the first render.
-    renderSummary(config, paused);
-  };
-
-  // The current-site card only makes sense on a web tab; leave it hidden on about:/extension pages.
-  if (currentDomain) {
-    el<HTMLElement>("site-card").hidden = false;
-    el<HTMLElement>("site-domain").textContent = currentDomain;
-    sitePause.addEventListener("change", () => {
-      void (async () => {
-        try {
-          const message = sitePause.checked
-            ? { type: "poison:whitelist-add", hostname }
-            : { type: "poison:whitelist-remove", domain: currentDomain };
-          const res = (await browser.runtime.sendMessage(message)) as { list?: string[] };
-          applyList(res?.list ?? []);
-        } catch (err) {
-          showError(err);
-        }
-      })();
-    });
-  }
-
-  const initial = (await browser.runtime.sendMessage({ type: "poison:whitelist-list" })) as { list?: string[] };
-  applyList(initial?.list ?? []);
 }
 
 // Run immediately if the document is already parsed (DOMContentLoaded may have fired before this
