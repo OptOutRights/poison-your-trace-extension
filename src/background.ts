@@ -80,9 +80,21 @@ function privacySwitches(config: PoisonConfig): PrivacySwitch[] {
 // cleared so the note does not stick around forever.
 const recentlyReapplied = new Set<keyof Protections>();
 
-// True while applyConfig is writing settings. Our own set()/clear() calls fire onChange; checking in
-// the middle of an apply would race it, so checks are skipped and one runs once the apply is done.
-let applying = false;
+// Applies and checks run one after another, never at the same time. A check that overlaps an apply
+// could read the config from before the apply, see a setting the apply just cleared, and turn it back
+// on: the popup would then say a protection is off while Firefox still applies it. Two overlapping
+// applies have the same problem (one's check "repairs" what the other has not written yet).
+let queue: Promise<void> = Promise.resolve();
+
+function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task);
+  // Keep the queue alive if one task fails; the caller still sees the failure through `run`.
+  queue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
 
 /**
  * Read back what Firefox actually applies for one switch and, when it drifted and we are allowed to,
@@ -138,36 +150,32 @@ async function checkStatus(): Promise<ProtectionStatuses> {
   return statuses;
 }
 
-/** Check (and repair) in the background, outside of an apply. Errors are already handled per setting. */
+// True while a background check is waiting in the queue: a burst of triggers (tab switches, our own
+// writes firing onChange) then adds a single check instead of piling them up.
+let checkPending = false;
+
+/** Check (and repair) in the background, queued after any apply. Errors are already handled per
+ *  setting. */
 function checkInBackground(): void {
-  if (!applying) void checkStatus();
+  if (checkPending) return;
+  checkPending = true;
+  void enqueue(() => {
+    checkPending = false;
+    return checkStatus();
+  });
 }
 
-// Applies run one after another. Two overlapping applies (startup triggers firing together, two quick
-// toggles in the popup) would otherwise let the first one's end-of-apply check run while the second
-// is still writing: it would see a setting not yet written, "repair" it and report it as changed
-// outside the extension.
-let applyQueue: Promise<void> = Promise.resolve();
-
 /** Apply the current config: wire every protection on when enabled + its flag is on, off otherwise.
- *  Idempotent — safe to call from any trigger, any number of times. Calls are queued, never overlap. */
+ *  Idempotent — safe to call from any trigger, any number of times. Queued, never overlaps a check. */
 function applyConfig(): Promise<void> {
-  const run = applyQueue.then(applyConfigNow);
-  // Keep the queue alive if one apply fails; the caller still sees the failure through `run`.
-  applyQueue = run.catch(() => undefined);
-  return run;
+  return enqueue(applyConfigNow);
 }
 
 async function applyConfigNow(): Promise<void> {
   const config = await loadConfig();
-  applying = true;
-  try {
-    // The browser-wide privacy settings, each gated on enabled AND its own flag. Every set/clear is
-    // independent and self-guarding, so one failing setting does not abort the rest.
-    for (const sw of privacySwitches(config)) await applyPrivacySwitch(sw);
-  } finally {
-    applying = false;
-  }
+  // The browser-wide privacy settings, each gated on enabled AND its own flag. Every set/clear is
+  // independent and self-guarding, so one failing setting does not abort the rest.
+  for (const sw of privacySwitches(config)) await applyPrivacySwitch(sw);
 
   // Auto containers: gated on enabled AND the container flag. enable()/disable() are idempotent.
   if (config.enabled && config.protections.container) {
@@ -214,7 +222,7 @@ browser.runtime.onMessage.addListener(
     // The popup asks for the real state when it opens and after each toggle. A "reapplied" note is
     // shown once, so it is cleared after being reported.
     if (msg?.type === "poison:status") {
-      return checkStatus().then((statuses) => {
+      return enqueue(checkStatus).then((statuses) => {
         recentlyReapplied.clear();
         return { statuses };
       });
