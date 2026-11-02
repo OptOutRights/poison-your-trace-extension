@@ -143,9 +143,22 @@ function checkInBackground(): void {
   if (!applying) void checkStatus();
 }
 
+// Applies run one after another. Two overlapping applies (startup triggers firing together, two quick
+// toggles in the popup) would otherwise let the first one's end-of-apply check run while the second
+// is still writing: it would see a setting not yet written, "repair" it and report it as changed
+// outside the extension.
+let applyQueue: Promise<void> = Promise.resolve();
+
 /** Apply the current config: wire every protection on when enabled + its flag is on, off otherwise.
- *  Idempotent — safe to call from any trigger, any number of times. */
-async function applyConfig(): Promise<void> {
+ *  Idempotent — safe to call from any trigger, any number of times. Calls are queued, never overlap. */
+function applyConfig(): Promise<void> {
+  const run = applyQueue.then(applyConfigNow);
+  // Keep the queue alive if one apply fails; the caller still sees the failure through `run`.
+  applyQueue = run.catch(() => undefined);
+  return run;
+}
+
+async function applyConfigNow(): Promise<void> {
   const config = await loadConfig();
   applying = true;
   try {
