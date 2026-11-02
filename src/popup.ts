@@ -133,7 +133,12 @@ function renderSummary(config: PoisonConfig, statuses: ProtectionStatuses | null
     summary.textContent = "Protection is on, but every protection below is turned off, so nothing is active here.";
     return;
   }
-  const anyProblem = statuses !== null && PROTECTION_KEYS.some((k) => PROBLEM_STATUSES.has(statuses[k]));
+  // Without a read-back we don't know whether the protections are working, so don't claim they are.
+  if (statuses === null) {
+    summary.textContent = "Couldn't check whether the protections below are working right now.";
+    return;
+  }
+  const anyProblem = PROTECTION_KEYS.some((k) => PROBLEM_STATUSES.has(statuses[k]));
   summary.textContent = anyProblem
     ? "Some protections below can't be turned on right now. See the notes under them."
     : "These protections are working on this site. Open any one to see how.";
