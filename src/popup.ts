@@ -4,6 +4,7 @@
 
 import { loadConfig, saveConfig, PROTECTION_KEYS, type PoisonConfig } from "./config";
 import { buildDemo, type ReadoutKey } from "./demos";
+import { PROBLEM_STATUSES, type ProtectionStatus, type ProtectionStatuses } from "./status";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -66,18 +67,83 @@ function injectDemos(): void {
   }
 }
 
-// Update the one-line summary above the rows to match the REAL state — master off, all-off, or active.
-// No fabricated counts: just the honest overall state, so the panel never overclaims.
-function renderSummary(config: PoisonConfig): void {
+// What to tell the user when a protection is not in the state its tick box suggests. "applied" and
+// "off" need no note: the tick box already says it all.
+const STATUS_NOTES: Partial<Record<ProtectionStatus, string>> = {
+  reapplied: "This was changed outside the extension and has been turned back on. To turn it off, untick it here.",
+  other_extension: "Another extension controls this setting, so it can't be turned on here.",
+  locked: "This setting is locked on this computer (for example by your organisation), so it can't be turned on.",
+  mismatch: "Firefox isn't applying this right now. Tick it to try again.",
+  unavailable: "This setting isn't available in your version of Firefox.",
+};
+
+// Problems the user can't fix from the popup: the tick box is greyed out. A "mismatch" stays clickable,
+// since ticking it again re-applies the setting.
+const UNFIXABLE: ReadonlySet<ProtectionStatus> = new Set(["other_extension", "locked", "unavailable"]);
+
+// Make each tick box and its note match the real state Firefox reports: a protection that is not
+// actually applied is shown unticked, even though the stored config still asks for it (so it comes back
+// on its own once the lock or the other extension goes away).
+function renderStatuses(config: PoisonConfig, statuses: ProtectionStatuses | null): void {
+  for (const key of PROTECTION_KEYS) {
+    const status = statuses?.[key];
+    const problem = status !== undefined && PROBLEM_STATUSES.has(status);
+    const toggle = el<HTMLInputElement>(`prot-${key}`);
+    toggle.checked = problem ? false : config.protections[key];
+    toggle.disabled = !config.enabled || (status !== undefined && UNFIXABLE.has(status));
+
+    const text = document.querySelector<HTMLElement>(`.prot[data-key="${key}"] .prot-text`);
+    if (!text) continue;
+    let note = text.querySelector<HTMLElement>(".prot-status");
+    const message = status ? STATUS_NOTES[status] : undefined;
+    if (!message) {
+      note?.remove();
+      continue;
+    }
+    if (!note) {
+      note = document.createElement("p");
+      text.append(note);
+    }
+    // A problem is a warning; "reapplied" is only information (the protection is working again).
+    note.className = status && PROBLEM_STATUSES.has(status) ? "prot-status warn" : "prot-status";
+    note.textContent = message;
+  }
+}
+
+// Ask the background for the real state. Null if it can't answer, in which case no notes are shown.
+async function fetchStatuses(): Promise<ProtectionStatuses | null> {
+  try {
+    const res = (await browser.runtime.sendMessage({ type: "poison:status" })) as { statuses?: ProtectionStatuses };
+    return res?.statuses ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// Update the one-line summary above the rows to match the REAL state — master off, all-off, partly not
+// applied, or active. No fabricated counts: just the honest overall state, so the panel never overclaims.
+function renderSummary(config: PoisonConfig, statuses: ProtectionStatuses | null): void {
   const summary = el<HTMLElement>("readout-summary");
   if (!config.enabled) {
     summary.textContent = "Protection is off. Nothing is active on this or any site. Flip Enabled to turn it back on.";
     return;
   }
   const anyOn = PROTECTION_KEYS.some((k) => config.protections[k]);
-  summary.textContent = anyOn
-    ? "These protections are working on this site. Open any one to see how."
-    : "Protection is on, but every protection below is turned off, so nothing is active here.";
+  if (!anyOn) {
+    summary.textContent = "Protection is on, but every protection below is turned off, so nothing is active here.";
+    return;
+  }
+  const anyProblem = statuses !== null && PROTECTION_KEYS.some((k) => PROBLEM_STATUSES.has(statuses[k]));
+  summary.textContent = anyProblem
+    ? "Some protections below can't be turned on right now. See the notes under them."
+    : "These protections are working on this site. Open any one to see how.";
+}
+
+// Re-read the real state and repaint the tick boxes, the notes and the summary.
+async function refresh(config: PoisonConfig): Promise<void> {
+  const statuses = await fetchStatuses();
+  renderStatuses(config, statuses);
+  renderSummary(config, statuses);
 }
 
 // Bind the hero toggle and every protection toggle from the current config, then wire their change
@@ -99,9 +165,9 @@ async function render(): Promise<void> {
   }
   setDetailsEnabled(config.enabled);
 
-  // Fold the before→after visuals onto their protection rows (once) and paint the summary.
+  // Fold the before→after visuals onto their protection rows (once), then paint the real state.
   injectDemos();
-  renderSummary(config);
+  await refresh(config);
 
   // Surface an error inline on the status pill without throwing out of the handler.
   const showError = (err: unknown): void => {
@@ -118,7 +184,7 @@ async function render(): Promise<void> {
         setStatus(status, on);
         setDetailsEnabled(on);
         config.enabled = on;
-        renderSummary(config);
+        await refresh(config);
       } catch (err) {
         showError(err);
       }
@@ -134,7 +200,7 @@ async function render(): Promise<void> {
           await saveConfig({ protections: { [key]: toggle.checked } });
           await browser.runtime.sendMessage({ type: "poison:apply" });
           config.protections[key] = toggle.checked;
-          renderSummary(config);
+          await refresh(config);
         } catch (err) {
           showError(err);
         }
