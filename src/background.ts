@@ -198,8 +198,9 @@ void applyConfig();
 // change on every Firefox build, which is why tab switches also trigger a check below. Our own writes
 // fire onChange too, but a check then finds the expected value and does nothing, so there is no loop.
 void loadConfig().then((config) => {
-  // The setting objects are the same whatever the config; it is only needed to build the list.
-  for (const sw of privacySwitches(config)) sw.setting.onChange?.addListener(() => checkInBackground());
+  // The setting objects are the same whatever the config; it is only needed to build the list. A
+  // setting missing on this Firefox build is skipped, so the others still get their listener.
+  for (const sw of privacySwitches(config)) sw.setting?.onChange?.addListener(() => checkInBackground());
 });
 browser.tabs.onActivated.addListener(() => checkInBackground());
 
