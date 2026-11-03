@@ -34,22 +34,20 @@ interface PrivacySwitch {
 }
 
 /** Apply one privacy switch: set its value when active, clear it (revert to the user's value) when not.
- *  Never throws — a failure is logged and swallowed so the surrounding loop keeps going. Returns false
- *  when setting an active switch failed, so the check that follows does not mistake it for a change
- *  made outside the extension. */
+ *  Never throws — a failure is logged and swallowed so the surrounding loop keeps going. Returns true
+ *  only when the value was set, so a later check knows the extension really applied it. */
 async function applyPrivacySwitch(sw: PrivacySwitch): Promise<boolean> {
   try {
     if (sw.active) {
       await sw.setting.set({ value: sw.value });
-    } else {
-      // clear() takes an (empty) details object; passing {} reverts control to the user's own setting.
-      await sw.setting.clear({});
+      return true;
     }
-    return true;
+    // clear() takes an (empty) details object; passing {} reverts control to the user's own setting.
+    await sw.setting.clear({});
   } catch (err) {
     console.warn(`[poison] could not ${sw.active ? "set" : "clear"} ${sw.name}:`, err);
-    return !sw.active;
   }
+  return false;
 }
 
 /**
@@ -96,14 +94,15 @@ async function saveDisabledOutside(keys: Set<keyof Protections>): Promise<void> 
   await browser.storage.local.set({ [DISABLED_OUTSIDE_KEY]: [...keys] });
 }
 
-// Protections whose last set() failed. A differing value is then our own failure, not a change made
-// outside the extension, so it is reported as "mismatch" instead of turning the protection off.
-const failedSets = new Set<keyof Protections>();
+// Protections whose value the last apply really set. A differing value only means "changed outside the
+// extension" for these. Otherwise the protection was never applied: its set() failed, or it was just
+// ticked and the apply that sets it has not run yet (a check queued before that apply would otherwise
+// see the old value and turn the protection straight back off). Those are reported as "mismatch".
+const appliedByUs = new Set<keyof Protections>();
 
 // Applies and checks run one after another, never at the same time. A check that overlaps an apply
-// could read the config from before the apply, see a setting the apply just cleared, and turn it back
-// on: the popup would then say a protection is off while Firefox still applies it. Two overlapping
-// applies have the same problem (one's check "repairs" what the other has not written yet).
+// could read a setting the apply has not written yet and wrongly report (and record) it as changed
+// outside the extension.
 let queue: Promise<void> = Promise.resolve();
 
 function enqueue<T>(task: () => Promise<T>): Promise<T> {
@@ -123,7 +122,7 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
  *   - another extension holds a different value → "other_extension": the most recently installed
  *     extension takes precedence, so ours cannot win; report only.
  *   - not controllable (enterprise policy) with a different value → "locked": report only.
- *   - our own set() failed → "mismatch".
+ *   - not set by the last apply (set() failed, or not applied yet) → "mismatch".
  *   - controllable but different (typically changed by hand in about:config) → "disabled_outside": the
  *     change is respected and the caller turns the protection off in the config.
  */
@@ -136,7 +135,7 @@ async function verifyPrivacySwitch(sw: PrivacySwitch): Promise<ProtectionStatus>
     if (current.value === sw.value) return "applied";
     if (current.levelOfControl === "controlled_by_other_extensions") return "other_extension";
     if (current.levelOfControl === "not_controllable") return "locked";
-    if (failedSets.has(sw.key)) return "mismatch";
+    if (!appliedByUs.has(sw.key)) return "mismatch";
     return "disabled_outside";
   } catch (err) {
     console.warn(`[poison] could not read ${sw.name}:`, err);
@@ -152,8 +151,7 @@ async function verifyPrivacySwitch(sw: PrivacySwitch): Promise<ProtectionStatus>
 async function checkStatus(): Promise<ProtectionStatuses> {
   const config = await loadConfig();
   const disabledOutside = await loadDisabledOutside();
-  const turnedOff: Partial<Protections> = {};
-  const turnedBackOn: Partial<Protections> = {};
+  const changed: Partial<Protections> = {};
   const statuses = {} as ProtectionStatuses;
 
   for (const sw of privacySwitches(config)) {
@@ -165,7 +163,7 @@ async function checkStatus(): Promise<ProtectionStatuses> {
       const status = await verifyPrivacySwitch(sw);
       if (status === "applied") {
         disabledOutside.delete(sw.key);
-        turnedBackOn[sw.key] = true;
+        changed[sw.key] = true;
         statuses[sw.key] = "applied";
       } else {
         statuses[sw.key] = "disabled_outside";
@@ -177,13 +175,12 @@ async function checkStatus(): Promise<ProtectionStatuses> {
       if (status === "disabled_outside") {
         console.warn(`[poison] ${sw.name} was changed outside the extension; turning the protection off.`);
         disabledOutside.add(sw.key);
-        turnedOff[sw.key] = false;
+        changed[sw.key] = false;
       }
       statuses[sw.key] = status;
     }
   }
 
-  const changed = { ...turnedOff, ...turnedBackOn };
   if (Object.keys(changed).length > 0) {
     await saveConfig({ protections: changed });
     await saveDisabledOutside(disabledOutside);
@@ -252,11 +249,12 @@ async function applyConfigNow(): Promise<void> {
       } else {
         // Still off because it was changed outside the extension: leave the user's value alone (no set,
         // and no clear either, which could restore the value from before the extension took over).
+        appliedByUs.delete(sw.key);
         continue;
       }
     }
-    if (await applyPrivacySwitch(sw)) failedSets.delete(sw.key);
-    else failedSets.add(sw.key);
+    if (await applyPrivacySwitch(sw)) appliedByUs.add(sw.key);
+    else appliedByUs.delete(sw.key);
   }
   if (disabledOutside.size !== before) await saveDisabledOutside(disabledOutside);
 
