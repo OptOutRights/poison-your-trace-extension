@@ -70,7 +70,7 @@ function injectDemos(): void {
 // What to tell the user when a protection is not in the state its tick box suggests. "applied" and
 // "off" need no note: the tick box already says it all.
 const STATUS_NOTES: Partial<Record<ProtectionStatus, string>> = {
-  reapplied: "This was changed outside the extension and has been turned back on. To turn it off, untick it here.",
+  disabled_outside: "This was turned off in Firefox's settings, outside the extension. Tick it to turn it back on.",
   other_extension: "Another extension controls this setting, so it can't be turned on here.",
   locked: "This setting is locked on this computer (for example by your organisation), so it can't be turned on.",
   mismatch: "Firefox isn't applying this right now. Tick it to try again.",
@@ -82,8 +82,9 @@ const STATUS_NOTES: Partial<Record<ProtectionStatus, string>> = {
 const UNFIXABLE: ReadonlySet<ProtectionStatus> = new Set(["other_extension", "locked", "unavailable"]);
 
 // Make each tick box and its note match the real state Firefox reports: a protection that is not
-// actually applied is shown unticked, even though the stored config still asks for it (so it comes back
-// on its own once the lock or the other extension goes away).
+// actually applied is shown unticked. For a lock or another extension the stored config still asks for
+// it (so it comes back on its own once they go away); a protection turned off outside the extension is
+// off in the config too, and comes back only when the user ticks it again.
 function renderStatuses(config: PoisonConfig, statuses: ProtectionStatuses | null): void {
   for (const key of PROTECTION_KEYS) {
     const status = statuses?.[key];
@@ -104,8 +105,9 @@ function renderStatuses(config: PoisonConfig, statuses: ProtectionStatuses | nul
       note = document.createElement("p");
       text.append(note);
     }
-    // A problem is a warning; "reapplied" is only information (the protection is working again).
-    note.className = status && PROBLEM_STATUSES.has(status) ? "prot-status warn" : "prot-status";
+    // Turned off outside the extension: red, since the user may not know their protection is gone. The
+    // other notes are warnings.
+    note.className = status === "disabled_outside" ? "prot-status error" : "prot-status warn";
     note.textContent = message;
   }
 }
@@ -128,6 +130,10 @@ function renderSummary(config: PoisonConfig, statuses: ProtectionStatuses | null
     summary.textContent = "Protection is off. Nothing is active on this or any site. Flip Enabled to turn it back on.";
     return;
   }
+  if (statuses !== null && PROTECTION_KEYS.some((k) => statuses[k] === "disabled_outside")) {
+    summary.textContent = "Some protections below were turned off outside the extension. Tick them to turn them back on.";
+    return;
+  }
   const anyOn = PROTECTION_KEYS.some((k) => config.protections[k]);
   if (!anyOn) {
     summary.textContent = "Protection is on, but every protection below is turned off, so nothing is active here.";
@@ -144,9 +150,11 @@ function renderSummary(config: PoisonConfig, statuses: ProtectionStatuses | null
     : "These protections are working on this site. Open any one to see how.";
 }
 
-// Re-read the real state and repaint the tick boxes, the notes and the summary.
+// Re-read the real state and repaint the tick boxes, the notes and the summary. The check can turn a
+// protection off in the config (changed outside the extension), so the config is re-read after it.
 async function refresh(config: PoisonConfig): Promise<void> {
   const statuses = await fetchStatuses();
+  Object.assign(config, await loadConfig());
   renderStatuses(config, statuses);
   renderSummary(config, statuses);
 }

@@ -7,16 +7,17 @@ import type { Protections } from "./config";
 /**
  * - applied: active and Firefox reports the expected value.
  * - off: turned off on purpose (master switch or its own toggle), so nothing is expected.
- * - reapplied: was changed outside the extension (e.g. by hand in about:config) and has been put back.
+ * - disabled_outside: turned off outside the extension (e.g. by hand in about:config). It is not put
+ *   back: the protection is turned off in the config too, and the user can tick it again to re-enable it.
  * - other_extension: another extension controls this setting, so ours cannot apply it.
  * - locked: not controllable at all (typically an enterprise policy).
- * - mismatch: controllable by us, but the value still differs after trying to re-apply it.
+ * - mismatch: controllable by us, but setting it failed, so the value differs.
  * - unavailable: the setting could not be read (API missing on this Firefox build).
  */
 export type ProtectionStatus =
   | "applied"
   | "off"
-  | "reapplied"
+  | "disabled_outside"
   | "other_extension"
   | "locked"
   | "mismatch"
