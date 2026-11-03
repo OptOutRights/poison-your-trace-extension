@@ -189,7 +189,32 @@ async function checkStatus(): Promise<ProtectionStatuses> {
     await saveDisabledOutside(disabledOutside);
   }
   statuses.container = config.enabled && config.protections.container ? "applied" : "off";
+  await updateBadge(statuses);
   return statuses;
+}
+
+/**
+ * Flag the toolbar icon with a red "!" while a protection is turned off outside the extension, so the
+ * user notices without opening the popup. Every check ends here, so the badge clears as soon as the
+ * protection is ticked again (or the setting is put back by hand). Never throws: the badge API may be
+ * missing (Firefox for Android) and a badge failure must not break the check.
+ */
+async function updateBadge(statuses: ProtectionStatuses): Promise<void> {
+  const action = browser.browserAction;
+  if (!action?.setBadgeText) return;
+  const flagged = Object.values(statuses).includes("disabled_outside");
+  try {
+    await action.setBadgeText({ text: flagged ? "!" : "" });
+    await action.setTitle({
+      title: flagged ? "Poison your Trace: a protection was turned off in Firefox's settings" : "Poison your Trace",
+    });
+    if (flagged) {
+      await action.setBadgeBackgroundColor({ color: "#b42318" });
+      await action.setBadgeTextColor?.({ color: "#ffffff" });
+    }
+  } catch (err) {
+    console.warn("[poison] could not update the toolbar badge:", err);
+  }
 }
 
 // True while a background check is waiting in the queue: a burst of triggers (tab switches, our own
