@@ -7,28 +7,15 @@
 // right container, so its navigation is allowed through, no loop.
 
 import { loadConfig } from "../config";
+import { registrableDomain } from "./domain";
 import { ContainerManager } from "./manager";
 
 type BlockingResponse = browser.webRequest.BlockingResponse;
 type Details = browser.webRequest._OnBeforeRequestDetails;
 
-// A few common multi label public suffixes so `foo.co.uk` groups under `foo.co.uk`, not `co.uk`.
-const TWO_LEVEL_SUFFIXES = new Set([
-  "co.uk", "org.uk", "gov.uk", "ac.uk", "co.jp", "com.au", "co.nz", "com.br", "co.in",
-]);
-
 // Firefox container colours; we pick one deterministically per domain so distinct sites are
 // visibly distinct in the tab bar (and the same site always gets the same colour).
 const COLORS = ["blue", "turquoise", "green", "yellow", "orange", "red", "pink", "purple"] as const;
-
-/** The registrable domain ("example.com" for "www.shop.example.com"). One container per this. */
-export function registrableDomain(hostname: string): string {
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return hostname; // raw IPv4 maps to itself
-  const parts = hostname.split(".");
-  if (parts.length <= 2) return hostname;
-  const lastTwo = parts.slice(-2).join(".");
-  return TWO_LEVEL_SUFFIXES.has(lastTwo) ? parts.slice(-3).join(".") : lastTwo;
-}
 
 function colorForDomain(domain: string): (typeof COLORS)[number] {
   let hash = 0;

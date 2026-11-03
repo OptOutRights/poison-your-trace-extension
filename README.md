@@ -91,6 +91,9 @@ src/
   containers/
     manager.ts         creates one Firefox container per site
     auto.ts            reopens every navigation in its per-site container
+    domain.ts          which site a hostname belongs to (Public Suffix List, via tldts)
+test/
+  domain.test.ts       unit tests for the site grouping
 testpage/
   fingerprint.html     a standalone page that shows every in-scope signal
 ```

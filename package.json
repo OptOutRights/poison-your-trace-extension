@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test test/*.test.ts",
     "generate-icons": "node scripts/generate-icons.mjs",
     "build": "npm run typecheck && node build.mjs",
     "start": "npm run build && web-ext run",
@@ -20,5 +21,8 @@
     "sharp": "^0.33.0",
     "typescript": "^5.5.0",
     "web-ext": "^8.3.0"
+  },
+  "dependencies": {
+    "tldts": "^7.4.19"
   }
 }
