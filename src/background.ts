@@ -8,8 +8,12 @@
 import { loadConfig, type PoisonConfig } from "./config";
 import { ContainerManager } from "./containers/manager";
 import { AutoContainer } from "./containers/auto";
+import { ContainerCleanup } from "./containers/cleanup";
+import { ContainerRegistry } from "./containers/registry";
 
-const containers = new ContainerManager();
+const registry = new ContainerRegistry();
+const cleanup = new ContainerCleanup(registry);
+const containers = new ContainerManager(registry, cleanup);
 const autoContainer = new AutoContainer(containers);
 
 // A single privacy.* BrowserSetting we drive. We describe each one declaratively (the setting object,
@@ -84,8 +88,10 @@ async function applyConfig(): Promise<void> {
   // Auto containers: gated on enabled AND the container flag. enable()/disable() are idempotent.
   if (config.enabled && config.protections.container) {
     autoContainer.enable();
+    void cleanup.enable().catch((error) => console.warn("[poison] container cleanup failed", error));
   } else {
     autoContainer.disable();
+    cleanup.disable();
   }
 
   console.info(

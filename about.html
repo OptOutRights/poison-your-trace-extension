@@ -28,7 +28,8 @@
         </p>
         <p>
           Poison your Trace helps breaking both. It keeps each site in its own jar, so cookies from one site
-          can't follow you to another. And it turns on Firefox's built-in protections that smooth over
+          can't follow you to another. Once you close a site, its jar is emptied, so the site can't
+          recognise you next time either. And it turns on Firefox's built-in protections that smooth over
           your browsing information. Your browser looks like many other people instead of like
           only you.
         </p>
@@ -88,7 +89,10 @@
             <span class="signal-name">Each site in its own jar</span>
             <span class="signal-desc"
               >Puts every site in its own Firefox container, a separate cookie and storage jar. So one
-              site can't see what you do on another.
+              site can't see what you do on another. 15 minutes after you close a site's last tab, its
+              jar is thrown away with its cookies and logins, so your visits can't be linked to each
+              other either. You will need to sign in again next time. Containers you created yourself
+              are never touched.
               <a class="signal-source" href="https://support.mozilla.org/en-US/kb/containers" target="_blank" rel="noopener">Source: Firefox Containers ↗</a></span
             >
             <div class="about-demo" data-demo="container"></div>

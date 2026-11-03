@@ -44,7 +44,7 @@ There is one on/off switch that turns on everything below. If a site breaks, ope
 
 | | |
 |---|---|
-| **Each site in its own jar** | Every site gets its own private space for cookies and logins (a Firefox "container"), so one site can't see what you do on another. |
+| **Each site in its own jar** | Every site gets its own private space for cookies and logins (a Firefox "container"), so one site can't see what you do on another. Once you close a site's last tab, its jar is thrown away 15 minutes later, cookies and logins included: sites can't recognise you from one visit to the next, and no list of visited sites builds up. Containers you created yourself are never touched. |
 | **A browser that looks ordinary** | Firefox's built-in protection smooths over the details that make your device unique (screen, time zone, graphics card, fonts, and more) so your browser looks like a lot of other people's. You blend into a crowd instead of being randomly disguised. |
 | **Privacy settings turned on** | Keeps your IP address from leaking in calls (WebRTC), blocks known trackers everywhere, stops the links you click from quietly reporting back (hyperlink auditing), and stops Firefox from contacting sites before you open them (network prediction). |
 
@@ -55,6 +55,7 @@ Poison your Trace does not run its own fingerprint engine. It turns on protectio
 
 ## Current limitations
 
+- **You get logged out of sites you close.** Because a site's jar is thrown away 15 minutes after its last tab is closed, you will need to sign in again if you come back later than that. When you first update to this version, the jars of every site that isn't open are all cleared 15 minutes later, so expect to sign in again everywhere.
 - **Your IP address is not hidden.** The extension never leaks it, but it can't change what a site sees. Pair it with a VPN or Tor for IP-level cover.
 - **Which system you use stays visible.** Sites can still tell whether you are on Mac, Windows or Linux. Everything else in that part of the label is already common to everyone on your Firefox version.
 - **Some friction sign-ups and sign-ins.** You may occasionally experience difficulty signing up or signing in. Open the popup and turn off the one protection that trips the site up (usually **Make your browser look ordinary**), then try again. We are working to improve this.
