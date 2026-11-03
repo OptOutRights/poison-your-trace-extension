@@ -86,6 +86,7 @@ build.mjs              bundles each entry point into dist/ with esbuild
 src/
   background.ts        the single control point: applies every protection from the config
   config.ts            the on-device config: { enabled, protections }
+  status.ts            the real state of each protection, as Firefox reports it
   popup.ts             the popup toggles and their wiring
   containers/
     manager.ts         creates one Firefox container per site
