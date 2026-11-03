@@ -101,7 +101,16 @@ async function applyConfig(): Promise<void> {
   );
 }
 
-browser.runtime.onInstalled.addListener(() => void applyConfig());
+browser.runtime.onInstalled.addListener(({ reason }) => {
+  void (async () => {
+    // Only an update can leave containers from versions without a registry. On a fresh install,
+    // adopting would only ever catch containers the user made, so skip the migration entirely.
+    if (reason === "install") {
+      await registry.skipMigration().catch((error) => console.warn("[poison] skipMigration", error));
+    }
+    await applyConfig();
+  })();
+});
 browser.runtime.onStartup.addListener(() => void applyConfig());
 // Also apply on every background load (e.g. web-ext hot reload during development), so the
 // protections are armed without needing a manual toggle.

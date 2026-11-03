@@ -24,13 +24,29 @@ export class ContainerRegistry {
   // Writes are chained so an older snapshot can never land after a newer one.
   private saving: Promise<void> = Promise.resolve();
 
-  /** Load the registry from storage once. Every other method assumes this has resolved. */
+  /**
+   * Load the registry from storage and run the one time migration, once. Every other method assumes
+   * this has resolved: looking a container up before old containers are adopted would create a
+   * duplicate next to them. A failure is not cached, so the next call retries.
+   */
   ready(): Promise<void> {
-    this.loading ??= browser.storage.local.get(STORAGE_KEY).then((stored) => {
-      const ids = stored[STORAGE_KEY];
-      if (Array.isArray(ids)) for (const id of ids) if (typeof id === "string") this.ids.add(id);
+    this.loading ??= this.load().catch((error) => {
+      this.loading = null;
+      throw error;
     });
     return this.loading;
+  }
+
+  /** A fresh install has no containers from older versions: mark the migration as done. */
+  async skipMigration(): Promise<void> {
+    await browser.storage.local.set({ [MIGRATED_KEY]: true });
+  }
+
+  private async load(): Promise<void> {
+    const stored = await browser.storage.local.get([STORAGE_KEY, MIGRATED_KEY]);
+    const ids = stored[STORAGE_KEY];
+    if (Array.isArray(ids)) for (const id of ids) if (typeof id === "string") this.ids.add(id);
+    if (!stored[MIGRATED_KEY]) await this.adoptLegacy();
   }
 
   // has/add/delete are synchronous on purpose: the cleanup and the container lookup each check and
@@ -56,19 +72,21 @@ export class ContainerRegistry {
    * One time migration: versions before the registry created containers without recording them.
    * Adopt the ones that carry our `fingerprint` icon and a site-like name, so they get cleaned up
    * too. A user container with the same icon and a domain name would also be adopted: rare, and
-   * accepted.
+   * accepted. Only runs after an update: a fresh install skips it (see skipMigration).
    */
-  async adoptLegacy(): Promise<void> {
-    await this.ready();
-    const stored = await browser.storage.local.get(MIGRATED_KEY);
-    if (stored[MIGRATED_KEY]) return;
+  private async adoptLegacy(): Promise<void> {
     const all = await browser.contextualIdentities.query({});
     for (const c of all) {
       if (c.icon === "fingerprint" && looksLikeSite(c.name)) this.ids.add(c.cookieStoreId);
     }
-    this.save();
-    await this.saving;
-    await browser.storage.local.set({ [MIGRATED_KEY]: true });
+    // Ids and the "done" flag in one write that is allowed to fail: if it does, the migration is
+    // not marked done and runs again next time, instead of silently losing the adopted ids.
+    const snapshot = [...this.ids];
+    const write = this.saving.then(() =>
+      browser.storage.local.set({ [STORAGE_KEY]: snapshot, [MIGRATED_KEY]: true }),
+    );
+    this.saving = write.catch(() => undefined);
+    await write;
   }
 
   private save(): void {

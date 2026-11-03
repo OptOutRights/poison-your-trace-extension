@@ -46,9 +46,15 @@ export class ContainerCleanup {
     this.listening = true;
     browser.tabs.onRemoved.addListener(this.onTabRemoved);
     browser.contextualIdentities.onRemoved.addListener(this.onContainerRemoved);
-    await this.registry.adoptLegacy();
-    // Containers left without a tab (browser restart, extension update, turned back on).
-    await this.sweep();
+    try {
+      // Containers left without a tab (browser restart, extension update, turned back on).
+      // sweep() waits for the registry, including the one time migration.
+      await this.sweep();
+    } catch (error) {
+      // Back to off, so the next enable() (next config apply or browser start) retries everything.
+      this.disable();
+      throw error;
+    }
   }
 
   disable(): void {
@@ -59,7 +65,11 @@ export class ContainerCleanup {
     for (const id of [...this.timers.keys()]) this.cancel(id);
   }
 
-  /** Schedule removal of every container of ours that has no tab. `closedTabId` is ignored. */
+  /**
+   * Schedule removal of every container of ours that has no tab. `closedTabId` is the tab that just
+   * closed: it is excluded because it can still show up in `tabs.query` during `onRemoved`, which
+   * would make its container look in use and never schedule it.
+   */
   private async sweep(closedTabId?: number): Promise<void> {
     await this.registry.ready();
     const tabs = await browser.tabs.query({});
@@ -95,6 +105,8 @@ export class ContainerCleanup {
     } catch {
       return;
     }
+    // Turned off while we were waiting: disable() only clears timers, not a removal already running.
+    if (!this.listening) return;
     // Check and drop ownership in one synchronous step, so a navigation looking the container up
     // either sees it (and has marked it used, which aborts here) or does not (and creates a new one).
     if (tabs.length) return;
