@@ -306,6 +306,23 @@ h1 img {
   line-height: 1.3;
 }
 
+/* Real-state note under a protection (from the background's read-back of Firefox's settings). Amber
+   when a protection can't be turned on (lock, other extension...); red when it was turned off outside
+   the extension and is now unticked. */
+.prot-status {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.prot-status.warn {
+  color: var(--amber-text);
+}
+
+.prot-status.error {
+  color: var(--alert-red-text);
+}
+
 /* Per-protection toggle: same 16px accent checkbox and focus ring as the hero switch. */
 .prot-toggle {
   width: 16px;

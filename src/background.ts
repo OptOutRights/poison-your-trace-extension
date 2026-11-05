@@ -5,9 +5,10 @@
 // only in-extension mechanism left is auto containers. The popup toggle writes the config and sends a
 // "poison:apply" message, which re-runs applyConfig.
 
-import { loadConfig, type PoisonConfig } from "./config";
+import { loadConfig, saveConfig, type PoisonConfig, type Protections } from "./config";
 import { ContainerManager } from "./containers/manager";
 import { AutoContainer } from "./containers/auto";
+import type { ProtectionStatus, ProtectionStatuses } from "./status";
 
 const containers = new ContainerManager();
 const autoContainer = new AutoContainer(containers);
@@ -18,6 +19,8 @@ const autoContainer = new AutoContainer(containers);
 // to some hardcoded default we pretend is neutral. Every op is wrapped so one failing setting (an API
 // missing on an old/Android build, say) never aborts the others.
 interface PrivacySwitch {
+  /** The protection flag this switch belongs to, so its real status can be reported per protection. */
+  key: keyof Protections;
   /** Human name for the log line. */
   name: string;
   /** The BrowserSetting object exposing .set()/.clear(). browser.types.Setting is the shared shape of
@@ -31,18 +34,20 @@ interface PrivacySwitch {
 }
 
 /** Apply one privacy switch: set its value when active, clear it (revert to the user's value) when not.
- *  Never throws — a failure is logged and swallowed so the surrounding loop keeps going. */
-async function applyPrivacySwitch(sw: PrivacySwitch): Promise<void> {
+ *  Never throws — a failure is logged and swallowed so the surrounding loop keeps going. Returns true
+ *  only when the value was set, so a later check knows the extension really applied it. */
+async function applyPrivacySwitch(sw: PrivacySwitch): Promise<boolean> {
   try {
     if (sw.active) {
       await sw.setting.set({ value: sw.value });
-    } else {
-      // clear() takes an (empty) details object; passing {} reverts control to the user's own setting.
-      await sw.setting.clear({});
+      return true;
     }
+    // clear() takes an (empty) details object; passing {} reverts control to the user's own setting.
+    await sw.setting.clear({});
   } catch (err) {
     console.warn(`[poison] could not ${sw.active ? "set" : "clear"} ${sw.name}:`, err);
   }
+  return false;
 }
 
 /**
@@ -64,22 +69,194 @@ function privacySwitches(config: PoisonConfig): PrivacySwitch[] {
   const websites = browser.privacy.websites;
   const network = browser.privacy.network;
   return [
-    { name: "resistFingerprinting", setting: websites.resistFingerprinting, value: true, active: on && p.rfp },
-    { name: "webRTCIPHandlingPolicy", setting: network.webRTCIPHandlingPolicy, value: "disable_non_proxied_udp", active: on && p.webrtc },
-    { name: "trackingProtectionMode", setting: websites.trackingProtectionMode, value: "always", active: on && p.trackingProtection },
-    { name: "hyperlinkAuditingEnabled", setting: websites.hyperlinkAuditingEnabled, value: false, active: on && p.hyperlinkAuditing },
-    { name: "networkPredictionEnabled", setting: network.networkPredictionEnabled, value: false, active: on && p.networkPrediction },
+    { key: "rfp", name: "resistFingerprinting", setting: websites.resistFingerprinting, value: true, active: on && p.rfp },
+    { key: "webrtc", name: "webRTCIPHandlingPolicy", setting: network.webRTCIPHandlingPolicy, value: "disable_non_proxied_udp", active: on && p.webrtc },
+    { key: "trackingProtection", name: "trackingProtectionMode", setting: websites.trackingProtectionMode, value: "always", active: on && p.trackingProtection },
+    { key: "hyperlinkAuditing", name: "hyperlinkAuditingEnabled", setting: websites.hyperlinkAuditingEnabled, value: false, active: on && p.hyperlinkAuditing },
+    { key: "networkPrediction", name: "networkPredictionEnabled", setting: network.networkPredictionEnabled, value: false, active: on && p.networkPrediction },
   ];
 }
 
-/** Apply the current config: wire every protection on when enabled + its flag is on, off otherwise.
- *  Idempotent — safe to call from any trigger, any number of times. */
-async function applyConfig(): Promise<void> {
-  const config = await loadConfig();
+// Protections turned off outside the extension (e.g. by hand in about:config). When that is noticed the
+// setting is NOT put back: the protection is turned off in the config too, so its tick box matches what
+// Firefox really does, and its key is remembered here so the popup can say why it was turned off. Kept in
+// storage so the note survives a background restart. The key is dropped when the user ticks the
+// protection again, or when the setting goes back to the protective value by hand.
+const DISABLED_OUTSIDE_KEY = "poisonyourtrace.disabledOutside";
 
+async function loadDisabledOutside(): Promise<Set<keyof Protections>> {
+  const stored = await browser.storage.local.get(DISABLED_OUTSIDE_KEY);
+  const raw: unknown = stored[DISABLED_OUTSIDE_KEY];
+  return new Set(Array.isArray(raw) ? (raw as (keyof Protections)[]) : []);
+}
+
+async function saveDisabledOutside(keys: Set<keyof Protections>): Promise<void> {
+  await browser.storage.local.set({ [DISABLED_OUTSIDE_KEY]: [...keys] });
+}
+
+// Protections whose value the last apply really set. A differing value only means "changed outside the
+// extension" for these. Otherwise the protection was never applied: its set() failed, or it was just
+// ticked and the apply that sets it has not run yet (a check queued before that apply would otherwise
+// see the old value and turn the protection straight back off). Those are reported as "mismatch".
+const appliedByUs = new Set<keyof Protections>();
+
+// Applies and checks run one after another, never at the same time. A check that overlaps an apply
+// could read a setting the apply has not written yet and wrongly report (and record) it as changed
+// outside the extension.
+let queue: Promise<void> = Promise.resolve();
+
+function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  const run = queue.then(task);
+  // Keep the queue alive if one task fails; the caller still sees the failure through `run`.
+  queue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+/**
+ * Read back what Firefox actually applies for one active switch. Never throws, never re-applies. The
+ * cases:
+ *   - expected value → "applied", whoever holds it (us, another extension, a policy).
+ *   - another extension holds a different value → "other_extension": the most recently installed
+ *     extension takes precedence, so ours cannot win; report only.
+ *   - not controllable (enterprise policy) with a different value → "locked": report only.
+ *   - not set by the last apply (set() failed, or not applied yet) → "mismatch".
+ *   - controllable but different (typically changed by hand in about:config) → "disabled_outside": the
+ *     change is respected and the caller turns the protection off in the config.
+ */
+async function verifyPrivacySwitch(sw: PrivacySwitch): Promise<ProtectionStatus> {
+  try {
+    const current = await sw.setting.get({});
+    // The expected value is what matters: if another extension or a policy holds the setting at the
+    // same value (uBlock Origin also disables prefetching and pings, for instance), the user is
+    // protected, so this is not reported as a problem.
+    if (current.value === sw.value) return "applied";
+    if (current.levelOfControl === "controlled_by_other_extensions") return "other_extension";
+    if (current.levelOfControl === "not_controllable") return "locked";
+    if (!appliedByUs.has(sw.key)) return "mismatch";
+    return "disabled_outside";
+  } catch (err) {
+    console.warn(`[poison] could not read ${sw.name}:`, err);
+    return "unavailable";
+  }
+}
+
+/**
+ * The real status of every protection. Privacy settings are read back from Firefox; containers are an
+ * in-extension mechanism wired directly by applyConfig, so their state follows the config. A protection
+ * found turned off outside the extension is turned off in the config as well (never put back).
+ */
+async function checkStatus(): Promise<ProtectionStatuses> {
+  const config = await loadConfig();
+  const disabledOutside = await loadDisabledOutside();
+  const changed: Partial<Protections> = {};
+  const statuses = {} as ProtectionStatuses;
+
+  for (const sw of privacySwitches(config)) {
+    if (!config.enabled) {
+      statuses[sw.key] = "off";
+    } else if (disabledOutside.has(sw.key)) {
+      // Turned off outside the extension earlier. If the setting has since been put back to the
+      // protective value by hand, the protection is on again; otherwise keep explaining why it is off.
+      const status = await verifyPrivacySwitch(sw);
+      if (status === "applied") {
+        disabledOutside.delete(sw.key);
+        changed[sw.key] = true;
+        statuses[sw.key] = "applied";
+      } else {
+        statuses[sw.key] = "disabled_outside";
+      }
+    } else if (!sw.active) {
+      statuses[sw.key] = "off";
+    } else {
+      const status = await verifyPrivacySwitch(sw);
+      if (status === "disabled_outside") {
+        console.warn(`[poison] ${sw.name} was changed outside the extension; turning the protection off.`);
+        disabledOutside.add(sw.key);
+        changed[sw.key] = false;
+      }
+      statuses[sw.key] = status;
+    }
+  }
+
+  if (Object.keys(changed).length > 0) {
+    await saveConfig({ protections: changed });
+    await saveDisabledOutside(disabledOutside);
+  }
+  statuses.container = config.enabled && config.protections.container ? "applied" : "off";
+  await updateBadge(statuses);
+  return statuses;
+}
+
+/**
+ * Flag the toolbar icon with a red "!" while a protection is turned off outside the extension, so the
+ * user notices without opening the popup. Every check ends here, so the badge clears as soon as the
+ * protection is ticked again (or the setting is put back by hand). Never throws: the badge API may be
+ * missing (Firefox for Android) and a badge failure must not break the check.
+ */
+async function updateBadge(statuses: ProtectionStatuses): Promise<void> {
+  const action = browser.browserAction;
+  if (!action?.setBadgeText) return;
+  const flagged = Object.values(statuses).includes("disabled_outside");
+  try {
+    await action.setBadgeText({ text: flagged ? "!" : "" });
+    await action.setTitle({
+      title: flagged ? "Poison your Trace: a protection was turned off in Firefox's settings" : "Poison your Trace",
+    });
+    if (flagged) {
+      await action.setBadgeBackgroundColor({ color: "#b42318" });
+      await action.setBadgeTextColor?.({ color: "#ffffff" });
+    }
+  } catch (err) {
+    console.warn("[poison] could not update the toolbar badge:", err);
+  }
+}
+
+// True while a background check is waiting in the queue: a burst of triggers (tab switches, our own
+// writes firing onChange) then adds a single check instead of piling them up.
+let checkPending = false;
+
+/** Check in the background, queued after any apply. Errors are already handled per
+ *  setting. */
+function checkInBackground(): void {
+  if (checkPending) return;
+  checkPending = true;
+  void enqueue(() => {
+    checkPending = false;
+    return checkStatus();
+  });
+}
+
+/** Apply the current config: wire every protection on when enabled + its flag is on, off otherwise.
+ *  Idempotent — safe to call from any trigger, any number of times. Queued, never overlaps a check. */
+function applyConfig(): Promise<void> {
+  return enqueue(applyConfigNow);
+}
+
+async function applyConfigNow(): Promise<void> {
+  const config = await loadConfig();
+  const disabledOutside = await loadDisabledOutside();
+  const before = disabledOutside.size;
   // The browser-wide privacy settings, each gated on enabled AND its own flag. Every set/clear is
   // independent and self-guarding, so one failing setting does not abort the rest.
-  for (const sw of privacySwitches(config)) await applyPrivacySwitch(sw);
+  for (const sw of privacySwitches(config)) {
+    if (disabledOutside.has(sw.key)) {
+      // Ticked again by the user: the protection is theirs to turn back on.
+      if (config.protections[sw.key]) {
+        disabledOutside.delete(sw.key);
+      } else {
+        // Still off because it was changed outside the extension: leave the user's value alone (no set,
+        // and no clear either, which could restore the value from before the extension took over).
+        appliedByUs.delete(sw.key);
+        continue;
+      }
+    }
+    if (await applyPrivacySwitch(sw)) appliedByUs.add(sw.key);
+    else appliedByUs.delete(sw.key);
+  }
+  if (disabledOutside.size !== before) await saveDisabledOutside(disabledOutside);
 
   // Auto containers: gated on enabled AND the container flag. enable()/disable() are idempotent.
   if (config.enabled && config.protections.container) {
@@ -93,6 +270,10 @@ async function applyConfig(): Promise<void> {
       ? "[poison] enabled; privacy settings applied per protection flags, containers wired to their flag."
       : "[poison] disabled; all privacy settings reverted to the user's values, containers off.",
   );
+
+  // Read back what Firefox actually applied, so a failed set() (other extension, policy) is noticed
+  // right away rather than only logged.
+  await checkStatus();
 }
 
 browser.runtime.onInstalled.addListener(() => void applyConfig());
@@ -101,12 +282,28 @@ browser.runtime.onStartup.addListener(() => void applyConfig());
 // protections are armed without needing a manual toggle.
 void applyConfig();
 
+// Notice settings changed outside the extension (by hand in about:config, another extension, a
+// policy). onChange is the direct signal; it is guarded because it may not fire for every kind of
+// change on every Firefox build, which is why tab switches also trigger a check below. Our own writes
+// fire onChange too, but a check then finds the expected value and does nothing, so there is no loop.
+// A check never writes a privacy setting, so it cannot trigger itself either.
+void loadConfig().then((config) => {
+  // The setting objects are the same whatever the config; it is only needed to build the list. A
+  // setting missing on this Firefox build is skipped, so the others still get their listener.
+  for (const sw of privacySwitches(config)) sw.setting?.onChange?.addListener(() => checkInBackground());
+});
+browser.tabs.onActivated.addListener(() => checkInBackground());
+
 browser.runtime.onMessage.addListener(
   (message: unknown, _sender: browser.runtime.MessageSender): Promise<unknown> | undefined => {
     const msg = message as { type?: string };
     // The popup writes the config then sends this so the background re-wires every setting immediately.
     if (msg?.type === "poison:apply") {
       return applyConfig().then(() => ({ ok: true }));
+    }
+    // The popup asks for the real state when it opens and after each toggle.
+    if (msg?.type === "poison:status") {
+      return enqueue(checkStatus).then((statuses) => ({ statuses }));
     }
     return undefined;
   },
