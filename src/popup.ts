@@ -4,7 +4,7 @@
 
 import { loadConfig, saveConfig, PROTECTION_KEYS, type PoisonConfig } from "./config";
 import { buildDemo, type ReadoutKey } from "./demos";
-import { PROBLEM_STATUSES, type ProtectionStatus, type ProtectionStatuses } from "./status";
+import { PROBLEM_STATUSES, fetchStatuses, paintProtection, type ProtectionStatuses } from "./status";
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id);
@@ -67,58 +67,11 @@ function injectDemos(): void {
   }
 }
 
-// What to tell the user when a protection is not in the state its tick box suggests. "applied" and
-// "off" need no note: the tick box already says it all.
-const STATUS_NOTES: Partial<Record<ProtectionStatus, string>> = {
-  disabled_outside: "This was turned off in Firefox's settings, outside the extension. Tick it to turn it back on.",
-  other_extension: "Another extension controls this setting, so it can't be turned on here.",
-  locked: "This setting is locked on this computer (for example by your organisation), so it can't be turned on.",
-  mismatch: "Firefox isn't applying this right now. Tick it to try again.",
-  unavailable: "This setting isn't available in your version of Firefox.",
-};
-
-// Problems the user can't fix from the popup: the tick box is greyed out. A "mismatch" stays clickable,
-// since ticking it again re-applies the setting.
-const UNFIXABLE: ReadonlySet<ProtectionStatus> = new Set(["other_extension", "locked", "unavailable"]);
-
-// Make each tick box and its note match the real state Firefox reports: a protection that is not
-// actually applied is shown unticked. For a lock or another extension the stored config still asks for
-// it (so it comes back on its own once they go away); a protection turned off outside the extension is
-// off in the config too, and comes back only when the user ticks it again.
+// Make each tick box and its note match the real state Firefox reports (see paintProtection).
 function renderStatuses(config: PoisonConfig, statuses: ProtectionStatuses | null): void {
   for (const key of PROTECTION_KEYS) {
-    const status = statuses?.[key];
-    const problem = status !== undefined && PROBLEM_STATUSES.has(status);
-    const toggle = el<HTMLInputElement>(`prot-${key}`);
-    toggle.checked = problem ? false : config.protections[key];
-    toggle.disabled = !config.enabled || (status !== undefined && UNFIXABLE.has(status));
-
     const text = document.querySelector<HTMLElement>(`.prot[data-key="${key}"] .prot-text`);
-    if (!text) continue;
-    let note = text.querySelector<HTMLElement>(".prot-status");
-    const message = status ? STATUS_NOTES[status] : undefined;
-    if (!message) {
-      note?.remove();
-      continue;
-    }
-    if (!note) {
-      note = document.createElement("p");
-      text.append(note);
-    }
-    // Turned off outside the extension: red, since the user may not know their protection is gone. The
-    // other notes are warnings.
-    note.className = status === "disabled_outside" ? "prot-status error" : "prot-status warn";
-    note.textContent = message;
-  }
-}
-
-// Ask the background for the real state. Null if it can't answer, in which case no notes are shown.
-async function fetchStatuses(): Promise<ProtectionStatuses | null> {
-  try {
-    const res = (await browser.runtime.sendMessage({ type: "poison:status" })) as { statuses?: ProtectionStatuses };
-    return res?.statuses ?? null;
-  } catch {
-    return null;
+    paintProtection(el<HTMLInputElement>(`prot-${key}`), text, config.enabled, config.protections[key], statuses?.[key]);
   }
 }
 

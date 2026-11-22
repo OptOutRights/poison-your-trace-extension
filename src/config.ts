@@ -33,7 +33,8 @@ export interface PoisonConfig {
   protections: Protections;
 }
 
-const STORAGE_KEY = "poisonyourtrace.config";
+/** Storage key of the config, exported so a page can watch it with browser.storage.onChanged. */
+export const STORAGE_KEY = "poisonyourtrace.config";
 
 const DEFAULT_PROTECTIONS: Protections = {
   rfp: true,
