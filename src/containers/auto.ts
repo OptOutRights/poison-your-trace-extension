@@ -95,7 +95,7 @@ export class AutoContainer {
     const tabStore = tab.cookieStoreId ?? DEFAULT_STORE;
 
     // Everything decide() needs, read in parallel. None of it creates a container, so a site another
-    // extension handles never gets an empty container of ours.
+    // extension handles gets no container of ours when it is left to that extension.
     const [handledElsewhere, tabContainer] = await Promise.all([
       this.containers.isHandledElsewhere(site),
       tabStore === DEFAULT_STORE ? Promise.resolve(null) : this.containers.describe(tabStore),
@@ -120,7 +120,7 @@ export class AutoContainer {
     }
     // A site handed to another extension that now loads in a normal tab and stays there: that
     // extension no longer handles it, so take it back from the next navigation on.
-    if (handledElsewhere && tabStore === DEFAULT_STORE) this.checkStillHandledElsewhere(details.tabId, site);
+    if (handledElsewhere && tabStore === DEFAULT_STORE) this.checkStillHandledElsewhere(details.tabId, site, DEFAULT_STORE);
 
     const decision = decide({ site, tabStore, tabContainer, handledElsewhere });
     if (decision === "leave") return {};
@@ -149,29 +149,34 @@ export class AutoContainer {
     // If another extension moves the tab we are about to open, its load in that extension's container
     // will be matched against this reopen (see HandoffTracker).
     this.handoffs.noteReopen(details.url, Date.now());
-    await browser.tabs.create({
+    const reopened = await browser.tabs.create({
       url: details.url,
       cookieStoreId: container.cookieStoreId,
       index: tab.index,
       active: tab.active,
       windowId: tab.windowId,
     });
+    // A site handed to another extension, reopened from one of our containers: if it stays in its own
+    // container, that extension no longer handles it, so stop leaving it to that extension.
+    if (handledElsewhere && reopened.id !== undefined) {
+      this.checkStillHandledElsewhere(reopened.id, site, container.cookieStoreId);
+    }
     // The tab may already be gone: another extension reacting faster than us closes it too.
     if (!keepSource) await browser.tabs.remove(details.tabId).catch(() => undefined);
     return { cancel: true };
   };
 
   /**
-   * After a moment, if the tab is still in the default container on `site`, no extension moved it:
-   * the one that handled the site is gone or no longer assigns it. Forget the handoff so the site
-   * gets its own container again. If the tab was closed or moved, the other extension still acts.
+   * After a moment, if the tab is still in `store` on `site`, no extension moved it: the one that
+   * handled the site is gone or no longer assigns it. Forget the handoff so the site gets its own
+   * container again. If the tab was closed or moved, the other extension still acts.
    */
-  private checkStillHandledElsewhere(tabId: number, site: string): void {
+  private checkStillHandledElsewhere(tabId: number, site: string, store: string): void {
     setTimeout(() => {
       void (async () => {
         try {
           const tab = await browser.tabs.get(tabId);
-          if ((tab.cookieStoreId ?? DEFAULT_STORE) !== DEFAULT_STORE) return;
+          if ((tab.cookieStoreId ?? DEFAULT_STORE) !== store) return;
           if (targetFor(tab.url ?? "")?.name !== site) return;
           console.info(`[poison] no extension handles ${site} anymore; giving it its own container again.`);
           await this.containers.forgetHandledElsewhere(site);

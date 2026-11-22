@@ -43,6 +43,13 @@ test("a site another extension handles is left to it, even from a normal tab", (
   assert.equal(decide({ ...base, handledElsewhere: true }), "leave");
 });
 
+test("a site another extension handles, opened from our container for another site, gets its own", () => {
+  // Left there, it would share the other site's cookies whenever the other extension doesn't move it.
+  assert.equal(decide({ ...base, ...ours("other.com"), handledElsewhere: true }), "reopen");
+  assert.equal(decide({ ...base, ...ours("example.com"), handledElsewhere: true }), "leave");
+  assert.equal(decide({ ...base, ...theirs, handledElsewhere: true }), "leave");
+});
+
 test("containers created before ids were recorded are recognised by icon and name", () => {
   assert.equal(looksLikeOurs({ name: "example.com", icon: "fingerprint" }, registrableDomain), true);
   assert.equal(looksLikeOurs({ name: "bbc.co.uk", icon: "fingerprint" }, registrableDomain), true);

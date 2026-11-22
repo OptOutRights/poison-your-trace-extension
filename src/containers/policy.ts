@@ -3,12 +3,15 @@
 // respected. Pure: no extension APIs, so it is unit tested directly.
 //
 // The rules, checked in order for each top level navigation:
-//   1. Another extension was found to handle this site (see HandoffTracker) → leave it: two
-//      extensions moving the same tab is what loops.
+//   1. The tab is in the default container and another extension was found to handle this site (see
+//      HandoffTracker) → leave it to that extension: two extensions moving the same tab is what loops.
 //   2. The tab is in a container we did not create (the user's, another extension's) → leave it.
 //   3. The tab is already in the site's own container → leave it.
 //   4. Otherwise (default container, or one of our containers for another site) → reopen it in the
-//      site's own container.
+//      site's own container. Even for a site another extension handles: left in our container for
+//      another site, it would share that site's cookies whenever the other extension doesn't move it.
+//      Reopened in its own container, it stays isolated, and the other extension can still move it
+//      from there without a loop, since we never move a tab out of its container.
 
 /** cookieStoreId of tabs that are in no container. */
 export const DEFAULT_STORE = "firefox-default";
@@ -34,8 +37,7 @@ export interface NavigationFacts {
 export type Decision = "reopen" | "leave";
 
 export function decide(facts: NavigationFacts): Decision {
-  if (facts.handledElsewhere) return "leave";
-  if (facts.tabStore === DEFAULT_STORE) return "reopen";
+  if (facts.tabStore === DEFAULT_STORE) return facts.handledElsewhere ? "leave" : "reopen";
   // Any other store we can't identify as ours (another extension's container, a private window...) is
   // left alone: moving a tab out of a container we did not create is what fights other extensions.
   if (!facts.tabContainer?.ours) return "leave";
