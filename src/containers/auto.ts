@@ -105,7 +105,7 @@ export class AutoContainer {
     // of its own: it handles this site, so stop moving it (rule 1). Only for a container we could read
     // and did not create (not a private window, say).
     if (tabContainer && !tabContainer.ours) {
-      const load = this.handoffs.onForeignLoad(details.url, details.tabId, tabStore, Date.now());
+      const load = this.handoffs.onForeignLoad(details.url, details.tabId, Date.now());
       if (load !== "none") {
         console.info(`[poison] another extension handles ${site}; leaving it to that extension from now on.`);
         await this.containers.markHandledElsewhere(site, tabStore);
@@ -146,14 +146,9 @@ export class AutoContainer {
     // traffic case and we want a conservative, well understood match; extending the same treatment
     // to Bing / DuckDuckGo / social feeds is tracked as issue #58 and is out of scope here.
     const keepSource = isGoogleSearch(tab.url ?? "");
-    // Another extension already moved this very navigation into its own container (it reacted faster
-    // than us): don't open a second tab, it would only be moved again and leave the site open twice.
-    const handedTo = this.handoffs.noteReopen(details.url, Date.now());
-    if (handedTo) {
-      console.info(`[poison] another extension handles ${site}; leaving it to that extension from now on.`);
-      await this.containers.markHandledElsewhere(site, handedTo);
-      return {};
-    }
+    // If another extension moves the tab we are about to open, its load in that extension's container
+    // will be matched against this reopen (see HandoffTracker).
+    this.handoffs.noteReopen(details.url, Date.now());
     await browser.tabs.create({
       url: details.url,
       cookieStoreId: container.cookieStoreId,
@@ -161,7 +156,8 @@ export class AutoContainer {
       active: tab.active,
       windowId: tab.windowId,
     });
-    if (!keepSource) await browser.tabs.remove(details.tabId);
+    // The tab may already be gone: another extension reacting faster than us closes it too.
+    if (!keepSource) await browser.tabs.remove(details.tabId).catch(() => undefined);
     return { cancel: true };
   };
 

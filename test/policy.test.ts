@@ -51,7 +51,6 @@ test("containers created before ids were recorded are recognised by icon and nam
   assert.equal(looksLikeOurs({ name: "www.example.com", icon: "fingerprint" }, registrableDomain), false);
 });
 
-const FB = "firefox-container-9";
 const FB_A = "https://www.facebook.com/a";
 const FB_B = "https://www.facebook.com/b";
 const FB_C = "https://www.facebook.com/c";
@@ -59,29 +58,39 @@ const EX = "https://example.com/";
 
 test("a move into another container right after our reopen is a handoff", () => {
   const t = new HandoffTracker(2000);
-  assert.equal(t.noteReopen(EX, 1000), null);
-  assert.equal(t.onForeignLoad(EX, 7, FB, 2500), "handoff");
+  t.noteReopen(EX, 1000);
+  assert.equal(t.onForeignLoad(EX, 7, 2500), "handoff");
 });
 
-test("the other extension moving the tab before our reopen: we must not reopen", () => {
-  // The other extension reacts first: its tab loads, then we get to our reopen.
+test("the other extension reacting faster than us: its move of our tab is a duplicate", () => {
+  // Its tab for the original navigation loads first, then we reopen, then it moves our tab too.
   const t = new HandoffTracker(2000);
-  assert.equal(t.onForeignLoad(FB_A, 7, FB, 1000), "none");
-  assert.equal(t.noteReopen(FB_A, 1100), FB);
-  // Its tab loading the same URL again is not a duplicate.
-  assert.equal(t.onForeignLoad(FB_A, 7, FB, 1200), "none");
+  assert.equal(t.onForeignLoad(FB_A, 7, 1000), "none");
+  t.noteReopen(FB_A, 1100);
+  assert.equal(t.onForeignLoad(FB_A, 8, 1200), "duplicate");
+  // Its first tab loading the same URL again is not a duplicate.
+  assert.equal(t.onForeignLoad(FB_A, 7, 1300), "none");
+});
+
+test("the user's own tab loading the URL just before our reopen is not a handoff", () => {
+  // example.com open in a container the user chose, and the same URL opened from a normal tab.
+  const t = new HandoffTracker(2000);
+  assert.equal(t.onForeignLoad(EX, 7, 1000), "none");
+  t.noteReopen(EX, 1300);
+  // That tab reloading is still nothing to do with us.
+  assert.equal(t.onForeignLoad(EX, 7, 1500), "none");
 });
 
 test("a second tab for the same URL around our reopen is a duplicate", () => {
   // The other extension reopens both the original tab and the one we opened.
   const t = new HandoffTracker(2000);
   t.noteReopen(FB_A, 1000);
-  assert.equal(t.onForeignLoad(FB_A, 7, FB, 1100), "handoff");
-  assert.equal(t.onForeignLoad(FB_A, 8, FB, 1200), "duplicate");
+  assert.equal(t.onForeignLoad(FB_A, 7, 1100), "handoff");
+  assert.equal(t.onForeignLoad(FB_A, 8, 1200), "duplicate");
   // The kept tab loading again is not a duplicate.
-  assert.equal(t.onForeignLoad(FB_A, 7, FB, 1300), "none");
+  assert.equal(t.onForeignLoad(FB_A, 7, 1300), "none");
   // Past the window, a new tab is the user's own.
-  assert.equal(t.onForeignLoad(FB_A, 9, FB, 3500), "none");
+  assert.equal(t.onForeignLoad(FB_A, 9, 3500), "none");
 });
 
 test("several pages of the same site opened together are not duplicates of each other", () => {
@@ -91,20 +100,18 @@ test("several pages of the same site opened together are not duplicates of each 
   t.noteReopen(FB_A, 1000);
   t.noteReopen(FB_B, 1010);
   t.noteReopen(FB_C, 1020);
-  assert.equal(t.onForeignLoad(FB_A, 11, FB, 1100), "handoff");
-  assert.equal(t.onForeignLoad(FB_B, 12, FB, 1110), "handoff");
-  assert.equal(t.onForeignLoad(FB_C, 13, FB, 1120), "handoff");
-  assert.equal(t.onForeignLoad(FB_A, 21, FB, 1200), "duplicate");
-  assert.equal(t.onForeignLoad(FB_B, 22, FB, 1210), "duplicate");
-  assert.equal(t.onForeignLoad(FB_C, 23, FB, 1220), "duplicate");
+  assert.equal(t.onForeignLoad(FB_A, 11, 1100), "handoff");
+  assert.equal(t.onForeignLoad(FB_B, 12, 1110), "handoff");
+  assert.equal(t.onForeignLoad(FB_C, 13, 1120), "handoff");
+  assert.equal(t.onForeignLoad(FB_A, 21, 1200), "duplicate");
+  assert.equal(t.onForeignLoad(FB_B, 22, 1210), "duplicate");
+  assert.equal(t.onForeignLoad(FB_C, 23, 1220), "duplicate");
 });
 
 test("a URL browsed in another container, with no reopen by us, is left alone", () => {
   const t = new HandoffTracker(2000);
-  assert.equal(t.onForeignLoad(EX, 7, FB, 1000), "none");
-  assert.equal(t.onForeignLoad(EX, 8, FB, 1100), "none");
+  assert.equal(t.onForeignLoad(EX, 7, 1000), "none");
+  assert.equal(t.onForeignLoad(EX, 8, 1100), "none");
   t.noteReopen("https://other.com/", 1200);
-  assert.equal(t.onForeignLoad(EX, 9, FB, 1300), "none");
-  // An old foreign load does not count for a later reopen.
-  assert.equal(t.noteReopen(EX, 5000), null);
+  assert.equal(t.onForeignLoad(EX, 9, 1300), "none");
 });
