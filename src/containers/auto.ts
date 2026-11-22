@@ -13,8 +13,7 @@
 import { loadConfig } from "../config";
 import { registrableDomain } from "./domain";
 import { ContainerManager } from "./manager";
-import { isAssignedByMac } from "./mac";
-import { DEFAULT_STORE, HANDOFF_WINDOW_MS, HandoffTracker, decide, isMultiAccountContainersPrompt } from "./policy";
+import { DEFAULT_STORE, HANDOFF_WINDOW_MS, HandoffTracker, decide } from "./policy";
 
 type BlockingResponse = browser.webRequest.BlockingResponse;
 type Details = browser.webRequest._OnBeforeRequestDetails;
@@ -97,24 +96,15 @@ export class AutoContainer {
 
     // Everything decide() needs, read in parallel. None of it creates a container, so a site another
     // extension handles never gets an empty container of ours.
-    const [macAssignment, handledElsewhere, tabContainer] = await Promise.all([
-      isAssignedByMac(details.url),
+    const [handledElsewhere, tabContainer] = await Promise.all([
       this.containers.isHandledElsewhere(site),
       tabStore === DEFAULT_STORE ? Promise.resolve(null) : this.containers.describe(tabStore),
     ]);
-    // Asked by Multi-Account Containers, the user chose "Open in No Container": they declined the
-    // assigned container, so we take over and give the site its own container, as for any site. Our
-    // new tab isn't exempted by Multi-Account Containers, so it asks once more, now offering our
-    // container as the current one; picking it (with "Remember my decision") sends the site straight
-    // to our container from then on.
-    const declinedMac = macAssignment && tabStore === DEFAULT_STORE && isMultiAccountContainersPrompt(tab.url ?? "", details.url);
-    const assignedByMac = macAssignment && !declinedMac;
 
     // We just moved this site into our container and another extension moved it straight on into one
-    // of its own: it handles this site, so stop moving it (rule 2). Multi-Account Containers is asked
-    // directly instead.
-    // Only for a container we could read and did not create (not a private window, say).
-    if (!assignedByMac && tabContainer && !tabContainer.ours) {
+    // of its own: it handles this site, so stop moving it (rule 1). Only for a container we could read
+    // and did not create (not a private window, say).
+    if (tabContainer && !tabContainer.ours) {
       const load = this.handoffs.onForeignLoad(site, details.tabId, tabStore, Date.now());
       if (load !== "none") {
         console.info(`[poison] another extension handles ${site}; leaving it to that extension from now on.`);
@@ -132,7 +122,7 @@ export class AutoContainer {
     // extension no longer handles it, so take it back from the next navigation on.
     if (handledElsewhere && tabStore === DEFAULT_STORE) this.checkStillHandledElsewhere(details.tabId, site);
 
-    const decision = decide({ site, tabStore, tabContainer, assignedByMac, handledElsewhere });
+    const decision = decide({ site, tabStore, tabContainer, handledElsewhere });
     if (decision === "leave") return {};
 
     const container = await this.containers.getOrCreate(target.name, target.color);

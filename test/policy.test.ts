@@ -4,7 +4,6 @@ import {
   DEFAULT_STORE,
   HandoffTracker,
   decide,
-  isMultiAccountContainersPrompt,
   looksLikeOurs,
   type NavigationFacts,
 } from "../src/containers/policy.ts";
@@ -14,7 +13,6 @@ const base: NavigationFacts = {
   site: "example.com",
   tabStore: DEFAULT_STORE,
   tabContainer: null,
-  assignedByMac: false,
   handledElsewhere: false,
 };
 
@@ -39,11 +37,6 @@ test("a tab in a container we did not create stays, whatever the site", () => {
 
 test("a container we can't read (private window, removed) is left alone", () => {
   assert.equal(decide({ ...base, tabStore: "firefox-private", tabContainer: null }), "leave");
-});
-
-test("a site Multi-Account Containers assigns is left to it, even from a normal tab", () => {
-  assert.equal(decide({ ...base, assignedByMac: true }), "leave");
-  assert.equal(decide({ ...base, ...ours("other.com"), assignedByMac: true }), "leave");
 });
 
 test("a site another extension handles is left to it, even from a normal tab", () => {
@@ -95,15 +88,4 @@ test("a site browsed in another container, with no reopen by us, is left alone",
   assert.equal(t.onForeignLoad("example.com", 9, FB, 1300), "none");
   // An old foreign load does not count for a later reopen.
   assert.equal(t.noteReopen("example.com", 5000), null);
-});
-
-test("a navigation from the Multi-Account Containers prompt is recognised", () => {
-  const prompt =
-    "moz-extension://1234-abcd/confirm-page.html?url=https%3A%2F%2Fexample.com%2F&cookieStoreId=firefox-container-2";
-  assert.equal(isMultiAccountContainersPrompt(prompt, "https://example.com/"), true);
-  assert.equal(isMultiAccountContainersPrompt(prompt, "https://example.com/login"), true);
-  assert.equal(isMultiAccountContainersPrompt(prompt, "https://other.com/"), false);
-  assert.equal(isMultiAccountContainersPrompt("moz-extension://1234-abcd/popup.html", "https://example.com/"), false);
-  assert.equal(isMultiAccountContainersPrompt("https://example.com/confirm-page.html?url=https://example.com/", "https://example.com/"), false);
-  assert.equal(isMultiAccountContainersPrompt("about:newtab", "https://example.com/"), false);
 });

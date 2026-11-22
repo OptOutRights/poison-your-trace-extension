@@ -3,14 +3,11 @@
 // respected. Pure: no extension APIs, so it is unit tested directly.
 //
 // The rules, checked in order for each top level navigation:
-//   1. Multi-Account Containers assigns this URL to a container → leave it. Multi-Account Containers
-//      handles it (asks, or reopens in the assigned container), and two extensions moving the same
-//      tab is what loops. Unless the user, asked by Multi-Account Containers, chose "Open in No
-//      Container": that declines the assigned container, so the site is handled as unassigned.
-//   2. Another extension was found to handle this site (see HandoffTracker) → leave it, same reason.
-//   3. The tab is in a container we did not create (the user's, another extension's) → leave it.
-//   4. The tab is already in the site's own container → leave it.
-//   5. Otherwise (default container, or one of our containers for another site) → reopen it in the
+//   1. Another extension was found to handle this site (see HandoffTracker) → leave it: two
+//      extensions moving the same tab is what loops.
+//   2. The tab is in a container we did not create (the user's, another extension's) → leave it.
+//   3. The tab is already in the site's own container → leave it.
+//   4. Otherwise (default container, or one of our containers for another site) → reopen it in the
 //      site's own container.
 
 /** cookieStoreId of tabs that are in no container. */
@@ -30,8 +27,6 @@ export interface NavigationFacts {
   tabStore: string;
   /** That tab's container, or null when it is the default container or could not be read. */
   tabContainer: { name: string; ours: boolean } | null;
-  /** Multi-Account Containers has an assignment for this URL. */
-  assignedByMac: boolean;
   /** Another extension was found to handle this site. */
   handledElsewhere: boolean;
 }
@@ -39,38 +34,12 @@ export interface NavigationFacts {
 export type Decision = "reopen" | "leave";
 
 export function decide(facts: NavigationFacts): Decision {
-  if (facts.assignedByMac || facts.handledElsewhere) return "leave";
+  if (facts.handledElsewhere) return "leave";
   if (facts.tabStore === DEFAULT_STORE) return "reopen";
   // Any other store we can't identify as ours (another extension's container, a private window...) is
   // left alone: moving a tab out of a container we did not create is what fights other extensions.
   if (!facts.tabContainer?.ours) return "leave";
   return facts.tabContainer.name === facts.site ? "leave" : "reopen";
-}
-
-/**
- * Is `tabUrl` the Multi-Account Containers prompt ("Open in <container>" / "Open in No Container") for
- * `url`? A navigation to `url` that starts from that prompt means the user picked the other option and
- * declined the assigned container: Multi-Account Containers exempts that tab, and we can take over.
- * Its page lives at moz-extension://<id>/confirm-page.html?url=<url>.
- */
-export function isMultiAccountContainersPrompt(tabUrl: string, url: string): boolean {
-  let page: URL;
-  let target: URL;
-  try {
-    page = new URL(tabUrl);
-    target = new URL(url);
-  } catch {
-    return false;
-  }
-  if (page.protocol !== "moz-extension:" || page.pathname !== "/confirm-page.html") return false;
-  const asked = page.searchParams.get("url");
-  if (!asked) return false;
-  try {
-    // Same host is enough: the page may load a slightly different URL (a redirect, a trailing slash).
-    return new URL(asked).hostname === target.hostname;
-  } catch {
-    return false;
-  }
 }
 
 /**
