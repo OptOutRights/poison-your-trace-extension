@@ -53,24 +53,29 @@ export function looksLikeOurs(identity: { name: string; icon: string }, siteOf: 
 }
 
 /**
- * What a tab loading a site in a container we did not create means, when we reopened that same site in
+ * What a tab loading a URL in a container we did not create means, when we reopened that same URL in
  * our container a moment before or after:
  *   - "handoff": the first such tab. Another extension moved the site to the container it assigns, so
  *     the caller remembers the site and stops moving it. Without this, every visit from a normal tab
  *     would be moved twice (by us, then by them).
- *   - "duplicate": another tab for the same site. The other extension reacted to the same navigation
- *     as we did: it reopened the original tab AND the tab we had just opened, so the site is open twice.
+ *   - "duplicate": another tab for the same URL. The other extension reacted to the same navigation
+ *     as we did: it reopened the original tab AND the tab we had just opened, so the URL is open twice.
  *     The caller closes this one, keeps the first, and remembers the site as for a handoff.
- *   - "none": we did not reopen this site around that time, nothing to do with us.
+ *   - "none": we did not reopen this URL around that time, nothing to do with us.
  * Both orders happen: the other extension often moves the original tab before our reopen is noted, so
  * foreign loads are remembered for a moment too, not only reopens.
+ *
+ * Keyed by URL, not by site: several pages of the same site opened together ("Open All in Tabs",
+ * session restore) are distinct navigations, and none of them is a duplicate of another. Other
+ * extensions reopen a tab with the exact URL of its request, as we do, so a real duplicate always
+ * carries the URL we reopened.
  */
 export type ForeignLoad = "handoff" | "duplicate" | "none";
 
 export class HandoffTracker {
-  // Per site: when we last reopened it in our container.
+  // Per URL: when we last reopened it in our container.
   private readonly reopenedAt = new Map<string, number>();
-  // Per site: the first tab seen loading it in a container we did not create, and when.
+  // Per URL: the first tab seen loading it in a container we did not create, and when.
   private readonly firstForeign = new Map<string, { tabId: number; store: string; at: number; handedOff: boolean }>();
   private readonly windowMs: number;
 
@@ -81,32 +86,32 @@ export class HandoffTracker {
   }
 
   /**
-   * We are about to reopen `site` in its own container. If a tab already loaded it in another
+   * We are about to reopen `url` in its site's container. If a tab already loaded it in another
    * extension's container a moment ago, that extension reacted to the same navigation first: returns
    * that container's cookieStoreId, and the caller must not reopen (it would only be moved again,
-   * leaving the site open twice). Null otherwise.
+   * leaving the URL open twice). Null otherwise.
    */
-  noteReopen(site: string, now: number): string | null {
+  noteReopen(url: string, now: number): string | null {
     this.prune(now);
-    this.reopenedAt.set(site, now);
-    const first = this.firstForeign.get(site);
+    this.reopenedAt.set(url, now);
+    const first = this.firstForeign.get(url);
     if (!first || first.handedOff) return null;
     first.handedOff = true;
     return first.store;
   }
 
-  /** Tab `tabId` is loading `site` in the container `store`, which we did not create. */
-  onForeignLoad(site: string, tabId: number, store: string, now: number): ForeignLoad {
+  /** Tab `tabId` is loading `url` in the container `store`, which we did not create. */
+  onForeignLoad(url: string, tabId: number, store: string, now: number): ForeignLoad {
     this.prune(now);
-    const reopened = this.reopenedAt.has(site);
-    const first = this.firstForeign.get(site);
+    const reopened = this.reopenedAt.has(url);
+    const first = this.firstForeign.get(url);
     if (!first) {
-      this.firstForeign.set(site, { tabId, store, at: now, handedOff: reopened });
+      this.firstForeign.set(url, { tabId, store, at: now, handedOff: reopened });
       return reopened ? "handoff" : "none";
     }
     if (!reopened) return "none";
     if (tabId !== first.tabId) return "duplicate";
-    // The first tab loading again (a redirect, say) is not a duplicate.
+    // The first tab loading the same URL again is not a duplicate.
     if (first.handedOff) return "none";
     first.handedOff = true;
     return "handoff";
@@ -114,7 +119,7 @@ export class HandoffTracker {
 
   // Forget anything older than the window, so old entries never match and the maps stay small.
   private prune(now: number): void {
-    for (const [site, at] of this.reopenedAt) if (now - at > this.windowMs) this.reopenedAt.delete(site);
-    for (const [site, seen] of this.firstForeign) if (now - seen.at > this.windowMs) this.firstForeign.delete(site);
+    for (const [url, at] of this.reopenedAt) if (now - at > this.windowMs) this.reopenedAt.delete(url);
+    for (const [url, seen] of this.firstForeign) if (now - seen.at > this.windowMs) this.firstForeign.delete(url);
   }
 }

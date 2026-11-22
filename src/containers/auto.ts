@@ -105,13 +105,13 @@ export class AutoContainer {
     // of its own: it handles this site, so stop moving it (rule 1). Only for a container we could read
     // and did not create (not a private window, say).
     if (tabContainer && !tabContainer.ours) {
-      const load = this.handoffs.onForeignLoad(site, details.tabId, tabStore, Date.now());
+      const load = this.handoffs.onForeignLoad(details.url, details.tabId, tabStore, Date.now());
       if (load !== "none") {
         console.info(`[poison] another extension handles ${site}; leaving it to that extension from now on.`);
         await this.containers.markHandledElsewhere(site, tabStore);
       }
       if (load === "duplicate") {
-        // The other extension also reopened the tab we had just opened: the site is now open twice.
+        // The other extension also reopened the tab we had just opened: this URL is now open twice.
         // Keep the first tab and close this one.
         console.info(`[poison] closing a duplicate ${site} tab opened by another container extension.`);
         await browser.tabs.remove(details.tabId).catch(() => undefined);
@@ -148,7 +148,7 @@ export class AutoContainer {
     const keepSource = isGoogleSearch(tab.url ?? "");
     // Another extension already moved this very navigation into its own container (it reacted faster
     // than us): don't open a second tab, it would only be moved again and leave the site open twice.
-    const handedTo = this.handoffs.noteReopen(site, Date.now());
+    const handedTo = this.handoffs.noteReopen(details.url, Date.now());
     if (handedTo) {
       console.info(`[poison] another extension handles ${site}; leaving it to that extension from now on.`);
       await this.containers.markHandledElsewhere(site, handedTo);
