@@ -12,6 +12,7 @@
 
 import { loadConfig } from "../config";
 import { registrableDomain } from "./domain";
+import { clearSiteCookiesFromDefaultStore } from "./cleanup";
 import { ContainerManager } from "./manager";
 import { DEFAULT_STORE, HANDOFF_WINDOW_MS, HandoffTracker, decide } from "./policy";
 
@@ -170,18 +171,42 @@ export class AutoContainer {
    * After a moment, if the tab is still in `store` on `site`, no extension moved it: the one that
    * handled the site is gone or no longer assigns it. Forget the handoff so the site gets its own
    * container again. If the tab was closed or moved, the other extension still acts.
+   *
+   * From the default container, this visit has already loaded there, unisolated: move the tab to the
+   * site's own container right away, and clear the cookies the site left in the default container.
    */
   private checkStillHandledElsewhere(tabId: number, site: string, store: string): void {
     setTimeout(() => {
       void (async () => {
+        let tab: browser.tabs.Tab;
         try {
-          const tab = await browser.tabs.get(tabId);
-          if ((tab.cookieStoreId ?? DEFAULT_STORE) !== store) return;
-          if (targetFor(tab.url ?? "")?.name !== site) return;
-          console.info(`[poison] no extension handles ${site} anymore; giving it its own container again.`);
-          await this.containers.forgetHandledElsewhere(site);
+          tab = await browser.tabs.get(tabId);
         } catch {
-          // Tab closed: the other extension replaced it, so it still handles the site.
+          return; // Tab closed: the other extension replaced it, so it still handles the site.
+        }
+        if ((tab.cookieStoreId ?? DEFAULT_STORE) !== store) return;
+        const target = targetFor(tab.url ?? "");
+        if (!tab.url || target?.name !== site) return;
+        try {
+          console.info(`[poison] no extension handles ${site} anymore; giving it its own container again.`);
+          // Forget first, so the reopened tab's navigation is not left to the other extension again.
+          await this.containers.forgetHandledElsewhere(site);
+          if (store !== DEFAULT_STORE) return; // already in its own container
+
+          const container = await this.containers.getOrCreate(site, target.color);
+          await browser.tabs.create({
+            url: tab.url,
+            cookieStoreId: container.cookieStoreId,
+            index: tab.index,
+            active: tab.active,
+            windowId: tab.windowId,
+          });
+          // Remove the tab before clearing, so the page can't set its cookies again meanwhile.
+          await browser.tabs.remove(tabId).catch(() => undefined);
+          const cleared = await clearSiteCookiesFromDefaultStore(site);
+          if (cleared) console.info(`[poison] cleared ${cleared} ${site} cookie(s) left in the default container.`);
+        } catch (error) {
+          console.warn(`[poison] could not give ${site} its own container again:`, error);
         }
       })();
     }, HANDOFF_WINDOW_MS);

@@ -45,6 +45,25 @@ export function decide(facts: NavigationFacts): Decision {
 }
 
 /**
+ * Does this cookie belong to `site`: set by the site itself (any of its subdomains), or by a third party
+ * while the site was the top level page (partitioned under it)? `siteOf` maps a hostname to its site.
+ */
+export function cookieBelongsToSite(
+  cookie: { domain: string; partitionKey?: { topLevelSite?: string } | null },
+  site: string,
+  siteOf: (host: string) => string,
+): boolean {
+  if (siteOf(cookie.domain.replace(/^\./, "")) === site) return true;
+  const topLevel = cookie.partitionKey?.topLevelSite;
+  if (!topLevel) return false;
+  try {
+    return siteOf(new URL(topLevel).hostname) === site;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Containers created before we recorded our own ids: ours if they carry our icon and are named after
  * a site, as getOrCreate names them. `siteOf` maps a hostname to its site (registrableDomain).
  */

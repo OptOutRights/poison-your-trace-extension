@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_STORE,
   HandoffTracker,
+  cookieBelongsToSite,
   decide,
   looksLikeOurs,
   type NavigationFacts,
@@ -121,4 +122,14 @@ test("a URL browsed in another container, with no reopen by us, is left alone", 
   assert.equal(t.onForeignLoad(EX, 8, 1100), "none");
   t.noteReopen("https://other.com/", 1200);
   assert.equal(t.onForeignLoad(EX, 9, 1300), "none");
+});
+
+test("a site's cookies are its own and those partitioned under it, not other sites'", () => {
+  const of = (domain: string, topLevelSite?: string) => ({ domain, partitionKey: topLevelSite ? { topLevelSite } : null });
+  assert.equal(cookieBelongsToSite(of(".lemonde.fr"), "lemonde.fr", registrableDomain), true);
+  assert.equal(cookieBelongsToSite(of("www.lemonde.fr"), "lemonde.fr", registrableDomain), true);
+  assert.equal(cookieBelongsToSite(of(".doubleclick.net", "https://lemonde.fr"), "lemonde.fr", registrableDomain), true);
+  assert.equal(cookieBelongsToSite(of(".doubleclick.net"), "lemonde.fr", registrableDomain), false);
+  assert.equal(cookieBelongsToSite(of(".doubleclick.net", "https://example.com"), "lemonde.fr", registrableDomain), false);
+  assert.equal(cookieBelongsToSite(of(".notlemonde.fr"), "lemonde.fr", registrableDomain), false);
 });
