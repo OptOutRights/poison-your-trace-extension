@@ -107,8 +107,8 @@ Versions are `MAJOR.MINOR.PATCH`; the single source of truth is the `version` fi
 Local testing needs no store round-trip: `npm start` loads the extension into a throwaway Firefox instantly, and `about:debugging > Load Temporary Add-on` works too. `npm run sign` produces an instantly-signed unlisted `.xpi` if you want to test the signed-install flow on stock Firefox (use a throwaway version number, since a version can live in only one AMO channel).
 
 <div align="center">
-<sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> with <a href="https://github.com/mh2d">MH2D</a> · Apache-2.0 · No tracking, no telemetry, no accounts.</sub>
+<sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> with <a href="https://github.com/mh2d">MH2D</a> · Apache-2.0 · No tracking, no telemetry, no accounts.<br>
+This project is tested with BrowserStack.</sub>
 </div>
-This project is tested with BrowserStack.
 </content>
 </invoke>
