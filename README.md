@@ -109,5 +109,6 @@ Local testing needs no store round-trip: `npm start` loads the extension into a 
 <div align="center">
 <sub>Built by <a href="https://github.com/OptOutRights">OptOutRights</a> with <a href="https://github.com/mh2d">MH2D</a> · Apache-2.0 · No tracking, no telemetry, no accounts.</sub>
 </div>
+This project is tested with BrowserStack.
 </content>
 </invoke>
