@@ -13,6 +13,12 @@ import { STATUS_CHANGED, type ProtectionStatus, type ProtectionStatuses, type St
 const containers = new ContainerManager();
 const autoContainer = new AutoContainer(containers);
 
+// A container removed (by the user, or by the extension that created it): forget what we recorded
+// about it, so a site handed to it gets its own container again.
+browser.contextualIdentities.onRemoved.addListener(({ contextualIdentity }) => {
+  void containers.onContainerRemoved(contextualIdentity.cookieStoreId);
+});
+
 // A single privacy.* BrowserSetting we drive. We describe each one declaratively (the setting object,
 // the value to apply when on) so applyConfig can loop over them uniformly: set the value when the
 // protection is active, otherwise CLEAR it so Firefox reverts to the USER's own preference rather than
