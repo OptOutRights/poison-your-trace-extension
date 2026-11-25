@@ -8,7 +8,7 @@
 import { loadConfig, saveConfig, type PoisonConfig, type Protections } from "./config";
 import { ContainerManager } from "./containers/manager";
 import { AutoContainer } from "./containers/auto";
-import type { ProtectionStatus, ProtectionStatuses } from "./status";
+import { STATUS_CHANGED, type ProtectionStatus, type ProtectionStatuses, type StatusChangedMessage } from "./status";
 
 const containers = new ContainerManager();
 const autoContainer = new AutoContainer(containers);
@@ -187,7 +187,20 @@ async function checkStatus(): Promise<ProtectionStatuses> {
   }
   statuses.container = config.enabled && config.protections.container ? "applied" : "off";
   await updateBadge(statuses);
+  broadcastStatuses(statuses);
   return statuses;
+}
+
+/**
+ * Tell any open extension page (the How it works page) the fresh statuses, so it follows changes made
+ * in the popup or in about:config without a reload. Every check ends here, so this reuses the same
+ * triggers: setting onChange, tab switches, and the check after each apply. A page never asks for a
+ * check in reply to this message, so it cannot loop. Fire and forget: sendMessage rejects when no page
+ * is open to receive it, which is the normal case.
+ */
+function broadcastStatuses(statuses: ProtectionStatuses): void {
+  const message: StatusChangedMessage = { type: STATUS_CHANGED, statuses };
+  browser.runtime.sendMessage(message).catch(() => undefined);
 }
 
 /**
@@ -301,7 +314,8 @@ browser.runtime.onMessage.addListener(
     if (msg?.type === "poison:apply") {
       return applyConfig().then(() => ({ ok: true }));
     }
-    // The popup asks for the real state when it opens and after each toggle.
+    // The popup asks for the real state when it opens and after each toggle; the How it works page
+    // asks once when it opens, then follows the STATUS_CHANGED broadcasts.
     if (msg?.type === "poison:status") {
       return enqueue(checkStatus).then((statuses) => ({ statuses }));
     }

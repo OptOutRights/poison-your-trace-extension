@@ -306,3 +306,23 @@ footer.foot {
     gap: 2px;
   }
 }
+
+/* Real-state note under a protection, same wording and colours as the popup's: amber when it can't be
+   turned on (lock, other extension...), red when it was turned off outside the extension. */
+.prot-status {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.prot-status.warn {
+  color: var(--amber-text);
+}
+
+.prot-status.error {
+  color: var(--alert-red-text);
+}
+
+.verify-toggle:disabled {
+  cursor: not-allowed;
+}
