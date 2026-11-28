@@ -137,15 +137,20 @@ test("a site's cookies are its own and those partitioned under it, not other sit
   assert.equal(cookieBelongsToSite(of(".notlemonde.fr"), "lemonde.fr", registrableDomain), false);
 });
 
-const get: RequestFacts = { method: "GET", followsStayingRequest: false };
+const get: RequestFacts = { method: "GET", windowType: "normal", followsStayingRequest: false };
 
-test("a plain GET can be moved", () => {
+test("a plain GET in a normal window can be moved", () => {
   assert.equal(staysInTab(get), false);
+  assert.equal(staysInTab({ ...get, windowType: null }), false);
 });
 
 test("a form post stays in its tab: a reopen would replay it as a GET without its body", () => {
   assert.equal(staysInTab({ ...get, method: "POST" }), true);
   assert.equal(staysInTab({ ...get, method: "PUT" }), true);
+});
+
+test("a navigation in a popup window stays, so the popup keeps window.opener", () => {
+  assert.equal(staysInTab({ ...get, windowType: "popup" }), true);
 });
 
 test("a redirect of a request that stayed stays too", () => {

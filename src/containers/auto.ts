@@ -6,7 +6,7 @@
 // same URL in the correct container, and drop the old tab. The reopened tab is already in the
 // right container, so its navigation is allowed through, no loop.
 //
-// A reopen is a new GET in a new tab, so form posts and their redirects are never
+// A reopen is a new GET in a new tab, so form posts, login popups and their redirects are never
 // reopened: they load in the tab's current container (see staysInTab in ./policy).
 //
 // Other container extensions (Multi-Account Containers, Containerise...) also move tabs between
@@ -106,9 +106,9 @@ export class AutoContainer {
     }
     const tabStore = tab.cookieStoreId ?? DEFAULT_STORE;
 
-    // Form posts and their redirects load where they are (see staysInTab). Checked before
+    // Form posts, login popups and their redirects load where they are (see staysInTab). Checked before
     // anything else, so none of the handoff logic below can close or reopen their tab either.
-    if (this.keepsItsContainer(details)) return {};
+    if (await this.keepsItsContainer(details, tab)) return {};
 
     // Everything decide() needs, read in parallel. None of it creates a container, so a site another
     // extension handles gets no container of ours when it is left to that extension.
@@ -183,10 +183,18 @@ export class AutoContainer {
   };
 
   /** Must this navigation stay in its tab's container? Remembers it if so, so its redirects stay too. */
-  private keepsItsContainer(details: Details): boolean {
+  private async keepsItsContainer(details: Details, tab: browser.tabs.Tab): Promise<boolean> {
     const now = Date.now();
     const followsStayingRequest = this.stayingRequests.has(details.requestId, now);
-    if (!staysInTab({ method: details.method, followsStayingRequest })) return false;
+    let windowType: string | null = null;
+    if (!followsStayingRequest && details.method === "GET" && tab.windowId !== undefined) {
+      try {
+        windowType = (await browser.windows.get(tab.windowId)).type ?? null;
+      } catch {
+        // Window gone mid flight: treated as a normal window.
+      }
+    }
+    if (!staysInTab({ method: details.method, windowType, followsStayingRequest })) return false;
     this.stayingRequests.keep(details.requestId, now);
     return true;
   }

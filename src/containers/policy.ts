@@ -15,7 +15,7 @@
 //
 // Before any of these, some navigations always stay in the tab's container (see staysInTab): moving a
 // tab means cancelling the request and reopening its URL in a new tab, which only works for a plain GET
-// in a normal tab. That is what keeps form posts working.
+// in a normal tab. That is what keeps form posts and login popups working.
 
 /** cookieStoreId of tabs that are in no container. */
 export const DEFAULT_STORE = "firefox-default";
@@ -43,6 +43,8 @@ export type Decision = "reopen" | "leave";
 export interface RequestFacts {
   /** HTTP method of the navigation. */
   method: string;
+  /** Type of the window the tab is in ("normal", "popup", ...), or null when it could not be read. */
+  windowType: string | null;
   /** The navigation is a redirect of a request that already had to stay in its tab. */
   followsStayingRequest: boolean;
 }
@@ -53,11 +55,14 @@ export interface RequestFacts {
  *   - Not a GET (in practice a form POST: "Sign in with Apple", Microsoft and SAML callbacks, 3-D Secure
  *     payments...): the reopen would drop the body and replay it as a GET, which breaks the flow.
  *     Navigations are only ever GET or POST; anything not a GET stays, to be safe.
+ *   - In a popup window (window.open with features, as login popups do): the reopen would land in a
+ *     normal tab without window.opener, so the popup could never hand its result back to the page.
+ *     Firefox already opens the popup in its opener's container.
  *   - A redirect of such a request (POST, then 303 to a result page): its cookies were just set in this
  *     container, so the rest of the redirect chain must load there too.
  */
 export function staysInTab(facts: RequestFacts): boolean {
-  return facts.method !== "GET" || facts.followsStayingRequest;
+  return facts.method !== "GET" || facts.windowType === "popup" || facts.followsStayingRequest;
 }
 
 /** How long a request that stayed in its tab is remembered, to recognise its redirects. */
