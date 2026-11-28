@@ -12,6 +12,10 @@
 //      another site, it would share that site's cookies whenever the other extension doesn't move it.
 //      Reopened in its own container, it stays isolated, and the other extension can still move it
 //      from there without a loop, since we never move a tab out of its container.
+//
+// Before any of these, some navigations always stay in the tab's container (see staysInTab): moving a
+// tab means cancelling the request and reopening its URL in a new tab, which only works for a plain GET
+// in a normal tab. That is what keeps form posts and login popups working.
 
 /** cookieStoreId of tabs that are in no container. */
 export const DEFAULT_STORE = "firefox-default";
@@ -35,6 +39,61 @@ export interface NavigationFacts {
 }
 
 export type Decision = "reopen" | "leave";
+
+export interface RequestFacts {
+  /** HTTP method of the navigation. */
+  method: string;
+  /** Type of the window the tab is in ("normal", "popup", ...), or null when it could not be read. */
+  windowType: string | null;
+  /** The navigation is a redirect of a request that already had to stay in its tab. */
+  followsStayingRequest: boolean;
+}
+
+/**
+ * Must this navigation stay in the tab's current container, whatever its site? Reopening a URL in
+ * another container is a new GET in a new tab, so it is only done when that loses nothing:
+ *   - Not a GET (in practice a form POST: a bank payment page, 3-D Secure, a form handled by another
+ *     service...): the reopen would drop the body and replay it as a GET, which breaks the flow.
+ *     Navigations are only ever GET or POST; anything not a GET stays, to be safe.
+ *   - In a popup window (window.open with features, as login popups do): the reopen would land in a
+ *     normal tab without window.opener, so the popup could never hand its result back to the page.
+ *     Firefox already opens the popup in its opener's container.
+ *   - A redirect of such a request (POST, then 303 to a result page): its cookies were just set in this
+ *     container, so the rest of the redirect chain must load there too.
+ */
+export function staysInTab(facts: RequestFacts): boolean {
+  return facts.method !== "GET" || facts.windowType === "popup" || facts.followsStayingRequest;
+}
+
+/** How long a request that stayed in its tab is remembered, to recognise its redirects. */
+export const STAYING_REQUEST_MS = 30_000;
+
+/**
+ * Remembers the requests that stayed in their tab (see staysInTab), so their redirects stay too. Firefox
+ * keeps the same requestId across the redirects of a navigation.
+ */
+export class StayingRequests {
+  private readonly keptAt = new Map<string, number>();
+  private readonly windowMs: number;
+
+  constructor(windowMs = STAYING_REQUEST_MS) {
+    this.windowMs = windowMs;
+  }
+
+  keep(requestId: string, now: number): void {
+    this.prune(now);
+    this.keptAt.set(requestId, now);
+  }
+
+  has(requestId: string, now: number): boolean {
+    this.prune(now);
+    return this.keptAt.has(requestId);
+  }
+
+  private prune(now: number): void {
+    for (const [id, at] of this.keptAt) if (now - at > this.windowMs) this.keptAt.delete(id);
+  }
+}
 
 export function decide(facts: NavigationFacts): Decision {
   if (facts.tabStore === DEFAULT_STORE) return facts.handledElsewhere ? "leave" : "reopen";

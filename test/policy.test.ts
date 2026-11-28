@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_STORE,
   HandoffTracker,
+  StayingRequests,
   cookieBelongsToSite,
   decide,
   looksLikeOurs,
+  staysInTab,
   type NavigationFacts,
+  type RequestFacts,
 } from "../src/containers/policy.ts";
 import { registrableDomain } from "../src/containers/domain.ts";
 
@@ -132,4 +135,32 @@ test("a site's cookies are its own and those partitioned under it, not other sit
   assert.equal(cookieBelongsToSite(of(".doubleclick.net"), "lemonde.fr", registrableDomain), false);
   assert.equal(cookieBelongsToSite(of(".doubleclick.net", "https://example.com"), "lemonde.fr", registrableDomain), false);
   assert.equal(cookieBelongsToSite(of(".notlemonde.fr"), "lemonde.fr", registrableDomain), false);
+});
+
+const get: RequestFacts = { method: "GET", windowType: "normal", followsStayingRequest: false };
+
+test("a plain GET in a normal window can be moved", () => {
+  assert.equal(staysInTab(get), false);
+  assert.equal(staysInTab({ ...get, windowType: null }), false);
+});
+
+test("a form post stays in its tab: a reopen would replay it as a GET without its body", () => {
+  assert.equal(staysInTab({ ...get, method: "POST" }), true);
+  assert.equal(staysInTab({ ...get, method: "PUT" }), true);
+});
+
+test("a navigation in a popup window stays, so the popup keeps window.opener", () => {
+  assert.equal(staysInTab({ ...get, windowType: "popup" }), true);
+});
+
+test("a redirect of a request that stayed stays too", () => {
+  assert.equal(staysInTab({ ...get, followsStayingRequest: true }), true);
+});
+
+test("the redirects of a request that stayed are recognised by its requestId, for a while", () => {
+  const staying = new StayingRequests(1000);
+  staying.keep("42", 0);
+  assert.equal(staying.has("42", 500), true);
+  assert.equal(staying.has("43", 500), false);
+  assert.equal(staying.has("42", 2000), false);
 });

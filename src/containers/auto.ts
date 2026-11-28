@@ -6,6 +6,9 @@
 // same URL in the correct container, and drop the old tab. The reopened tab is already in the
 // right container, so its navigation is allowed through, no loop.
 //
+// A reopen is a new GET in a new tab, so form posts, login popups and their redirects are never
+// reopened: they load in the tab's current container (see staysInTab in ./policy).
+//
 // Other container extensions (Multi-Account Containers, Containerise...) also move tabs between
 // containers. To never fight them, a tab is only moved out of the default container or one of ours,
 // never out of a container someone else chose; see ./policy for the full rules.
@@ -14,7 +17,14 @@ import { loadConfig } from "../config";
 import { registrableDomain } from "./domain";
 import { clearSiteCookiesFromDefaultStore } from "./cleanup";
 import { ContainerManager } from "./manager";
-import { DEFAULT_STORE, HANDOFF_WINDOW_MS, HandoffTracker, decide } from "./policy";
+import {
+  DEFAULT_STORE,
+  HANDOFF_WINDOW_MS,
+  HandoffTracker,
+  StayingRequests,
+  decide,
+  staysInTab,
+} from "./policy";
 
 type BlockingResponse = browser.webRequest.BlockingResponse;
 type Details = browser.webRequest._OnBeforeRequestDetails;
@@ -73,6 +83,7 @@ export function targetFor(url: string): { name: string; color: (typeof COLORS)[n
 export class AutoContainer {
   private listening = false;
   private readonly handoffs = new HandoffTracker();
+  private readonly stayingRequests = new StayingRequests();
   constructor(private readonly containers: ContainerManager) {}
 
   private readonly handler = async (details: Details): Promise<BlockingResponse> => {
@@ -94,6 +105,10 @@ export class AutoContainer {
       return {}; // tab vanished mid flight
     }
     const tabStore = tab.cookieStoreId ?? DEFAULT_STORE;
+
+    // Form posts, login popups and their redirects load where they are (see staysInTab). Checked before
+    // anything else, so none of the handoff logic below can close or reopen their tab either.
+    if (await this.keepsItsContainer(details, tab)) return {};
 
     // Everything decide() needs, read in parallel. None of it creates a container, so a site another
     // extension handles gets no container of ours when it is left to that extension.
@@ -166,6 +181,23 @@ export class AutoContainer {
     if (!keepSource) await browser.tabs.remove(details.tabId).catch(() => undefined);
     return { cancel: true };
   };
+
+  /** Must this navigation stay in its tab's container? Remembers it if so, so its redirects stay too. */
+  private async keepsItsContainer(details: Details, tab: browser.tabs.Tab): Promise<boolean> {
+    const now = Date.now();
+    const followsStayingRequest = this.stayingRequests.has(details.requestId, now);
+    let windowType: string | null = null;
+    if (!followsStayingRequest && details.method === "GET" && tab.windowId !== undefined) {
+      try {
+        windowType = (await browser.windows.get(tab.windowId)).type ?? null;
+      } catch {
+        // Window gone mid flight: treated as a normal window.
+      }
+    }
+    if (!staysInTab({ method: details.method, windowType, followsStayingRequest })) return false;
+    this.stayingRequests.keep(details.requestId, now);
+    return true;
+  }
 
   /**
    * After a moment, if the tab is still in `store` on `site`, no extension moved it: the one that
