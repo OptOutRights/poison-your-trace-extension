@@ -52,8 +52,8 @@ export interface RequestFacts {
 /**
  * Must this navigation stay in the tab's current container, whatever its site? Reopening a URL in
  * another container is a new GET in a new tab, so it is only done when that loses nothing:
- *   - Not a GET (in practice a form POST: "Sign in with Apple", Microsoft and SAML callbacks, 3-D Secure
- *     payments...): the reopen would drop the body and replay it as a GET, which breaks the flow.
+ *   - Not a GET (in practice a form POST: a bank payment page, 3-D Secure, a form handled by another
+ *     service...): the reopen would drop the body and replay it as a GET, which breaks the flow.
  *     Navigations are only ever GET or POST; anything not a GET stays, to be safe.
  *   - In a popup window (window.open with features, as login popups do): the reopen would land in a
  *     normal tab without window.opener, so the popup could never hand its result back to the page.
